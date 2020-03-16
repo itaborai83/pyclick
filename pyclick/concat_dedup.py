@@ -94,6 +94,8 @@ class App(object):
     VERSION = (0, 0, 0)
     
     def __init__(self, output, input_dir, inputs):
+        if len(inputs) == 1:
+            inputs = list(sorted(glob.iglob("202*.xlsx")))
         self.output     = output
         self.input_dir  = input_dir
         self.inputs     = inputs
