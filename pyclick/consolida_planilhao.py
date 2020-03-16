@@ -406,7 +406,7 @@ class App(object):
             del dfs_in # release memory
             
             logger.info('ordenando planilhão')
-            df_planilhao.sort_values(by=[ "id_chamado", "chamado_pai" ], inplace=True, kind="mergesort", ignore_index=True)
+            df_planilhao.sort_values(by=[ "id_chamado", "chamado_pai", "data_inicio_acao", "id_acao" ], inplace=True, kind="mergesort", ignore_index=True)
             
             logger.info('exportando mapeamento mesa x eventos')
             self.report_event_mapping(mesa_evt_mapping)
