@@ -3,6 +3,7 @@ import shutil
 import argparse
 import sys
 import pandas as pd
+import sqlite3
 import logging
 
 FORMAT = '%(asctime)s:%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d\n\t%(message)s\n'
@@ -86,7 +87,6 @@ EXPECTED_COLUMNS = [
     'vinculo_com_incidente_grave',
     'incidente_grave'
 ]
-   
 
 KEEP_COLUMNS = [ 
     'data_abertura_chamado',
@@ -109,30 +109,30 @@ KEEP_COLUMNS = [
     #'descricao_detalhada',
     'servico_catalogo',
     'classe_de_produto_de_servico',
-    'produto_de_servico',
-    'item_de_servico',
+    #'produto_de_servico',
+    #'item_de_servico',
     'categoria',
     'oferta_catalogo',
-    'classe_generica_b',
-    'classe_de_produto_b',
+    #'classe_generica_b',
+    #'classe_de_produto_b',
     'produto_b',
     #'fabricante_b',
     #'item_modelo_b',
     'item_b',
     'categoria_causa',
-    'classe_generica_causa',
-    'classe_de_produto_causa',
+    #'classe_generica_causa',
+    #'classe_de_produto_causa',
     'produto_causa',
     #'fabricante_causa',
     #'item_modelo_causa',
-    'item_causa',
+    #'item_causa',
     #'resolucao',
     'id_acao',
     'data_inicio_acao',
     'ultima_acao',
     'data_fim_acao',
     #'tempo_total_da_acao_h',
-    'tempo_total_da_acao_m',
+    #'tempo_total_da_acao_m',
     'ultima_acao_nome',
     #'motivo_pendencia',
     #'campos_alterados',
@@ -143,13 +143,13 @@ KEEP_COLUMNS = [
     'designado',
     #'grupo_default',
     'prioridade_do_ca',
-    'descricao_da_prioridade_do_ca',
+    #'descricao_da_prioridade_do_ca',
     'prazo_prioridade_ans_m',
     #'prazo_prioridade_ans_h',
     'prazo_prioridade_ano_m',
     #'prazo_prioridade_ano_h',
-    'prazo_prioridade_ca_m',
-    #'prazo_prioridade_ca_h',
+    #'prazo_prioridade_ca_m',
+    'prazo_prioridade_ca_h',
     'tempo_total_evento_m',
     #'tempo_total_evento_h',
     'tempo_util_evento_m',
@@ -192,21 +192,15 @@ CORRECTION_CATEGORIES = [
     'REPARAR FALHA',
 ]
 
-SLA_DEFAULT_CORRIGIR        = 135 * 60
-SLA_DEFAULT_ORIENTAR        = 27 * 60
-SLA_DEFAULT_CORRIGIR_PESO35 = 9 * 60
-SLA_DEFAULT_ORIENTAR_PESO35 = 9 * 60
-SLA_DEFAULT_CORRIGIR_PESO30 = 9 * 60
-SLA_DEFAULT_ORIENTAR_PESO30 = 9 * 60
-
-
 class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, arq_planilhao, arq_processado):
-        self.arq_planilhao = arq_planilhao
+    def __init__(self, arq_planilhao, arq_processado, db_medicao):
+        assert db_medicao.endswith(".db")
+        self.arq_planilhao  = arq_planilhao
         self.arq_processado = arq_processado
+        self.db_medicao     = db_medicao
         
     def report_file_mismatch(self, headers, expected_columns):
         set_expected    = set(expected_columns)
@@ -288,10 +282,10 @@ class App(object):
     
     def consolidate_dfs(self, df_services, df_tasks, df_corrections, df_user_instructions):
         logger.info('concatenating data frames')
-        df_services.insert(0, "tipo", [ "EXECUTAR" ] * df_services.shape[ 0 ])
-        df_tasks.insert(0, "tipo", [ "EXECUTAR - TAREFA" ] * df_tasks.shape[ 0 ])
-        df_corrections.insert(0, "tipo", [ "CORRIGIR" ] * df_corrections.shape[ 0 ])
-        df_user_instructions.insert(0, "tipo", [ "ORIENTAR" ] * df_user_instructions.shape[ 0 ])
+        df_services.insert(len(df_services.columns), "tipo", [ "EXECUTAR" ] * df_services.shape[ 0 ])
+        df_tasks.insert(len(df_tasks.columns), "tipo", [ "EXECUTAR - TAREFA" ] * df_tasks.shape[ 0 ])
+        df_corrections.insert(len(df_corrections.columns), "tipo", [ "CORRIGIR" ] * df_corrections.shape[ 0 ])
+        df_user_instructions.insert(len(df_user_instructions.columns), "tipo", [ "ORIENTAR" ] * df_user_instructions.shape[ 0 ])
         return pd.concat([ df_corrections, df_user_instructions, df_services, df_tasks ])
     
     def fill_last_mesa(self, df):
@@ -302,7 +296,7 @@ class App(object):
         last_mesas_mapping = df_validas.groupby('id_chamado').mesa.last().to_dict()
         id_chamados = df.id_chamado.to_list()
         last_mesas = [ last_mesas_mapping.get(id_chamado, None) for id_chamado in id_chamados ]
-        df.insert(1, "ultima_mesa", last_mesas)      
+        df.insert(len(df.columns), "ultima_mesa", last_mesas)      
         return df
 
     def fill_peso(self, df):
@@ -319,7 +313,7 @@ class App(object):
         last_mesas_mapping = df_validas.groupby('id_chamado').mesa.last().to_dict()
         id_chamados = df.id_chamado.to_list()
         pesos = [ compute_peso(last_mesas_mapping.get(id_chamado, None)) for id_chamado in id_chamados ]
-        df.insert(1, "peso", pesos)      
+        df.insert(len(df.columns), "peso", pesos)      
         return df  
         
     def sum_durations(self, df):
@@ -327,20 +321,42 @@ class App(object):
         duration_mapping = df_durations.groupby('id_chamado').tempo_util_atribuicao_mesa_m.sum().to_dict()
         id_chamados = df.id_chamado.to_list()
         durations_mesa = [ duration_mapping[ id_chamado ] for id_chamado in id_chamados ]
-        df.insert(2, "soma_duracoes_chamado", durations_mesa)
+        df.insert(len(df.columns), "soma_duracoes_chamado", durations_mesa)
         return df
 
     def fill_sla(self, df):
-        duration_mapping = df.groupby('id_chamado').tempo_util_atribuicao_mesa_m.sum().to_dict()
-        id_chamados = df.id_chamado.to_list()
-        durations_mesa = [ duration_mapping[ id_chamado ] for id_chamado in id_chamados ]
-        df.insert(2, "soma_duracoes_chamado", durations_mesa)
+        def compute_sla(row):
+            if row.peso == 0:
+                return -99999999999
+            elif row.tipo == 'ORIENTAR' and row.peso in (1, 30):
+                return 27 * 60
+            elif row.tipo == 'ORIENTAR' and row.peso == 35:
+                return 9 * 60
+            elif row.tipo == 'CORRIGIR' and row.peso in (1, 30):
+                return 135 * 60
+            elif row.tipo == 'CORRIGIR' and row.peso == 35:
+                return 9 * 60
+            elif row.tipo == 'EXECUTAR - TAREFA':
+                return 0
+            elif row.tipo == 'EXECUTAR' and row.peso in (1, 30, 35):
+                return row.prazo_prioridade_ans_m
+            else:
+                logger.error('unexpected combination >> tipo \'%s\', peso \'%s\' ... exiting', row.tipo, row.peso)
+                assert 1 == 2
+        slas = []
+        for row in df.itertuples():
+            sla = compute_sla(row)
+            slas.append(sla)
+        df.insert(len(df.columns), "prazo", slas)
         return df
         
-    def save_df(self, df_renamed):
+    def save_df(self, df):
         logger.info('saving dataframe as %s', self.arq_processado)
-        df_renamed.to_excel(self.arq_processado, index=False)
-    
+        df.to_excel(self.arq_processado, index=False)
+        logger.info('exporting to SQLITE3 as %s', self.db_medicao)
+        conn = sqlite3.connect(self.db_medicao)
+        df.to_sql("rel_medicao_stg", conn, index=False)
+        
     def run(self):
         try:
             logger.info('starting planilhao loader - version %d.%d.%d', *self.VERSION)
@@ -357,6 +373,7 @@ class App(object):
             df = self.fill_last_mesa(df)
             df = self.fill_peso(df)
             df = self.sum_durations(df)
+            df = self.fill_sla(df)
             self.save_df(df)
             logger.info('finished')
         except:
@@ -367,6 +384,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('arq_planilhao', type=str, help='arquivo planilhao')
     parser.add_argument('arq_processado', type=str, help='arquivo planilhao processado')
+    parser.add_argument('db_medicao', type=str, help='nome base sqlite3 para exportação')
     args = parser.parse_args()
-    app = App(args.arq_planilhao, args.arq_processado)
+    app = App(args.arq_planilhao, args.arq_processado, args.db_medicao)
     app.run()
