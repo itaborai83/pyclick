@@ -16,78 +16,77 @@ EXIT_FILE_MISMATCH      = 1
 EXIT_RENAMED_MISMATCH   = 2
 
 EXPECTED_COLUMNS = [
-    'Data Abertura Chamado',
-    'Data Resolução Chamado',
-    'ID Chamado',
-    'Chamado Pai',
-    'Origem Chamado',
-    'Usuário Afetado',
-    'Nome do Usuário Afetado',
-    'Usuário Informante',
-    'Nome do Usuário Informante',
-    'Organização Cliente',
-    'Departamento Cliente',
-    'Estado',
-    'Site',
-    'FCR',
-    'Status de evento',
-    'Categoria Maior',
-    'Resumo',
-    'Descrição Detalhada',
-    'Serviço Catálogo',
-    'Classe de Produto de Serviço',
-    'Produto de Serviço',
-    'Item de Serviço',
-    'Categoria',
-    'Oferta Catálogo',
-    'Classe Genérica B',
-    'Classe de Produto B',
-    'Produto B',
-    'Fabricante B',
-    'Item Modelo B',
-    'Item B',
-    'Categoria Causa',
-    'Classe Genérica Causa',
-    'Classe de Produto Causa',
-    'Produto Causa',
-    'Fabricante Causa',
-    'Item Modelo Causa',
-    'Item Causa',
-    'Resolução',
-    'ID Ação',
-    'Data Inicio Ação',
-    'Ultima Ação',
-    'Data Fim Ação',
-    'Tempo Total da Ação (h)',
-    'Tempo Total da Ação (M)',
-    'Ultima Ação Nome',
-    'Motivo Pendencia',
-    'Campos alterados',
-    'Itens alterados',
-    'Nome do CA',
-    'Contrato',
-    'Mesa',
-    'Designado',
-    'Grupo Default',
-    'Prioridade do CA',
-    'Descrição da Prioridade do CA',
-    'Prazo Prioridade ANS (m)',
-    'Prazo Prioridade ANS (h)',
-    'Prazo Prioridade ANO (m)',
-    'Prazo Prioridade ANO (h)',
-    'Prazo Prioridade CA (m)',
-    'Prazo Prioridade CA (h)',
-    'Tempo Total Evento (m)',
-    'Tempo Total Evento (h)',
-    'Tempo Util Evento (m)',
-    'Tempo Util Evento (h)',
-    'Tempo Util Atribuição Mesa (m)',
-    'Tempo Util Atribuição Mesa (h)',
-    'Tempo Util Atribuição CA (m)',
-    'Tempo Util Atribuição CA (h)',
-    'Vinculo',
-    'Vinculo com Incidente Grave?',
-    'Incidente Grave?',
+    'Data Abertura Chamado', 
+    'Data Resolução Chamado', 
+    'ID Chamado', 
+    'Chamado Pai', 
+    'Origem Chamado', 
+    'Usuário Afetado', 
+    'Nome do Usuário Afetado', 
+    'Usuário Informante', 
+    'Nome do Usuário Informante', 
+    'Organização Cliente', 
+    'Departamento Cliente', 
+    'Estado', 
+    'Site', 
+    'FCR', 
+    'Status de evento', 
+    'Categoria Maior', 
+    'Resumo', 
+    'Serviço Catálogo', 
+    'Classe de Produto de Serviço', 
+    'Produto de Serviço', 
+    'Item de Serviço', 
+    'Categoria', 
+    'Oferta Catálogo', 
+    'Classe Genérica B', 
+    'Classe de Produto B', 
+    'Produto B', 
+    'Fabricante B', 
+    'Item Modelo B', 
+    'Item B', 
+    'Categoria Causa', 
+    'Classe Genérica Causa', 
+    'Classe de Produto Causa', 
+    'Produto Causa', 
+    'Fabricante Causa', 
+    'Item Modelo Causa', 
+    'Item Causa', 
+    'Resolução', 
+    'ID Ação', 
+    'Data Inicio Ação', 
+    'Ultima Ação', 
+    'Data Fim Ação', 
+    'Tempo Total da Ação (h)', 
+    'Tempo Total da Ação (M)', 
+    'Ultima Ação Nome', 
+    'Motivo Pendencia', 
+    'Campos alterados', 
+    'Itens alterados', 
+    'Nome do CA', 
+    'Contrato', 
+    'Mesa', 
+    'Designado', 
+    'Grupo Default', 
+    'Prioridade do CA', 
+    'Descrição da Prioridade do CA', 
+    'Prazo Prioridade ANS (m)', 
+    'Prazo Prioridade ANS (h)', 
+    'Prazo Prioridade ANO (m)', 
+    'Prazo Prioridade ANO (h)', 
+    'Prazo Prioridade CA (m)', 
+    'Prazo Prioridade CA (h)', 
+    'Tempo Total Evento (m)', 
+    'Tempo Total Evento (h)', 
+    'Tempo Util Evento (m)', 
+    'Tempo Util Evento (h)', 
+    'Tempo Util Atribuição Mesa (m)', 
+    'Tempo Util Atribuição Mesa (h)', 
+    'Tempo Util Atribuição CA (m)', 
+    'Tempo Util Atribuição CA (h)', 
+    'Vinculo', 
+    'Vinculo com Incidente Grave?', 
+    'Incidente Grave?', 
 ]
    
 COLUMN_MAPPING = {
@@ -108,7 +107,6 @@ COLUMN_MAPPING = {
     'Status de evento':                 'status_de_evento',
     'Categoria Maior':                  'categoria_maior',
     'Resumo':                           'resumo',
-    'Descrição Detalhada':              'descricao_detalhada',
     'Serviço Catálogo':                 'servico_catalogo',
     'Classe de Produto de Serviço':     'classe_de_produto_de_servico',
     'Produto de Serviço':               'produto_de_servico',
@@ -185,7 +183,7 @@ KEEP_COLUMNS = [
     'status_de_evento',
     'categoria_maior',
     'resumo',
-    'descricao_detalhada',
+    #'descricao_detalhada',
     'servico_catalogo',
     'classe_de_produto_de_servico',
     'produto_de_servico',
@@ -279,6 +277,34 @@ class App(object):
         for extra_header in extra_headers:
             logger.warning('dropando coluna extra: %s', extra_header)
             del df[ extra_header ]
+    
+    def find_separator(self, filename):
+        with open(filename) as fh:
+            headers_txt = fh.readline()
+            fields1 = headers_txt.split(',')
+            fields2 = headers_txt.split(';')
+            return ',' if len(fields1) > len(fields2) else ';'
+        
+    def read_csv(self, arq_planilha):
+        filename = os.path.join(self.dir_planilhao, arq_planilha)
+        logger.info('lendo arquivo %s', filename)
+        sep = self.find_separator(filename)
+        df = pd.read_csv(
+            filename, 
+            sep             = sep,
+            verbose         = True,
+            header          = 0, 
+            encoding        = "latin_1",
+            error_bad_lines = True, 
+            warn_bad_lines  = True,
+            low_memory      = False
+        )
+        headers = df.columns.to_list()
+        self.drop_unnanmed_columns(df)
+        if headers != EXPECTED_COLUMNS:
+            self.report_file_mismatch(headers, EXPECTED_COLUMNS)
+            sys.exit(EXIT_FILE_MISMATCH)
+        return df
 
     def read_excel(self, arq_planilha):
         filename = os.path.join(self.dir_planilhao, arq_planilha)
@@ -354,7 +380,7 @@ class App(object):
         logger.info('listando arquivos do planilhao')
         currdir = os.getcwd()
         os.chdir(self.dir_planilhao)
-        arquivos = list(sorted(glob.iglob("202*.xlsx")))
+        arquivos = list(sorted(glob.iglob("202*.csv")))      
         os.chdir(currdir)
         return arquivos
     
@@ -391,7 +417,8 @@ class App(object):
             logger.info('iniciando loop de parsing')
             for arq_planilha in arq_planilhas:
                 logger.info('processsando planilha %s', arq_planilha)
-                df = self.read_excel(arq_planilha)
+                #df = self.read_excel(arq_planilha)
+                df = self.read_csv(arq_planilha)
                 df = self.rename_columns(df)
                 self.drop_columns(df)
                 df = self.filter_out_open_events(df)

@@ -148,8 +148,8 @@ KEEP_COLUMNS = [
     #'prazo_prioridade_ans_h',
     'prazo_prioridade_ano_m',
     #'prazo_prioridade_ano_h',
-    #'prazo_prioridade_ca_m',
-    'prazo_prioridade_ca_h',
+    'prazo_prioridade_ca_m',
+    #'prazo_prioridade_ca_h',
     'tempo_total_evento_m',
     #'tempo_total_evento_h',
     'tempo_util_evento_m',
@@ -173,6 +173,8 @@ MESAS_TEMPORIZADAS = set([
     'N4-SAP-SUSTENTACAO-FINANCAS',
     'N4-SAP-SUSTENTACAO-PRIORIDADE',
     'N4-SAP-SUSTENTACAO-SERVICOS',
+    'N4-SAP-SUSTENTACAO-GRC',
+    'N4-SAP-SUSTENTACAO-PORTAL'
 ])
 
 MESAS_INVALIDAS = set([
@@ -320,7 +322,7 @@ class App(object):
         df_durations = df[ df.mesa.isin(MESAS_TEMPORIZADAS) ]
         duration_mapping = df_durations.groupby('id_chamado').tempo_util_atribuicao_mesa_m.sum().to_dict()
         id_chamados = df.id_chamado.to_list()
-        durations_mesa = [ duration_mapping[ id_chamado ] for id_chamado in id_chamados ]
+        durations_mesa = [ duration_mapping.get(id_chamado, None) for id_chamado in id_chamados ]
         df.insert(len(df.columns), "soma_duracoes_chamado", durations_mesa)
         return df
 
@@ -355,7 +357,7 @@ class App(object):
         df.to_excel(self.arq_processado, index=False)
         logger.info('exporting to SQLITE3 as %s', self.db_medicao)
         conn = sqlite3.connect(self.db_medicao)
-        df.to_sql("rel_medicao_stg", conn, index=False)
+        df.to_sql("rel_medicao_stg", conn, index=False, if_exists="replace")
         
     def run(self):
         try:
