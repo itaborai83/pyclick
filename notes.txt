@@ -1,0 +1,16 @@
+https://wiki.axiossystems.com/assyst11-2Wiki/index.php/Category:Reporting_Guide
+https://wiki.axiossystems.com/assyst11-2Wiki/index.php/Entity_Relationship_Diagrams
+
+Principais Tabelas
+------------------
+incident
+act_reg
+inc_data
+usr
+assyst_usr
+surv_req
+serv_dept
+
+Planilhão
+---------    
+\\petrobras.biz\Petrobras\TIC\TIC_OI_QOI\NP-1\Relatorios Click
