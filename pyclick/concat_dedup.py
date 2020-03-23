@@ -9,6 +9,8 @@ import pandas as pd
 
 import pyclick.util as util
 
+assert os.environ[ 'PYTHONUTF8' ] == "1"
+
 logger = util.get_logger('concat_dedup')
 
 EXPECTED_COLUMNS = [ 
@@ -42,7 +44,7 @@ EXPECTED_COLUMNS = [
     'fabricante_b',
     'item_modelo_b',
     'item_b',
-    'categoria_causa',
+    #'categoria_causa',
     'classe_generica_causa',
     'classe_de_produto_causa',
     'produto_causa',
@@ -58,7 +60,7 @@ EXPECTED_COLUMNS = [
     'tempo_total_da_acao_m',
     'ultima_acao_nome',
     'motivo_pendencia',
-    'campos_alterados',
+    #'campos_alterados',
     'itens_alterados',
     'nome_do_ca',
     'contrato',
@@ -111,7 +113,7 @@ class App(object):
         df = pd.read_excel(filename, verbose=False)
         headers = df.columns.to_list()
         if headers != EXPECTED_COLUMNS:
-            self.report_file_mismatch(headers, EXPECTED_COLUMNS)
+            util.report_file_mismatch(logger, headers, EXPECTED_COLUMNS)
             sys.exit(EXIT_FILE_MISMATCH)
         return df
     

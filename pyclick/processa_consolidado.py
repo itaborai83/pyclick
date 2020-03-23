@@ -6,6 +6,10 @@ import pandas as pd
 import sqlite3
 import logging
 
+import pyclick.util as util
+
+assert os.environ[ 'PYTHONUTF8' ] == "1"
+
 FORMAT = '%(asctime)s:%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d\n\t%(message)s\n'
 logging.basicConfig(level=logging.DEBUG, format=FORMAT)
 logger = logging.getLogger('loader_planilhao')
@@ -44,7 +48,7 @@ EXPECTED_COLUMNS = [
     'fabricante_b',
     'item_modelo_b',
     'item_b',
-    'categoria_causa',
+    #'categoria_causa',
     'classe_generica_causa',
     'classe_de_produto_causa',
     'produto_causa',
@@ -60,7 +64,7 @@ EXPECTED_COLUMNS = [
     'tempo_total_da_acao_m',
     'ultima_acao_nome',
     'motivo_pendencia',
-    'campos_alterados',
+    #'campos_alterados',
     'itens_alterados',
     'nome_do_ca',
     'contrato',
@@ -204,6 +208,7 @@ class App(object):
         self.arq_processado = arq_processado
         self.db_medicao     = db_medicao
         
+    """
     def report_file_mismatch(self, headers, expected_columns):
         set_expected    = set(expected_columns)
         set_actual      = set(headers)
@@ -220,13 +225,13 @@ class App(object):
             if c1 != c2:
                 logger.error('column on position %d is the first mismatch >> %s != %s', i, repr(c1), repr(c2))
                 break
-        
+    """ 
     def read_excel(self):
         logger.info('reading excel file %s', self.arq_planilhao)
         df = pd.read_excel(self.arq_planilhao, verbose=False)
         headers = df.columns.to_list()
         if headers != EXPECTED_COLUMNS:
-            self.report_file_mismatch(headers, EXPECTED_COLUMNS)
+            util.report_file_mismatch(logger, headers, EXPECTED_COLUMNS)
             sys.exit(EXIT_FILE_MISMATCH)
         return df
         

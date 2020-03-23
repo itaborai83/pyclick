@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+# please set the environment variable PYTHONUTF8=1
 import sys
 import os
 import os.path
@@ -9,6 +11,7 @@ import pandas as pd
 
 import pyclick.util as util
 
+assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('loader_planilhao')
 
@@ -196,7 +199,6 @@ KEEP_COLUMNS = [
     'fabricante_b',
     'item_modelo_b',
     'item_b',
-    'categoria_causa',
     'classe_generica_causa',
     'classe_de_produto_causa',
     'produto_causa',
@@ -212,7 +214,7 @@ KEEP_COLUMNS = [
     'tempo_total_da_acao_m',
     'ultima_acao_nome',
     'motivo_pendencia',
-    'campos_alterados',
+    #'campos_alterados',
     'itens_alterados',
     'nome_do_ca',
     'contrato',
@@ -277,9 +279,10 @@ class App(object):
         for extra_header in extra_headers:
             logger.warning('dropando coluna extra: %s', extra_header)
             del df[ extra_header ]
+        
     
     def find_separator(self, filename):
-        with open(filename) as fh:
+        with open(filename, encoding='latin-1') as fh:
             headers_txt = fh.readline()
             fields1 = headers_txt.split(',')
             fields2 = headers_txt.split(';')
@@ -299,8 +302,8 @@ class App(object):
             warn_bad_lines  = True,
             low_memory      = False
         )
-        headers = df.columns.to_list()
         self.drop_unnanmed_columns(df)
+        headers = df.columns.to_list()
         if headers != EXPECTED_COLUMNS:
             self.report_file_mismatch(headers, EXPECTED_COLUMNS)
             sys.exit(EXIT_FILE_MISMATCH)
@@ -370,11 +373,22 @@ class App(object):
         os.chdir(currdir)
 
     def save_planilha_mesa(self, df, mesa):
-        mesa = mesa.replace("/", "_").replace("\\", "_")
+        orig_mesa = mesa
+        mesa = mesa.replace("/", "_").\
+                    replace("\\", "_").\
+                    replace(":", "_").\
+                    replace("*", "_").\
+                    replace("[", "_").\
+                    replace("]", "_").\
+                    replace(" ", "_")
         currdir = os.getcwd()
         os.chdir(self.dir_saida)
-        df.to_excel("MESA - " + mesa + ".xlsx", index=False)
-        os.chdir(currdir)
+        try:
+            df.to_excel("MESA - " + mesa + ".xlsx", index=False)
+            os.chdir(currdir)
+        except:
+            logger.exception("could not export mesa %s !!! ... skipping", orig_mesa)
+            os.chdir(currdir)
         
     def read_planilhas(self):
         logger.info('listando arquivos do planilhao')
