@@ -29,7 +29,7 @@ EXPECTED_COLUMNS = [
     'status_de_evento',
     'categoria_maior',
     'resumo',
-    'descricao_detalhada',
+    #'descricao_detalhada',
     'servico_catalogo',
     'classe_de_produto_de_servico',
     'produto_de_servico',
@@ -95,7 +95,12 @@ class App(object):
     
     def __init__(self, output, input_dir, inputs):
         if len(inputs) == 1:
-            inputs = list(sorted(glob.iglob("202*.xlsx")))
+            if input_dir:
+                currdir = os.getcwd()
+                os.chdir(input_dir)
+            inputs = list(sorted(glob.iglob(inputs[0])))
+            if input_dir:
+                os.chdir(currdir)
         self.output     = output
         self.input_dir  = input_dir
         self.inputs     = inputs

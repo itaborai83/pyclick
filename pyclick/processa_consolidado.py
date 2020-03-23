@@ -31,7 +31,7 @@ EXPECTED_COLUMNS = [
     'status_de_evento',
     'categoria_maior',
     'resumo',
-    'descricao_detalhada',
+    #'descricao_detalhada',
     'servico_catalogo',
     'classe_de_produto_de_servico',
     'produto_de_servico',
