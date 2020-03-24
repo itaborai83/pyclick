@@ -20,9 +20,8 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_planilhao, dir_saida, cutoff_date):
-        self.dir_planilhao  = dir_planilhao
-        self.dir_saida      = dir_saida
+    def __init__(self, dir_apuracao, cutoff_date):
+        self.dir_apuracao   = dir_apuracao
         self.cutoff_date    = cutoff_date
 
     def drop_unnanmed_columns(self, df):
@@ -45,7 +44,8 @@ class App(object):
             return ',' if len(fields1) > len(fields2) else ';'
         
     def read_csv(self, arq_planilha):
-        filename = os.path.join(self.dir_planilhao, arq_planilha)
+        path = self.get_dir_planilhas()
+        filename = os.path.join(path, arq_planilha)
         logger.info('lendo arquivo %s', filename)
         sep = self.find_separator(filename)
         df = pd.read_csv(
@@ -111,8 +111,10 @@ class App(object):
     
     def replace_tabs_enters(self, df):
         logger.info('removendo tabs e enters')
+        return
         substs = {
             '\t': '<<TAB>>',
+            '\r\n': '<<ENTER>>',
             '\n': '<<ENTER>>',
         }
         df.replace(substs, regex=True, inplace=True)
@@ -124,7 +126,7 @@ class App(object):
     def save_planilhao(self, df):
         logger.info('salvando planilhão')
         currdir = os.getcwd()
-        os.chdir(self.dir_saida)
+        os.chdir(self.get_output_dir())
         df.to_excel("consolidado_periodo.xlsx", index=False)
         os.chdir(currdir)
 
@@ -138,22 +140,32 @@ class App(object):
                     replace("]", "_").\
                     replace(" ", "_")
         currdir = os.getcwd()
-        os.chdir(self.dir_saida)
+        os.chdir(self.get_output_dir())
         try:
             df.to_excel("MESA_" + mesa + ".xlsx", index=False)
             os.chdir(currdir)
         except:
             logger.exception("could not export mesa %s !!! ... skipping", orig_mesa)
             os.chdir(currdir)
+    
+    def get_dir_planilhas(self):
+        return os.path.join(self.dir_apuracao, config.INPUT_DIR)
+
+    def get_output_dir(self):
+        return os.path.join(self.dir_apuracao, config.CONSOLIDATED_DIR)
         
     def read_planilhas(self):
         logger.info('listando arquivos do planilhao')
         currdir = os.getcwd()
-        os.chdir(self.dir_planilhao)
-        arquivos = list(sorted(glob.iglob("202*.csv")))      
-        os.chdir(currdir)
-        return arquivos
-    
+        try:
+            path = self.get_dir_planilhas()
+            os.chdir(path)
+            arquivos = list(sorted(glob.iglob(config.INPUT_FILES_GLOB)))      
+            os.chdir(currdir)
+            return arquivos
+        finally:
+            os.chdir(currdir)
+            
     def update_event_mapping(self, mesa_evt_mapping, df):
         logger.info('atualizando mapeamento evento mesa')
         df_mesas        = df[ ~(df.mesa.isna()) ]
@@ -169,7 +181,7 @@ class App(object):
     
     def report_event_mapping(self, mesa_evt_mapping):
         currdir = os.getcwd()
-        os.chdir(self.dir_saida)
+        os.chdir(self.get_output_dir())
         with open("mapa_mesa_evento.tsv", "w") as fh:
             print("mesa", "evento", sep='\t', file=fh)
             for mesa, eventos in sorted(mesa_evt_mapping.items()):
@@ -209,7 +221,7 @@ class App(object):
             logger.info('relatório consolidado')
             df = df_planilhao[ df_planilhao.ultima_acao_nome.isin(['Atribuir ao Fornecedor', 'Resolver', 'Encerrar']) ]
             currdir = os.getcwd()
-            os.chdir(self.dir_saida)
+            os.chdir(self.get_output_dir())
             df.to_excel("consolidado_gustavo.xlsx", index=False)
             os.chdir(currdir)
             del df
@@ -226,9 +238,8 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('dir_planilhao', type=str, help='diretorio planilhao')
-    parser.add_argument('dir_saida', type=str, help='diretorio saida')
+    parser.add_argument('dir_apuracao', type=str, help='diretório apuração')
     parser.add_argument('cutoff_date', type=str, help='data de corte encerramento evento')
     args = parser.parse_args()
-    app = App(args.dir_planilhao, args.dir_saida, args.cutoff_date)
+    app = App(args.dir_apuracao, args.cutoff_date)
     app.run()

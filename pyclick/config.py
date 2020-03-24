@@ -1,6 +1,12 @@
+INPUT_DIR               = "INPUT"
+INPUT_FILES_GLOB        = "202*.csv"
+CONSOLIDATED_DIR        = "CONSOLIDADO"
+CONSOLIDATED_FILE       = "consolidado.xlsx"
 EXIT_FILE_MISMATCH      = 1
 EXIT_RENAMED_MISMATCH   = 2
 EXIT_TOO_FEW_FILES      = 3
+
+SEPARATOR_HEADER        = "sep="
 
 EXPECTED_COLUMNS = [
     'Data Abertura Chamado', 

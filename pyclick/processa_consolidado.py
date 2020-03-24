@@ -31,12 +31,7 @@ class App(object):
             util.report_file_mismatch(logger, headers, config.RENAMED_COLUMNS)
             sys.exit(config.EXIT_FILE_MISMATCH)
         return df
-        
-    def drop_columns(self, df_renamed):
-        logger.info('dropping columns')
-        for col in config.DROP_COLUMNS:
-            del df_renamed[ col ]
-        
+            
     def drop_internal_demands(self, df):
         (rows, cols) = df[ df.categoria_maior == "Demandas Internas" ].shape
         logger.info('dropping internal demands - %d rows', rows)
@@ -165,7 +160,6 @@ class App(object):
         try:
             logger.info('starting planilhao loader - version %d.%d.%d', *self.VERSION)
             df = self.read_excel()
-            self.drop_columns(df)
             df = self.drop_internal_demands(df)
             df_original = df
             df = self.drop_open_events(df)

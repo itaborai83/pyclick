@@ -154,47 +154,77 @@ GROUP	BY MESA
 ,		TIPO
 , 		CASE WHEN PESO = 35 THEN 'S' ELSE 'N' END
 
-
-SELECT	DATA_ABERTURA_CHAMADO
-,       DATA_RESOLUCAO_CHAMADO
-,       ID_CHAMADO
-,       CHAMADO_PAI
-,       STATUS_DE_EVENTO
-,       CATEGORIA_MAIOR
-,       SERVICO_CATALOGO
-,       CLASSE_DE_PRODUTO_DE_SERVICO
-,       CATEGORIA
-,       OFERTA_CATALOGO
-,       PRODUTO_B
-,       ITEM_B
-,       CATEGORIA_CAUSA
-,       PRODUTO_CAUSA
-,       ID_ACAO
-,       DATA_INICIO_ACAO
-,       ULTIMA_ACAO
-,       DATA_FIM_ACAO
-,       ULTIMA_ACAO_NOME
-,       NOME_DO_CA
-,       CONTRATO
-,       MESA
-,       DESIGNADO
-,       PRIORIDADE_DO_CA
-,       CAST(PRAZO_PRIORIDADE_ANS_M AS INTEGER) AS PRAZO_PRIORIDADE_ANS_M 
-,       CAST(PRAZO_PRIORIDADE_ANO_M AS INTEGER) AS PRAZO_PRIORIDADE_ANO_M 
-,       CAST(PRAZO_PRIORIDADE_CA_M AS INTEGER) AS PRAZO_PRIORIDADE_CA_M 
-,       CAST(TEMPO_TOTAL_EVENTO_M AS INTEGER) AS TEMPO_TOTAL_EVENTO_M 
-,       CAST(TEMPO_UTIL_EVENTO_M AS INTEGER) AS TEMPO_UTIL_EVENTO_M 
-,       CAST(TEMPO_UTIL_ATRIBUICAO_MESA_M AS INTEGER) AS TEMPO_UTIL_ATRIBUICAO_MESA_M 
-,       CAST(TEMPO_UTIL_ATRIBUICAO_CA_M AS INTEGER) AS TEMPO_UTIL_ATRIBUICAO_CA_M 
-,       VINCULO
-,       VINCULO_COM_INCIDENTE_GRAVE
-,       INCIDENTE_GRAVE
-,       TIPO
-,       ULTIMA_MESA
-,       PESO
-,       CAST(SOMA_DURACOES_CHAMADO AS INTEGER) AS SOMA_DURACOES_CHAMADO
-,       PRAZO
-FROM	REL_MEDICAO_STG 
-ORDER 	BY ID_CHAMADO
-, 		DATA_INICIO_ACAO
-, 		ID_ACAO
+/*
+SELECT	data_abertura_chamado
+,		data_resolucao_chamado
+,		id_chamado
+,		chamado_pai
+,		origem_chamado
+,		usuario_afetado
+,		nome_do_usuario_afetado
+,		usuario_informante
+,		nome_do_usuario_informante
+,		organizacao_cliente
+,		departamento_cliente
+,		estado
+,		site
+,		fcr
+,		status_de_evento
+,		categoria_maior
+,		resumo
+,		servico_catalogo
+,		classe_de_produto_de_servico
+,		produto_de_servico
+,		item_de_servico
+,		categoria
+,		oferta_catalogo
+,		classe_generica_b
+,		classe_de_produto_b
+,		produto_b
+,		fabricante_b
+,		item_modelo_b
+,		item_b
+,		categoria_causa
+,		classe_generica_causa
+,		classe_de_produto_causa
+,		produto_causa
+,		fabricante_causa
+,		item_modelo_causa
+,		item_causa
+,		replace(replace(resolucao, CHAR(13), '\r'), CHAR(10), '\n') as resolucao
+,		id_acao
+,		data_inicio_acao
+,		ultima_acao
+,		data_fim_acao
+,		cast(tempo_total_da_acao_m as integer) as tempo_total_da_acao_m 
+,		ultima_acao_nome
+,		replace(replace(motivo_pendencia, CHAR(13), '\r'), CHAR(10), '\n') as motivo_pendencia
+,		replace(replace(campos_alterados, CHAR(13), '\r'), CHAR(10), '\n') as campos_alterados 
+,		replace(replace(itens_alterados, CHAR(13), '\r'), CHAR(10), '\n') as itens_alterados
+,		nome_do_ca
+,		contrato
+,		mesa
+,		designado
+,		grupo_default
+,		prioridade_do_ca
+,		descricao_da_prioridade_do_ca
+,		cast(prazo_prioridade_ans_m as integer) as prazo_prioridade_ans_m 
+,		cast(prazo_prioridade_ano_m as integer) as prazo_prioridade_ano_m 
+,		cast(prazo_prioridade_ca_m as integer) as prazo_prioridade_ca_m 
+,		cast(tempo_total_evento_m as integer) as tempo_total_evento_m 
+,		cast(tempo_util_evento_m as integer) as tempo_util_evento_m 
+,		cast(tempo_util_atribuicao_mesa_m as integer) as tempo_util_atribuicao_mesa_m 
+,		cast(tempo_util_atribuicao_ca_m as integer) as tempo_util_atribuicao_ca_m
+,		vinculo
+,		vinculo_com_incidente_grave
+,		incidente_grave
+,		tipo
+,		ultima_mesa
+,		peso
+,		cast(soma_duracoes_chamado as integer) as soma_duracoes_chamado
+,		cast(prazo as integer) as prazo
+from	rel_medicao_stg 
+order 	by id_chamado
+, 		data_inicio_acao
+, 		id_acao
+*/
