@@ -14,7 +14,7 @@ WITH INCS AS (
 	,		PRAZO
 	,		SOMA_DURACOES_CHAMADO
 	FROM	REL_MEDICAO_STG AS R
-	WHERE	TIPO IN ('ORIENTAR', 'CORRIGIR', 'EXECUTAR')
+	WHERE	TIPO IN ('ORIENTAR', 'CORRIGIR', 'REALIZAR')
 )
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ WITH INCS AS (
 	FROM (
 		SELECT	DISTINCT CHAMADO_PAI, SOMA_DURACOES_CHAMADO
 		FROM	REL_MEDICAO_STG
-		WHERE	TIPO = 'EXECUTAR - TAREFA'
+		WHERE	TIPO = 'REALIZAR - TAREFA'
 		AND		CHAMADO_PAI IS NOT NULL
 		AND		PESO > 0
 		ORDER	BY 1, 2
@@ -198,6 +198,3 @@ FROM	REL_MEDICAO_STG
 ORDER 	BY ID_CHAMADO
 , 		DATA_INICIO_ACAO
 , 		ID_ACAO
-
-
-
