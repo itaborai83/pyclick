@@ -17,29 +17,41 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, arq_planilhao, arq_processado, db_medicao):
-        assert db_medicao.endswith(".db")
-        self.arq_planilhao  = arq_planilhao
-        self.arq_processado = arq_processado
-        self.db_medicao     = db_medicao
+    def __init__(self, dir_apuracao):
+        self.dir_apuracao = dir_apuracao
+    
+    def connect_db(self):
+        logger.info('connecting to db')
+        db_file = util.get_processed_db(self.dir_apuracao)
+        conn = sqlite3.connect(db_file)
+        return conn
+    
+    def list_actions(self, conn):
+        logger.info('listing Click actions')
+        sql = util.get_query('LISTA_ACOES')
+        df = pd.read_sql(sql, conn, index_col=None)
+        return df
+        
+    def compute_slas(self, conn):
+        logger.info('computing SLA\'s')
+        sql = util.get_query('SLA')
+        df = pd.read_sql(sql, conn, index_col=None)
+        return df
+    
+    def write_result(self, df_slas, df_actions):
+        logger.info('writing result spreadsheet')
+        rs = util.get_result_spreadsheet(self.dir_apuracao)
+        with pd.ExcelWriter(rs) as xw:
+            df_slas.to_excel(xw, sheet_name="SLAs", index=False)
+            df_actions.to_excel(xw, sheet_name="DADOS", index=False)
         
     def run(self):
         try:
-            logger.info('starting planilhao loader - version %d.%d.%d', *self.VERSION)
-            df = self.read_excel()
-            df = self.drop_internal_demands(df)
-            df_original = df
-            df = self.drop_open_events(df)
-            df = self.drop_tasks_with_no_parents(df)
-            df_services, df_tasks, df_others = self.extract_services(df)
-            df_services, df_tasks = self.match_services_tasks(df_services, df_tasks)
-            df_corrections, df_user_instructions = self.split_corrections_from_user_instructions(df_others)
-            df = self.consolidate_dfs(df_services, df_tasks, df_corrections, df_user_instructions)
-            df = self.fill_last_mesa(df)
-            df = self.fill_peso(df)
-            df = self.sum_durations(df)
-            df = self.fill_sla(df)
-            self.save_df(df)
+            logger.info('starting geração indicadores - version %d.%d.%d', *self.VERSION)
+            conn = self.connect_db()
+            df_slas = self.compute_slas(conn)
+            df_actions = self.list_actions(conn)
+            self.write_result(df_slas, df_actions)
             logger.info('finished')
         except:
             logger.exception('an error has occurred')
@@ -47,9 +59,7 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('arq_planilhao', type=str, help='arquivo planilhao')
-    parser.add_argument('arq_processado', type=str, help='arquivo planilhao processado')
-    parser.add_argument('db_medicao', type=str, help='nome base sqlite3 para exportação')
+    parser.add_argument('dir_apuracao', type=str, help='diretório de apuração')
     args = parser.parse_args()
-    app = App(args.arq_planilhao, args.arq_processado, args.db_medicao)
+    app = App(args.dir_apuracao)
     app.run()

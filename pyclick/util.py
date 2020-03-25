@@ -26,6 +26,14 @@ def get_processed_file(dir_apuracao):
 
 def get_processed_db(dir_apuracao):
     return os.path.join(dir_apuracao, config.PROCESSED_DB)
+
+def get_query(query_name):
+    assert '.' not in query_name and '/' not in query_name and '\\' not in query_name
+    path = os.path.join('./pyclick/QUERIES', query_name + '.sql')
+    return open(path).read()
+
+def get_result_spreadsheet(dir_apuracao):
+    return os.path.join(dir_apuracao, config.RESULT_SPREADSHEET)
     
 def report_file_mismatch(logger, headers, expected_columns):
     set_expected    = set(expected_columns)

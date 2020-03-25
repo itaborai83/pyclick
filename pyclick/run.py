@@ -14,6 +14,7 @@ import pyclick.preprocess_input_files as pif
 import pyclick.concat_dedup as cd
 import pyclick.consolida_planilhao as cp
 import pyclick.processa_consolidado as pd
+import pyclick.gerar_indicadores as gi
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -104,6 +105,16 @@ class App(object):
             logger.info('******************************************************************************')            
             logger.info('')            
             pd.App(self.dir_apuracao).run()
+
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')            
+            logger.info('******************************************************************************')
+            logger.info('writing result')
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')            
+            logger.info('')            
+            gi.App(self.dir_apuracao).run()
             
         except:
             logger.exception('an error has occurred')
