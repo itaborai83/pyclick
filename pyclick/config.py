@@ -1,7 +1,10 @@
 INPUT_DIR               = "INPUT"
 INPUT_FILES_GLOB        = "202*.csv"
 CONSOLIDATED_DIR        = "CONSOLIDADO"
+CONSOLIDATED_GLOB       = "MESA*.xlsx"
 CONSOLIDATED_FILE       = "consolidado.xlsx"
+PROCESSED_FILE          = "processado.xlsx"
+PROCESSED_DB            = "medicao.db"
 EXIT_FILE_MISMATCH      = 1
 EXIT_RENAMED_MISMATCH   = 2
 EXIT_TOO_FEW_FILES      = 3

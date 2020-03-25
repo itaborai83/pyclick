@@ -8,7 +8,7 @@ import argparse
 import logging
 import datetime as dt
 import pandas as pd
-
+import shutil
 import pyclick.util as util
 import pyclick.config as config
 
@@ -25,7 +25,8 @@ class App(object):
     
     def get_input_dir(self):
         return os.path.join(self.dir_apuracao, config.INPUT_DIR)
-        
+    
+    
     def read_planilhas(self):
         logger.info('listando arquivos de entrada')
         currdir = os.getcwd()
