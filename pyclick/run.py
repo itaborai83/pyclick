@@ -5,6 +5,7 @@ import glob
 import argparse
 import logging
 import datetime as dt
+import shutil
 import pandas as pd
 
 import pyclick.util as util
@@ -25,28 +26,25 @@ class App(object):
     def __init__(self, dir_apuracao, cutoff_date):
         self.dir_apuracao   = dir_apuracao
         self.cutoff_date    = cutoff_date
-    
-    def get_consolidated_file(self):
-        return os.path.join(self.dir_apuracao, config.CONSOLIDATED_DIR, config.CONSOLIDATED_FILE)
-
-    def get_input_dir(self):
-        return os.path.join(self.dir_apuracao, config.INPUT_DIR)
-    
-    def get_consolidated_dir(self):
-        return os.path.join(self.dir_apuracao, config.CONSOLIDATED_DIR)
         
-    def get_processed_file(self):
-        return os.path.join(self.dir_apuracao, config.PROCESSED_FILE)
-    
-    def get_processed_db(self):
-        return os.path.join(self.dir_apuracao, config.PROCESSED_DB)
+    def cleanup(self):
+        consolidated_dir = util.get_consolidated_dir(self.dir_apuracao)
+        consolidated_file = util.get_consolidated_file(self.dir_apuracao)
+        processed_file = util.get_processed_file(self.dir_apuracao)
+        processed_db = util.get_processed_db(self.dir_apuracao)
+
+        if os.path.exists(consolidated_dir):
+            logger.warning("rm -R %s", consolidated_dir)
+            shutil.rmtree(consolidated_dir)
+        os.mkdir(consolidated_dir)
+        if os.path.exists(processed_file):
+            logger.warning("rm %s", processed_file)
+            os.unlink(processed_file)
+        if os.path.exists(processed_db):
+            logger.warning("rm %s", processed_db)
+            os.unlink(processed_db)
         
     def run(self):
-        input_dir = self.get_input_dir()
-        consolidated_dir = self.get_consolidated_dir()
-        consolidated_file = self.get_consolidated_file()
-        processed_file = self.get_processed_file()
-        processed_db = self.get_processed_db()
         try:
             logger.info('******************************************************************************')
             logger.info('******************************************************************************')
@@ -56,30 +54,56 @@ class App(object):
             logger.info('******************************************************************************')
             logger.info('******************************************************************************')
             logger.info('')
+
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')            
+            logger.info('******************************************************************************')
+            logger.info('cleaning up')
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')
+            logger.info('')
+            self.cleanup()
             
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')            
             logger.info('******************************************************************************')
             logger.info('preprocessing input files')
             logger.info('******************************************************************************')
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')            
             logger.info('')
             pif.App(self.dir_apuracao).run()
             
             logger.info('******************************************************************************')
+            logger.info('******************************************************************************')            
+            logger.info('******************************************************************************')
             logger.info('consolidating input files')
             logger.info('******************************************************************************')
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')            
             logger.info('')
             cp.App(self.dir_apuracao, self.cutoff_date).run()
 
             logger.info('******************************************************************************')
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')
             logger.info('concatenating and deduping')
             logger.info('******************************************************************************')
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')            
             logger.info('')
-            cd.App(consolidated_file, consolidated_dir, [ config.CONSOLIDATED_GLOB ]).run()
+            cd.App(self.dir_apuracao).run()
             
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')            
             logger.info('******************************************************************************')
             logger.info('processing consolidated file and generating db')
             logger.info('******************************************************************************')
+            logger.info('******************************************************************************')
+            logger.info('******************************************************************************')            
             logger.info('')            
-            pd.App(consolidated_file, processed_file, processed_db).run()
+            pd.App(self.dir_apuracao).run()
             
         except:
             logger.exception('an error has occurred')

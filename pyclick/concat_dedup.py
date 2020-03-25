@@ -18,20 +18,12 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, output, input_dir, inputs):
-        if len(inputs) == 1:
-            if input_dir:
-                currdir = os.getcwd()
-                os.chdir(input_dir)
-            inputs = list(sorted(glob.iglob(inputs[0])))
-            if input_dir:
-                os.chdir(currdir)
-        self.output     = output
-        self.input_dir  = input_dir
-        self.inputs     = inputs
+    def __init__(self, dir_apuracao):
+        self.dir_apuracao = dir_apuracao
     
     def read_planilha(self, input_file):
-        filename = os.path.join(self.input_dir, input_file)
+        consolidated_dir = util.get_consolidated_dir(self.dir_apuracao)
+        filename = os.path.join(consolidated_dir, input_file)
         logger.info('lendo arquivo %s', filename)
         df = pd.read_excel(filename, verbose=False)
         headers = df.columns.to_list()
@@ -42,17 +34,29 @@ class App(object):
     
     def save_planilhao(self, df):
         logger.info('salvando planilhão')
-        df.to_excel(self.output, index=False)
-        
+        output = util.get_consolidated_file(self.dir_apuracao)
+        df.to_excel(output, index=False)
+    
+    def get_inputs(self):
+        consolidated_dir = util.get_consolidated_dir(self.dir_apuracao)
+        currdir = os.getcwd()
+        try:
+            os.chdir(consolidated_dir)
+            inputs = list(sorted(glob.iglob(config.CONSOLIDATED_GLOB)))
+            return inputs
+        finally:
+            os.chdir(currdir)
+            
     def run(self):
         try:
             logger.info('concat_dedup - versão %d.%d.%d', *self.VERSION)
-            if len(self.inputs) < 2:
+            inputs = self.get_inputs()
+            if len(inputs) < 2:
                 logger.error('especificar ao menos 2 arquivos')
-                sys.exit(config.EXIT_TOO_FEW_FILES)      
+                sys.exit(config.EXIT_TOO_FEW_FILES)
             logger.info('iniciando loop de parsing')
             dfs = []
-            for input_file in self.inputs:
+            for input_file in inputs:
                 logger.info('processsando planilha %s', input_file)
                 df = self.read_planilha(input_file)
                 dfs.append(df)
@@ -69,9 +73,7 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--output', type=str, help='planilha saida', required=True)
-    parser.add_argument('--input_dir', type=str, help='planilha saida', default='.')
-    parser.add_argument('input', nargs='+', type=str, help='planilhas a serem consolidadas')
+    parser.add_argument('dir_apuracao', type=str, help='diretório de apuração')
     args = parser.parse_args()
-    app = App(args.output, args.input_dir, args.input)
+    app = App(args.dir_apuracao)
     app.run()

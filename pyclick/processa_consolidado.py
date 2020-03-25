@@ -17,15 +17,13 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, arq_planilhao, arq_processado, db_medicao):
-        assert db_medicao.endswith(".db")
-        self.arq_planilhao  = arq_planilhao
-        self.arq_processado = arq_processado
-        self.db_medicao     = db_medicao
+    def __init__(self, dir_apuracao):
+        self.dir_apuracao = dir_apuracao
         
     def read_excel(self):
-        logger.info('reading excel file %s', self.arq_planilhao)
-        df = pd.read_excel(self.arq_planilhao, verbose=False)
+        consolidated_file = util.get_consolidated_file(self.dir_apuracao)
+        logger.info('reading excel file %s', consolidated_file)
+        df = pd.read_excel(consolidated_file, verbose=False)
         headers = df.columns.to_list()
         if headers != config.RENAMED_COLUMNS:
             util.report_file_mismatch(logger, headers, config.RENAMED_COLUMNS)
@@ -150,10 +148,12 @@ class App(object):
         return df
         
     def save_df(self, df):
-        logger.info('saving dataframe as %s', self.arq_processado)
-        df.to_excel(self.arq_processado, index=False)
-        logger.info('exporting to SQLITE3 as %s', self.db_medicao)
-        conn = sqlite3.connect(self.db_medicao)
+        processed_file = util.get_processed_file(self.dir_apuracao)
+        processed_db = util.get_processed_db(self.dir_apuracao)
+        logger.info('saving dataframe as %s', processed_file)
+        df.to_excel(processed_file, index=False)
+        logger.info('exporting to SQLITE3 as %s', processed_db)
+        conn = sqlite3.connect(processed_db)
         df.to_sql("rel_medicao_stg", conn, index=False, if_exists="replace")
         
     def run(self):
@@ -180,9 +180,7 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('arq_planilhao', type=str, help='arquivo planilhao')
-    parser.add_argument('arq_processado', type=str, help='arquivo planilhao processado')
-    parser.add_argument('db_medicao', type=str, help='nome base sqlite3 para exportação')
+    parser.add_argument('dir_apuracao', type=str, help='diretório de apuração')
     args = parser.parse_args()
-    app = App(args.arq_planilhao, args.arq_processado, args.db_medicao)
+    app = App(args.dir_apuracao)
     app.run()

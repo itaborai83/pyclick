@@ -44,7 +44,7 @@ class App(object):
             return ',' if len(fields1) > len(fields2) else ';'
         
     def read_csv(self, arq_planilha):
-        path = self.get_dir_planilhas()
+        path = util.get_input_dir(self.dir_apuracao)
         filename = os.path.join(path, arq_planilha)
         logger.info('lendo arquivo %s', filename)
         sep = self.find_separator(filename)
@@ -58,17 +58,6 @@ class App(object):
             warn_bad_lines  = True,
             low_memory      = False
         )
-        self.drop_unnanmed_columns(df)
-        headers = df.columns.to_list()
-        if headers != config.EXPECTED_COLUMNS:
-            util.report_file_mismatch(logger, headers, config.EXPECTED_COLUMNS)
-            sys.exit(config.EXIT_FILE_MISMATCH)
-        return df
-
-    def read_excel(self, arq_planilha):
-        filename = os.path.join(self.dir_planilhao, arq_planilha)
-        logger.info('lendo arquivo %s', filename)
-        df = pd.read_excel(filename, verbose=False)
         self.drop_unnanmed_columns(df)
         headers = df.columns.to_list()
         if headers != config.EXPECTED_COLUMNS:
@@ -126,7 +115,7 @@ class App(object):
     def save_planilhao(self, df):
         logger.info('salvando planilhão')
         currdir = os.getcwd()
-        os.chdir(self.get_output_dir())
+        os.chdir(util.get_consolidated_dir(self.dir_apuracao))
         df.to_excel("consolidado_periodo.xlsx", index=False)
         os.chdir(currdir)
 
@@ -140,25 +129,19 @@ class App(object):
                     replace("]", "_").\
                     replace(" ", "_")
         currdir = os.getcwd()
-        os.chdir(self.get_output_dir())
+        os.chdir(util.get_consolidated_dir(self.dir_apuracao))
         try:
             df.to_excel("MESA_" + mesa + ".xlsx", index=False)
             os.chdir(currdir)
         except:
             logger.exception("could not export mesa %s !!! ... skipping", orig_mesa)
             os.chdir(currdir)
-    
-    def get_dir_planilhas(self):
-        return os.path.join(self.dir_apuracao, config.INPUT_DIR)
-
-    def get_output_dir(self):
-        return os.path.join(self.dir_apuracao, config.CONSOLIDATED_DIR)
-        
+            
     def read_planilhas(self):
         logger.info('listando arquivos do planilhao')
         currdir = os.getcwd()
         try:
-            path = self.get_dir_planilhas()
+            path = util.get_input_dir(self.dir_apuracao)
             os.chdir(path)
             arquivos = list(sorted(glob.iglob(config.INPUT_FILES_GLOB)))      
             os.chdir(currdir)
@@ -181,7 +164,7 @@ class App(object):
     
     def report_event_mapping(self, mesa_evt_mapping):
         currdir = os.getcwd()
-        os.chdir(self.get_output_dir())
+        os.chdir(util.get_consolidated_dir(self.dir_apuracao))
         with open("mapa_mesa_evento.tsv", "w") as fh:
             print("mesa", "evento", sep='\t', file=fh)
             for mesa, eventos in sorted(mesa_evt_mapping.items()):
@@ -221,7 +204,7 @@ class App(object):
             logger.info('relatório consolidado')
             df = df_planilhao[ df_planilhao.ultima_acao_nome.isin(['Atribuir ao Fornecedor', 'Resolver', 'Encerrar']) ]
             currdir = os.getcwd()
-            os.chdir(self.get_output_dir())
+            os.chdir(util.get_consolidated_dir(self.dir_apuracao))
             df.to_excel("consolidado_gustavo.xlsx", index=False)
             os.chdir(currdir)
             del df

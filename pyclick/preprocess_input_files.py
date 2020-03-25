@@ -22,15 +22,11 @@ class App(object):
     
     def __init__(self, dir_apuracao):
         self.dir_apuracao  = dir_apuracao        
-    
-    def get_input_dir(self):
-        return os.path.join(self.dir_apuracao, config.INPUT_DIR)
-    
-    
+        
     def read_planilhas(self):
         logger.info('listando arquivos de entrada')
         currdir = os.getcwd()
-        path = self.get_input_dir()
+        path = util.get_input_dir(self.dir_apuracao)
         try:
             os.chdir(path)
             arquivos = list(sorted(glob.iglob("*.csv")))
@@ -41,7 +37,7 @@ class App(object):
     def process_input_file(self, filename):
         logger.info('processando arquivo %s', filename)
         currdir = os.getcwd()
-        path = self.get_input_dir()
+        path = util.get_input_dir(self.dir_apuracao)
         try:
             os.chdir(path)
             with open(filename, encoding="latin-1") as fh:
