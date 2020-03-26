@@ -85,6 +85,18 @@ class App(object):
         for col in config.DROP_COLUMNS:
             del df_renamed[ col ]
     
+    def drop_duplicated_actions(self, df):
+        logger.info('dropando ações duplidadas (Comparando status_de_evento')
+        last_status = df.groupby('id_acao').status_de_evento.last().to_dict()
+        id_acoes = df.id_acao.to_list()
+        statuses = df.status_de_evento.to_list()
+        keep = [ status == last_status.get(id_acao, status) for id_acao, status in zip(id_acoes, statuses) ]
+        assert len(keep) == len(id_acoes)
+        df.insert(0, "keep", keep)
+        df = df[ df.keep ]
+        del df[ "keep" ]
+        return df
+
     def convert_ids_to_string(self, df):
         def conv(value):
             if pd.isna(value):
@@ -96,8 +108,8 @@ class App(object):
 
     def filter_out_open_events(self, df):
         logger.info('filtrado eventos ainda abertos')
-        return df[ ~(df.data_resolucao_chamado.isna()) ]
-    
+        return df[ ~(df.data_resolucao_chamado.isna()) | (df.status_de_evento == "Aberto") ]
+        
     def replace_tabs_enters(self, df):
         logger.info('removendo tabs e enters')
         return
@@ -197,6 +209,8 @@ class App(object):
             
             logger.info('ordenando planilhão')
             df_planilhao.sort_values(by=[ "id_chamado", "chamado_pai", "data_inicio_acao", "id_acao" ], inplace=True, kind="mergesort", ignore_index=True)
+            
+            df_planilhao = self.drop_duplicated_actions(df_planilhao)
             
             logger.info('exportando mapeamento mesa x eventos')
             self.report_event_mapping(mesa_evt_mapping)

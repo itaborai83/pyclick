@@ -11,6 +11,7 @@ EXIT_RENAMED_MISMATCH   = 2
 EXIT_TOO_FEW_FILES      = 3
 
 SEPARATOR_HEADER        = "sep="
+INPUT_FILENAME_PREFIX   = "Generate_Report_Query_Medicao_"
 
 EXPECTED_COLUMNS = [
     'Data Abertura Chamado', 

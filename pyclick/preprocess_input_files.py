@@ -33,13 +33,25 @@ class App(object):
             return arquivos
         finally:
             os.chdir(currdir)
-
+    
+    def handle_filename(self, filename):
+        orig_filename = filename
+        filename = filename[ len(config.INPUT_FILENAME_PREFIX) : ]
+        day, month, year_ext = filename.split("-")
+        year, ext = year_ext.split(".")
+        assert ext == "csv"
+        new_name = year + "-" + month + "-" + day + "." + ext
+        shutil.move(orig_filename, new_name)
+        return new_name
+        
     def process_input_file(self, filename):
         logger.info('processando arquivo %s', filename)
         currdir = os.getcwd()
         path = util.get_input_dir(self.dir_apuracao)
         try:
             os.chdir(path)
+            if filename.startswith(config.INPUT_FILENAME_PREFIX):
+                filename = self.handle_filename(filename)
             with open(filename, encoding="latin-1") as fh:
                 line = fh.readline()
                 if not line.startswith(config.SEPARATOR_HEADER):

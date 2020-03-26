@@ -96,6 +96,17 @@ class App(object):
         df.insert(len(df.columns), "ultima_mesa", last_mesas)      
         return df
 
+    def fill_last_mesa(self, df):
+        mesas_invalidas = config.MESAS_INVALIDAS.union( 
+            set( [ 'N4-SAP-SUSTENTACAO-PRIORIDADE', 'N4-SAP-SUSTENTACAO-ESCALADOS' ] )
+        )
+        df_validas = df[ ~(df.mesa.isin(mesas_invalidas)) ]
+        last_mesas_mapping = df_validas.groupby('id_chamado').mesa.last().to_dict()
+        id_chamados = df.id_chamado.to_list()
+        last_mesas = [ last_mesas_mapping.get(id_chamado, None) for id_chamado in id_chamados ]
+        df.insert(len(df.columns), "ultima_mesa", last_mesas)      
+        return df
+        
     def fill_peso(self, df):
         def compute_peso(value):
             if value == 'N4-SAP-SUSTENTACAO-PRIORIDADE':

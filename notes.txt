@@ -14,3 +14,22 @@ serv_dept
 Planilhão
 ---------    
 \\petrobras.biz\Petrobras\TIC\TIC_OI_QOI\NP-1\Relatorios Click
+
+
+Relatórios de Sanity Check
+--------------------------
+Duplicação de Registros no processo de consolidação (olhar por ID_ACAO)
+
+Relatórios de Exceção
+---------------------
+Falhas de Categorização de Corrigir
+
+TODO:
+
+ - Preencher status de Cancelamento com base em ações
+ - Estudar prazos de serviços (e impacto peso 35)
+ - Estudar categorização CORRIGIR e analisar falhas de categorização
+ - Desenhar mecanismo de expurgo
+ - Criar modelo de dados pós importação
+ - Criar grafos de transição de ações
+ - Cruzamento de dados com E070
