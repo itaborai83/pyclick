@@ -18,7 +18,9 @@ Planilhão
 
 Relatórios de Sanity Check
 --------------------------
+Verificar que status_de_evento só possui valores Resolvido e Fechado
 Duplicação de Registros no processo de consolidação (olhar por ID_ACAO)
+ID_ACAO não numérico
 
 Relatórios de Exceção
 ---------------------

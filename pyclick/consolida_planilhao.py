@@ -68,6 +68,7 @@ class App(object):
     def concat_planilhas(self, dfs):
         logger.info('concatenando planilhão - versão %d.%d.%d', *self.VERSION)
         df_planilhao = pd.concat(dfs)
+        self.drop_duplicated_actions(df_planilhao)        
         return df_planilhao
     
     def rename_columns(self, df_original):
@@ -86,16 +87,16 @@ class App(object):
             del df_renamed[ col ]
     
     def drop_duplicated_actions(self, df):
-        logger.info('dropando ações duplidadas (Comparando status_de_evento')
-        last_status = df.groupby('id_acao').status_de_evento.last().to_dict()
-        id_acoes = df.id_acao.to_list()
-        statuses = df.status_de_evento.to_list()
-        keep = [ status == last_status.get(id_acao, status) for id_acao, status in zip(id_acoes, statuses) ]
-        assert len(keep) == len(id_acoes)
-        df.insert(0, "keep", keep)
-        df = df[ df.keep ]
-        del df[ "keep" ]
-        return df
+        logger.info('dropando ações duplidadas (Comparando status_de_evento)')
+        df[ 'id_acao' ] = pd.to_numeric( df[ 'id_acao' ], errors='coerce' )
+        df.dropna(subset = [ 'id_acao' ], inplace=True)
+        statuses = set(df.status_de_evento.to_list())
+        assert 'Resolvido' in statuses
+        assert 'Fechado' in statuses
+        assert len(statuses) == 2
+        df.sort_values(by=[ 'id_acao', 'status_de_evento' ], inplace=True, kind='mergesort', ignore_index=True)
+        # keep Resolvido if it exists
+        df.drop_duplicates(subset=[ 'id_acao' ], keep='first', inplace=True, ignore_index=True)
 
     def convert_ids_to_string(self, df):
         def conv(value):
@@ -206,11 +207,9 @@ class App(object):
             logger.info('concatenando planilhão')
             df_planilhao = self.concat_planilhas(dfs_in)
             del dfs_in # release memory
-            
+
             logger.info('ordenando planilhão')
             df_planilhao.sort_values(by=[ "id_chamado", "chamado_pai", "data_inicio_acao", "id_acao" ], inplace=True, kind="mergesort", ignore_index=True)
-            
-            df_planilhao = self.drop_duplicated_actions(df_planilhao)
             
             logger.info('exportando mapeamento mesa x eventos')
             self.report_event_mapping(mesa_evt_mapping)
