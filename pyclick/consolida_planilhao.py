@@ -34,7 +34,10 @@ class App(object):
         for extra_header in extra_headers:
             logger.warning('dropando coluna extra: %s', extra_header)
             del df[ extra_header ]
-        
+    
+    def check_row_splits(self, df):
+        split_rows_df = df[ df[ 'Incidente Grave?' ].isna() ]
+        return len(split_rows_df) > 0
     
     def find_separator(self, filename):
         with open(filename, encoding='latin-1') as fh:
@@ -63,6 +66,9 @@ class App(object):
         if headers != config.EXPECTED_COLUMNS:
             util.report_file_mismatch(logger, headers, config.EXPECTED_COLUMNS)
             sys.exit(config.EXIT_FILE_MISMATCH)
+        if self.check_row_splits(df):
+            logger.error('file has row splits')
+            sys.exit(config.EXIT_SPLIT_ROW)
         return df
     
     def concat_planilhas(self, dfs):

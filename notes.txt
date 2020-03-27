@@ -21,6 +21,7 @@ Relatórios de Sanity Check
 Verificar que status_de_evento só possui valores Resolvido e Fechado
 Duplicação de Registros no processo de consolidação (olhar por ID_ACAO)
 ID_ACAO não numérico
+Identificar quebra de linha observando se o último campo possui valores nulos
 
 Relatórios de Exceção
 ---------------------

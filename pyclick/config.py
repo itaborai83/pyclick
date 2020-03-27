@@ -6,12 +6,14 @@ CONSOLIDATED_FILE       = "consolidado.xlsx"
 PROCESSED_FILE          = "processado.xlsx"
 PROCESSED_DB            = "medicao.db"
 RESULT_SPREADSHEET      = "medicao.xlsx"
-EXIT_FILE_MISMATCH      = 1
-EXIT_RENAMED_MISMATCH   = 2
-EXIT_TOO_FEW_FILES      = 3
 
 SEPARATOR_HEADER        = "sep="
 INPUT_FILENAME_PREFIX   = "Generate_Report_Query_Medicao_"
+
+EXIT_FILE_MISMATCH      = 1
+EXIT_RENAMED_MISMATCH   = 2
+EXIT_TOO_FEW_FILES      = 3
+EXIT_SPLIT_ROW          = 4
 
 EXPECTED_COLUMNS = [
     'Data Abertura Chamado', 
