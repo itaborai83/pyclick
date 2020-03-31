@@ -20,32 +20,12 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_apuracao, cutoff_date):
+    def __init__(self, dir_apuracao, dir_import, start_date, end_date):
         self.dir_apuracao   = dir_apuracao
-        self.cutoff_date    = cutoff_date
-
-    def drop_unnanmed_columns(self, df):
-        headers = df.columns.to_list()
-        col_count = len(config.EXPECTED_COLUMNS)
-        header_count = len(headers)
-        if header_count <= col_count:
-            return
-        extra_headers = headers[ col_count : ]
-        for extra_header in extra_headers:
-            logger.warning('dropando coluna extra: %s', extra_header)
-            del df[ extra_header ]
-    
-    def check_row_splits(self, df):
-        split_rows_df = df[ df[ 'Incidente Grave?' ].isna() ]
-        return len(split_rows_df) > 0
-    
-    def find_separator(self, filename):
-        with open(filename, encoding='latin-1') as fh:
-            headers_txt = fh.readline()
-            fields1 = headers_txt.split(',')
-            fields2 = headers_txt.split(';')
-            return ',' if len(fields1) > len(fields2) else ';'
-        
+        self.dir_import     = dir_import
+        self.start_date     = start_date
+        self.end_date       = end_date
+                
     def read_csv(self, arq_planilha):
         path = util.get_input_dir(self.dir_apuracao)
         filename = os.path.join(path, arq_planilha)
@@ -76,26 +56,9 @@ class App(object):
         df_planilhao = pd.concat(dfs)
         self.drop_duplicated_actions(df_planilhao)        
         return df_planilhao
-    
-    def rename_columns(self, df_original):
-        logger.debug('renomeando columns')
-        df_renamed = df_original.rename(mapper=config.COLUMN_MAPPING, axis='columns')
-        headers = df_renamed.columns.to_list()
-        if headers != config.RENAMED_COLUMNS:
-            logger.info('renamed columns mismatch ')
-            self.report_file_mismatch(headers, config.RENAMED_COLUMNS)
-            sys.exit(config.EXIT_RENAMED_MISMATCH)
-        return df_renamed
-
-    def drop_columns(self, df_renamed):
-        logger.debug('dropando colunas')
-        for col in config.DROP_COLUMNS:
-            del df_renamed[ col ]
-    
+        
     def drop_duplicated_actions(self, df):
         logger.info('dropando ações duplidadas (Comparando status_de_evento)')
-        df[ 'id_acao' ] = pd.to_numeric( df[ 'id_acao' ], errors='coerce' )
-        df.dropna(subset = [ 'id_acao' ], inplace=True)
         statuses = set(df.status_de_evento.to_list())
         assert 'Resolvido' in statuses
         assert 'Fechado' in statuses
@@ -103,33 +66,12 @@ class App(object):
         df.sort_values(by=[ 'id_acao', 'status_de_evento' ], inplace=True, kind='mergesort', ignore_index=True)
         # keep Resolvido if it exists
         df.drop_duplicates(subset=[ 'id_acao' ], keep='first', inplace=True, ignore_index=True)
-
-    def convert_ids_to_string(self, df):
-        def conv(value):
-            if pd.isna(value):
-                return value
-            else:
-                return str(value)
-        df['id_chamado'] = df['id_chamado'].apply(conv)
-        df['chamado_pai'] = df['chamado_pai'].apply(conv)
-
-    def filter_out_open_events(self, df):
-        logger.info('filtrado eventos ainda abertos')
-        return df[ ~(df.data_resolucao_chamado.isna()) | (df.status_de_evento == "Aberto") ]
-        
-    def replace_tabs_enters(self, df):
-        logger.info('removendo tabs e enters')
-        return
-        substs = {
-            '\t': '<<TAB>>',
-            '\r\n': '<<ENTER>>',
-            '\n': '<<ENTER>>',
-        }
-        df.replace(substs, regex=True, inplace=True)
     
-    def apply_cutoff_date(self, df):
+    def apply_cutoff_date(self, df_open, df_closed):
         logger.info('filtrando eventos encerrados após a data de corte %s', self.cutoff_date)
-        return df[ df.data_resolucao_chamado < self.cutoff_date ]
+        df_open = df_open[ df_open.data_abertura_chamado < self.cutoff_date ]
+        df_closed = df_closed[ df_closed.data_resolucao_chamado < self.cutoff_date ]
+        return df_open, df_closed
     
     def save_planilhao(self, df):
         logger.info('salvando planilhão')
@@ -190,26 +132,35 @@ class App(object):
                 for evento in eventos:
                     print(mesa, evento, sep='\t', file=fh)
         os.chdir(currdir)
-    
+        
+    def read_mesas(self):
+        logger.info('recuperando a listagem de mesas para apuração')
+        return util.read_mesas(self.dir_apuracao)
+        
     def run(self):
         try:
             logger.info('começando a consolidação do planilhão - versão %d.%d.%d', *self.VERSION)
-            arq_planilhas = self.read_planilhas()
+            mesas = self.read_mesas()
+            print(mesas)
+            """
             dfs_in = []
             mesa_evt_mapping = {}
-            dfs_out = {}
             logger.info('iniciando loop de parsing')
+            df_open_acc = None
             for arq_planilha in arq_planilhas:
                 logger.info('processsando planilha %s', arq_planilha)
                 df = self.read_csv(arq_planilha)
                 df = self.rename_columns(df)
-                df = self.filter_out_open_events(df)
-                df = self.apply_cutoff_date(df)
                 self.replace_tabs_enters(df)
-                self.convert_ids_to_string(df)
-                self.update_event_mapping(mesa_evt_mapping, df)
-                dfs_in.append(df)
-            
+                self.process_ids(df)                
+                df_open, df_closed = self.split_open_events(df)
+                df_open, df_closed = self.apply_cutoff_date(df_open, df_closed)
+                if df_open_acc is None:
+                    df_open_acc = pd.DataFrame(columns=df.columns)                
+                df_open_acc = self.update_open_acc(df_open_acc, df_open, df_closed)
+                self.update_event_mapping(mesa_evt_mapping, df_closed)
+                #self.update_event_mapping(mesa_evt_mapping, df_open)
+                dfs_in.append(df_closed)
             logger.info('concatenando planilhão')
             df_planilhao = self.concat_planilhas(dfs_in)
             del dfs_in # release memory
@@ -234,6 +185,7 @@ class App(object):
                     logger.info('particionando mesa %s', mesa)
                     df = df_planilhao[ df_planilhao.id_chamado.isin(eventos) ]
                     self.save_planilha_mesa(df, mesa)
+            """
         except:
             logger.exception('an error has occurred')
             raise
@@ -241,7 +193,10 @@ class App(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('dir_apuracao', type=str, help='diretório apuração')
-    parser.add_argument('cutoff_date', type=str, help='data de corte encerramento evento')
+    parser.add_argument('dir_import', type=str, help='diretório de importação')
+    parser.add_argument('start_date', type=str, help='data inicio apuração')
+    parser.add_argument('end_date', type=str, help='data fim apuração')
+    
     args = parser.parse_args()
-    app = App(args.dir_apuracao, args.cutoff_date)
+    app = App(args.dir_apuracao, args.dir_import, args.start_date, args.end_date)
     app.run()

@@ -11,7 +11,7 @@ import pyclick.config as config
 
 def get_logger(name):
     return logging.getLogger(name)
-
+    
 def get_input_dir(dir_apuracao):
     return os.path.join(dir_apuracao, config.INPUT_DIR)
 
@@ -50,3 +50,20 @@ def report_file_mismatch(logger, headers, expected_columns):
         if c1 != c2:
             logger.error('column on position %d is the first mismatch >> %s != %s', i, repr(c1), repr(c2))
             break
+
+            
+def sort_rel_medicao(df):
+    df.sort_values(by=[ "id_chamado", "chamado_pai", "data_inicio_acao", "id_acao", "status_de_evento" ], inplace=True, kind="mergesort", ignore_index=True)
+
+def read_mesas(dir_apuracao):
+    path = os.path.join(dir_apuracao, config.MESAS_FILE)
+    result = []
+    with open(path) as fh:
+        for line in fh:
+            mesa = line.strip()
+            if mesa.startswith("#"):
+                continue
+            elif mesa:
+                result.append(mesa)
+        return result
+            

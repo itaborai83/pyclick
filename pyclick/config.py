@@ -1,3 +1,6 @@
+CSV_SEPARATOR           = ";"
+INCIDENT_TABLE          = "rel_medicao"
+MESAS_FILE              = "mesas.txt"
 INPUT_DIR               = "INPUT"
 INPUT_FILES_GLOB        = "202*.csv"
 CONSOLIDATED_DIR        = "CONSOLIDADO"
@@ -175,6 +178,8 @@ MESAS_TEMPORIZADAS = set([
     'N4-SAP-SUSTENTACAO-SERVICOS',
     'N4-SAP-SUSTENTACAO-GRC',
     'N4-SAP-SUSTENTACAO-PORTAL'
+    #'N4-SAP-SUSTENTACAO-SATI',
+    #'N4-SAP-SUSTENTACAO-CE'
 ])
 
 MESAS_INVALIDAS = set([
