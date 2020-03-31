@@ -6,16 +6,7 @@ IMPORT_OPEN_GLOB        = "202*-OPEN.db"
 IMPORT_CLOSED_MASK      = "{}-CLOSED.db"
 IMPORT_OPEN_MASK        = "{}-OPEN.db"
 CONSOLIDATED_DB         = "consolidado_mesas.db"
-"""
-INPUT_DIR               = "INPUT"
-INPUT_CLOSED_FILES_GLOB = "202*.csv"
-CONSOLIDATED_DIR        = "CONSOLIDADO"
-CONSOLIDATED_GLOB       = "MESA*.xlsx"
-CONSOLIDATED_FILE       = "consolidado.xlsx"
-PROCESSED_FILE          = "processado.xlsx"
-PROCESSED_DB            = "medicao.db"
-RESULT_SPREADSHEET      = "medicao.xlsx"
-"""
+
 SEPARATOR_HEADER        = "sep="
 INPUT_FILENAME_PREFIX   = "Generate_Report_Query_Medicao_"
 
@@ -173,34 +164,3 @@ COLUMN_MAPPING = {
 }
 
 RENAMED_COLUMNS = list([ COLUMN_MAPPING[ col ] for col in EXPECTED_COLUMNS ])
-
-MESAS_TEMPORIZADAS = set([
-    'N4-SAP-SUSTENTACAO-ABAST_GE',
-    'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',
-    'N4-SAP-SUSTENTACAO-CORPORATIVO',
-    'N4-SAP-SUSTENTACAO-ESCALADOS',
-    'N4-SAP-SUSTENTACAO-FINANCAS',
-    'N4-SAP-SUSTENTACAO-PRIORIDADE',
-    'N4-SAP-SUSTENTACAO-SERVICOS',
-    'N4-SAP-SUSTENTACAO-GRC',
-    'N4-SAP-SUSTENTACAO-PORTAL'
-    #'N4-SAP-SUSTENTACAO-SATI',
-    #'N4-SAP-SUSTENTACAO-CE'
-])
-
-MESAS_INVALIDAS = set([
-    'A DEFINIR',
-    'Atendimento de RH',
-    'Mesa Padrão',
-    'SVD Manager Template',
-    'Usuários Finais',
-])
-
-CORRECTION_CATEGORIES = [
-    'CORRIGIR-NÃO EMERGENCIAL',
-    'CORRIGIR-PESO30',
-    'CORRIGIR-PESO35',
-    'CORRIGIR-SEVERIDADE1',
-    'CORRIGIR-SEVERIDADE2',
-    'REPARAR FALHA',
-]

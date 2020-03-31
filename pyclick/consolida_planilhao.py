@@ -26,7 +26,8 @@ class App(object):
         self.dir_import     = dir_import
         self.start_date     = start_date
         self.end_date       = end_date
-                
+        self.cutoff_date    = util.next_date(end_date)
+
     def read_dump(self, dump_file):
         filename = os.path.join(self.dir_import, dump_file)
         logger.info('lendo arquivo %s', filename)
@@ -36,10 +37,11 @@ class App(object):
         util.sort_rel_medicao(df)
         return df
     
-    def concat_planilhas(self, dfs):
+    def concat_planilhas(self, df_open , dfs_closed):
         logger.info('concatenando planilhão')
-        df_planilhao = pd.concat(dfs)
-        self.drop_duplicated_actions(df_planilhao)        
+        df_closed = pd.concat(dfs_closed)
+        self.drop_duplicated_actions(df_closed)        
+        df_planilhao = pd.concat([ df_closed, df_open ])
         return df_planilhao
         
     def drop_duplicated_actions(self, df):
@@ -52,12 +54,16 @@ class App(object):
         # keep Resolvido if it exists
         df.drop_duplicates(subset=[ 'id_acao' ], keep='first', inplace=True, ignore_index=True)
     
-    def apply_cutoff_date(self, df_open, df_closed):
+    def apply_cutoff_date_closed(self, df):
         logger.info('filtrando eventos encerrados após a data de corte %s', self.cutoff_date)
-        df_open = df_open[ df_open.data_abertura_chamado < self.cutoff_date ]
-        df_closed = df_closed[ df_closed.data_resolucao_chamado < self.cutoff_date ]
-        return df_open, df_closed
-    
+        df = df[ df.data_resolucao_chamado < self.cutoff_date ]
+        return df.copy()
+
+    def apply_cutoff_date_open(self, df):
+        logger.info('filtrando eventos abertos após a data de corte %s', self.cutoff_date)
+        df = df[ df.data_abertura_chamado < self.cutoff_date ]
+        return df.copy()
+        
     def save_planilhao(self, df):
         logger.info('salvando planilhão')
         currdir = os.getcwd()
@@ -151,29 +157,30 @@ class App(object):
     
     def run(self):
         try:
-            logger.info('começando a consolidação do planilhão - versão %d.%d.%d')
+            logger.info('começando a consolidação do planilhão - versão %d.%d.%d', *self.VERSION)
             mesas = self.read_mesas()
-            closed_dumps, open_file = self.get_dump_files()
-            dfs = []
             mesa_evt_mapping = {}
+            closed_dumps, open_dump = self.get_dump_files()
+            df_open = self.read_dump(open_dump)
+            df_open = self.apply_cutoff_date_open(df_open)
+            self.update_event_mapping(mesa_evt_mapping, df_open)
+            dfs_closed = [ ]
             logger.info('iniciando loop de parsing')
             for closed_dump in closed_dumps:
                 logger.info('processsando %s', closed_dump)
                 df = self.read_dump(closed_dump)
+                df = self.apply_cutoff_date_closed(df)
                 self.update_event_mapping(mesa_evt_mapping, df)
-                #self.update_event_mapping(mesa_evt_mapping, df_open)
-                dfs.append(df)
+                dfs_closed.append(df)
             
             logger.info('concatenando planilhão')
-            df_planilhao = self.concat_planilhas(dfs)
-            del dfs # release memory
+            df_planilhao = self.concat_planilhas(df_open, dfs_closed)
+            del dfs_closed # release memory
+            del df_open # release memory
             
             logger.info('ordenando planilhão')
             util.sort_rel_medicao(df_planilhao)
-            
-            #logger.info('exportando mapeamento mesa x eventos')
-            #self.report_event_mapping(mesa_evt_mapping)
-            
+                        
             #logger.info('relatório consolidado')
             #df = df_planilhao[ df_planilhao.ultima_acao_nome.isin(['Atribuir ao Fornecedor', 'Resolver', 'Encerrar']) ]
             #currdir = os.getcwd()

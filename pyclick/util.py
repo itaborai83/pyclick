@@ -2,6 +2,7 @@ import os
 import os.path
 import shutil
 import logging
+import datetime as dt
 
 LOGGER_FORMAT = '%(asctime)s:%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d\n\t%(message)s\n'
 LOGGER_FORMAT = '%(levelname)s - %(filename)s:%(funcName)s:%(lineno)s - %(message)s'
@@ -51,7 +52,6 @@ def report_file_mismatch(logger, headers, expected_columns):
             logger.error('column on position %d is the first mismatch >> %s != %s', i, repr(c1), repr(c2))
             break
 
-            
 def sort_rel_medicao(df):
     df.sort_values(by=[ "id_chamado", "chamado_pai", "data_inicio_acao", "id_acao", "status_de_evento" ], inplace=True, kind="mergesort", ignore_index=True)
 
@@ -66,4 +66,6 @@ def read_mesas(dir_apuracao):
             elif mesa:
                 result.append(mesa)
         return result
-            
+
+def next_date(d):
+    return str((dt.datetime.strptime(d, '%Y-%m-%d') + dt.timedelta(1)).date())
