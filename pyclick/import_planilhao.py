@@ -190,6 +190,7 @@ class App(object):
         conn.commit()
         conn.execute("VACUUM")
         conn.close()
+        
     def read_open_acc(self):
         if self.open_acc is None:
             return None

@@ -8,6 +8,7 @@ import argparse
 import logging
 import datetime as dt
 import pandas as pd
+import sqlite3
 
 import pyclick.util as util
 import pyclick.config as config
@@ -26,33 +27,17 @@ class App(object):
         self.start_date     = start_date
         self.end_date       = end_date
                 
-    def read_csv(self, arq_planilha):
-        path = util.get_input_dir(self.dir_apuracao)
-        filename = os.path.join(path, arq_planilha)
+    def read_dump(self, dump_file):
+        filename = os.path.join(self.dir_import, dump_file)
         logger.info('lendo arquivo %s', filename)
-        sep = self.find_separator(filename)
-        df = pd.read_csv(
-            filename, 
-            sep             = sep,
-            verbose         = True,
-            header          = 0, 
-            encoding        = "latin_1",
-            error_bad_lines = True, 
-            warn_bad_lines  = True,
-            low_memory      = False
-        )
-        self.drop_unnanmed_columns(df)
-        headers = df.columns.to_list()
-        if headers != config.EXPECTED_COLUMNS:
-            util.report_file_mismatch(logger, headers, config.EXPECTED_COLUMNS)
-            sys.exit(config.EXIT_FILE_MISMATCH)
-        if self.check_row_splits(df):
-            logger.error('file has row splits')
-            sys.exit(config.EXIT_SPLIT_ROW)
+        conn = sqlite3.connect(filename)
+        sql = "SELECT * FROM " + config.INCIDENT_TABLE
+        df = pd.read_sql(sql, conn)
+        util.sort_rel_medicao(df)
         return df
     
     def concat_planilhas(self, dfs):
-        logger.info('concatenando planilhão - versão %d.%d.%d', *self.VERSION)
+        logger.info('concatenando planilhão')
         df_planilhao = pd.concat(dfs)
         self.drop_duplicated_actions(df_planilhao)        
         return df_planilhao
@@ -136,56 +121,77 @@ class App(object):
     def read_mesas(self):
         logger.info('recuperando a listagem de mesas para apuração')
         return util.read_mesas(self.dir_apuracao)
-        
+    
+    def get_dump_files(self):
+        logger.info("retrieving daily dump files of closed incidents")
+        currdir = os.getcwd()
+        os.chdir(self.dir_import)
+        try:
+            closed_start_file = config.IMPORT_CLOSED_MASK.format(self.start_date) 
+            closed_end_file = config.IMPORT_CLOSED_MASK.format(self.end_date) 
+            all_closed_files = sorted(glob.iglob(config.IMPORT_CLOSED_GLOB))
+            closed_files = list([ f for f in all_closed_files if closed_start_file <= f <= closed_end_file ])
+            open_file = config.IMPORT_OPEN_MASK.format(self.end_date)
+            return closed_files, open_file
+        finally:
+            os.chdir(currdir)
+    
+    def save_consolidado(self, df):
+        logger.info('salvando planilhão como %s', config.CONSOLIDATED_DB)
+        currdir = os.getcwd()
+        os.chdir(self.dir_apuracao)
+        try:
+            conn = sqlite3.connect(config.CONSOLIDATED_DB)
+            df.to_sql(config.INCIDENT_TABLE, conn, index=False, if_exists="replace")
+            conn.commit()
+            conn.execute("VACUUM")
+            conn.close()
+        finally:
+            os.chdir(currdir)
+    
     def run(self):
         try:
-            logger.info('começando a consolidação do planilhão - versão %d.%d.%d', *self.VERSION)
+            logger.info('começando a consolidação do planilhão - versão %d.%d.%d')
             mesas = self.read_mesas()
-            print(mesas)
-            """
-            dfs_in = []
+            closed_dumps, open_file = self.get_dump_files()
+            dfs = []
             mesa_evt_mapping = {}
             logger.info('iniciando loop de parsing')
-            df_open_acc = None
-            for arq_planilha in arq_planilhas:
-                logger.info('processsando planilha %s', arq_planilha)
-                df = self.read_csv(arq_planilha)
-                df = self.rename_columns(df)
-                self.replace_tabs_enters(df)
-                self.process_ids(df)                
-                df_open, df_closed = self.split_open_events(df)
-                df_open, df_closed = self.apply_cutoff_date(df_open, df_closed)
-                if df_open_acc is None:
-                    df_open_acc = pd.DataFrame(columns=df.columns)                
-                df_open_acc = self.update_open_acc(df_open_acc, df_open, df_closed)
-                self.update_event_mapping(mesa_evt_mapping, df_closed)
+            for closed_dump in closed_dumps:
+                logger.info('processsando %s', closed_dump)
+                df = self.read_dump(closed_dump)
+                self.update_event_mapping(mesa_evt_mapping, df)
                 #self.update_event_mapping(mesa_evt_mapping, df_open)
-                dfs_in.append(df_closed)
+                dfs.append(df)
+            
             logger.info('concatenando planilhão')
-            df_planilhao = self.concat_planilhas(dfs_in)
-            del dfs_in # release memory
-
+            df_planilhao = self.concat_planilhas(dfs)
+            del dfs # release memory
+            
             logger.info('ordenando planilhão')
-            df_planilhao.sort_values(by=[ "id_chamado", "chamado_pai", "data_inicio_acao", "id_acao" ], inplace=True, kind="mergesort", ignore_index=True)
+            util.sort_rel_medicao(df_planilhao)
             
-            logger.info('exportando mapeamento mesa x eventos')
-            self.report_event_mapping(mesa_evt_mapping)
+            #logger.info('exportando mapeamento mesa x eventos')
+            #self.report_event_mapping(mesa_evt_mapping)
             
-            logger.info('relatório consolidado')
-            df = df_planilhao[ df_planilhao.ultima_acao_nome.isin(['Atribuir ao Fornecedor', 'Resolver', 'Encerrar']) ]
-            currdir = os.getcwd()
-            os.chdir(util.get_consolidated_dir(self.dir_apuracao))
-            df.to_excel("consolidado_gustavo.xlsx", index=False)
-            os.chdir(currdir)
-            del df
+            #logger.info('relatório consolidado')
+            #df = df_planilhao[ df_planilhao.ultima_acao_nome.isin(['Atribuir ao Fornecedor', 'Resolver', 'Encerrar']) ]
+            #currdir = os.getcwd()
+            #os.chdir(util.get_consolidated_dir(self.dir_apuracao))
+            #df.to_excel("consolidado_gustavo.xlsx", index=False)
+            #os.chdir(currdir)
+            #del df
             
             logger.info('iniciando loop de particionamento')
-            for mesa, eventos in sorted(mesa_evt_mapping.items()):
-                if mesa in config.MESAS_TEMPORIZADAS:
-                    logger.info('particionando mesa %s', mesa)
-                    df = df_planilhao[ df_planilhao.id_chamado.isin(eventos) ]
-                    self.save_planilha_mesa(df, mesa)
-            """
+            all_events = set()
+            for mesa, events in sorted(mesa_evt_mapping.items()):
+                if mesa in mesas:
+                    logger.info('particionando mesa %s com %d eventos', mesa, len(events))
+                    all_events.update(events)
+            logger.info("consolidando planilhão com %d eventos", len(all_events))
+            df = df_planilhao[ df_planilhao.id_chamado.isin(all_events) ]
+            logger.info("consolidando planilhão com %d linhas", len(df))
+            self.save_consolidado(df)
         except:
             logger.exception('an error has occurred')
             raise
