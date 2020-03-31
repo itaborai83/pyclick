@@ -1,3 +1,7 @@
+RESULT_SPREADSHEET = "resultado.xlsx"
+RESULT_DB = "resultado.db"
+KPI_SPREADSHEET = "indicadores.xlsx"
+
 MESAS_INVALIDAS = set([
     'A DEFINIR',
     'Atendimento de RH',

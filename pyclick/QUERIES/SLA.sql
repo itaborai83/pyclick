@@ -15,6 +15,7 @@ WITH INCS AS (
 	,		SOMA_DURACOES_CHAMADO
 	FROM	REL_MEDICAO_STG AS R
 	WHERE	TIPO IN ('ORIENTAR', 'CORRIGIR', 'REALIZAR')
+	AND		DATA_RESOLUCAO_CHAMADO IS NOT NULL
 )
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
@@ -32,6 +33,7 @@ WITH INCS AS (
 		WHERE	TIPO = 'REALIZAR - TAREFA'
 		AND		CHAMADO_PAI IS NOT NULL
 		AND		PESO > 0
+		AND		DATA_RESOLUCAO_CHAMADO IS NOT NULL
 		ORDER	BY 1, 2
 	) AS T
 	GROUP	BY CHAMADO_PAI

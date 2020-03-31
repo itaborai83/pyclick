@@ -13,15 +13,6 @@ import pyclick.config as config
 def get_logger(name):
     return logging.getLogger(name)
     
-def get_input_dir(dir_apuracao):
-    return os.path.join(dir_apuracao, config.INPUT_DIR)
-
-def get_consolidated_dir(dir_apuracao):
-    return os.path.join(dir_apuracao, config.CONSOLIDATED_DIR)
-
-def get_consolidated_file(dir_apuracao):
-    return os.path.join(get_consolidated_dir(dir_apuracao), config.CONSOLIDATED_FILE)
-    
 def get_processed_file(dir_apuracao):
     return os.path.join(dir_apuracao, config.PROCESSED_FILE)
 

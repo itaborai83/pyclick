@@ -8,6 +8,7 @@ import logging
 
 import pyclick.util as util
 import pyclick.config as config
+import pyclick.n4sap.config as n4_config
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -22,8 +23,8 @@ class App(object):
     
     def connect_db(self):
         logger.info('connecting to db')
-        db_file = util.get_processed_db(self.dir_apuracao)
-        conn = sqlite3.connect(db_file)
+        result_db = os.path.join(self.dir_apuracao, n4_config.RESULT_DB)
+        conn = sqlite3.connect(result_db)
         return conn
     
     def list_actions(self, conn):
@@ -40,7 +41,7 @@ class App(object):
     
     def write_result(self, df_slas, df_actions):
         logger.info('writing result spreadsheet')
-        rs = util.get_result_spreadsheet(self.dir_apuracao)
+        rs = os.path.join(self.dir_apuracao, n4_config.KPI_SPREADSHEET)
         with pd.ExcelWriter(rs) as xw:
             df_slas.to_excel(xw, sheet_name="SLAs", index=False)
             df_actions.to_excel(xw, sheet_name="DADOS", index=False)
