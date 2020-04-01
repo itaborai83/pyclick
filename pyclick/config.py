@@ -10,10 +10,11 @@ CONSOLIDATED_DB         = "consolidado_mesas.db"
 SEPARATOR_HEADER        = "sep="
 INPUT_FILENAME_PREFIX   = "Generate_Report_Query_Medicao_"
 
-EXIT_FILE_MISMATCH      = 1
-EXIT_RENAMED_MISMATCH   = 2
-EXIT_TOO_FEW_FILES      = 3
-EXIT_SPLIT_ROW          = 4
+EXIT_FILE_MISMATCH          = 1
+EXIT_RENAMED_MISMATCH       = 2
+EXIT_TOO_FEW_FILES          = 3
+EXIT_SPLIT_ROW              = 4
+EXIT_CONSOLIDATION_ERROR    = 5
 
 EXPECTED_COLUMNS = [
     'Data Abertura Chamado', 

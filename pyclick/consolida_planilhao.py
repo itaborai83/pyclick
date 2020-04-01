@@ -17,6 +17,9 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('consolida_planilhao')
 
+
+SQL_CARGA_REL_MEDICAO = util.get_query("CARGA_REL_MEDICAO")
+SQL_CHECK_IMPORTACAO = util.get_query("SQL_CHECK_IMPORTACAO")
 class App(object):
     
     VERSION = (0, 0, 0)
@@ -45,7 +48,7 @@ class App(object):
         return df_planilhao
         
     def drop_duplicated_actions(self, df):
-        logger.info('dropando ações duplidadas (Comparando status_de_evento)')
+        logger.info('dropando ações duplicadas (Comparando status_de_evento)')
         statuses = set(df.status_de_evento.to_list())
         assert 'Resolvido' in statuses
         assert 'Fechado' in statuses
@@ -149,8 +152,16 @@ class App(object):
         try:
             conn = sqlite3.connect(config.CONSOLIDATED_DB)
             df.to_sql(config.INCIDENT_TABLE, conn, index=False, if_exists="replace")
+            conn.executescript(SQL_CARGA_REL_MEDICAO)
             conn.commit()
+            cursor = conn.execute(SQL_CHECK_IMPORTACAO)
+            result = cursor.fetchone()[ 0 ]
+            if result != "OK":
+                logger.error("falha na checagem da consolidação do relatório de medição")
+                sys.exit(config.EXIT_CONSOLIDATION_ERROR)
+            conn.execute("DROP TABLE " + config.INCIDENT_TABLE)
             conn.execute("VACUUM")
+            conn.commit()
             conn.close()
         finally:
             os.chdir(currdir)
