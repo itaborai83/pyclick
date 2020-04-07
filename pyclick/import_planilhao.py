@@ -4,6 +4,7 @@ import sys
 import os
 import os.path
 import glob
+import shutil
 import argparse
 import logging
 import datetime as dt
@@ -161,7 +162,7 @@ class App(object):
                     logger.warning("removing separator line from staging file")
                     for line in fh:
                         fh2.write(line)
-            logger.warning("moving staging file from %s to %s", fullpath)
+            logger.warning("moving staging file from %s to %s", filename_tmp, fullpath)
             shutil.move(filename_tmp, filename)
             return os.path.join(path, filename)
         finally:

@@ -5,6 +5,7 @@ IMPORT_CLOSED_GLOB      = "202*-CLOSED.db"
 IMPORT_OPEN_GLOB        = "202*-OPEN.db"
 IMPORT_CLOSED_MASK      = "{}-CLOSED.db"
 IMPORT_OPEN_MASK        = "{}-OPEN.db"
+OFFERINGS_SPREADSHEET   = "servicos.xlsx"
 CONSOLIDATED_DB         = "consolidado_mesas.db"
 
 SEPARATOR_HEADER        = "sep="

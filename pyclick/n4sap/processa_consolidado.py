@@ -197,5 +197,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('dir_apuracao', type=str, help='diretório de apuração')
     args = parser.parse_args()
-    app = App(args.dir_apuracao)
+    app = App(args.dir_apuracao, args.service_offerings)
     app.run()

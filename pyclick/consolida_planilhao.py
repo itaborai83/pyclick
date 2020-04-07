@@ -25,12 +25,12 @@ class App(object):
     VERSION = (0, 0, 0)
     
     def __init__(self, dir_apuracao, dir_import, start_date, end_date):
-        self.dir_apuracao   = dir_apuracao
-        self.dir_import     = dir_import
-        self.start_date     = start_date
-        self.end_date       = end_date
-        self.cutoff_date    = util.next_date(end_date)
-
+        self.dir_apuracao       = dir_apuracao
+        self.dir_import         = dir_import
+        self.start_date         = start_date
+        self.end_date           = end_date
+        self.cutoff_date        = util.next_date(end_date)
+            
     def read_dump(self, dump_file):
         filename = os.path.join(self.dir_import, dump_file)
         logger.info('lendo arquivo %s', filename)
@@ -131,6 +131,28 @@ class App(object):
         logger.info('recuperando a listagem de mesas para apuração')
         return util.read_mesas(self.dir_apuracao)
     
+    def read_ofertas(self):
+        logger.info('recuperando a listagem de ofertas de serviços') # Assistente de Relatórios > Catálogo de Serviços > Criar Relatório (Catálogo Completo e Prazos)
+        currdir = os.getcwd()
+        try:
+            os.chdir(self.dir_apuracao)
+            df = pd.read_excel(config.OFFERINGS_SPREADSHEET)
+            data = {
+                'oferta' : df[ 'Oferta' ],
+                'prazo' : df[ 'Prazo' ].mul(60)
+            }
+            return pd.DataFrame(data)
+        finally:
+            os.chdir(currdir)
+    
+    def add_dados_oferta(self, df, df_ofertas):
+        logger.info('adicionando dados da oferta')
+        ofertas_mapping = df_ofertas.groupby('oferta').prazo.last().to_dict()
+        ofertas = df.oferta_catalogo.to_list()
+        prazo_oferta = [ ofertas_mapping.get(oferta, None) for oferta in ofertas ]
+        df.insert(len(df.columns), "prazo_oferta_m", prazo_oferta)
+        return df
+        
     def get_dump_files(self):
         logger.info("retrieving daily dump files of closed incidents")
         currdir = os.getcwd()
@@ -159,7 +181,7 @@ class App(object):
             if result != "OK":
                 logger.error("falha na checagem da consolidação do relatório de medição")
                 sys.exit(config.EXIT_CONSOLIDATION_ERROR)
-            conn.execute("DROP TABLE " + config.INCIDENT_TABLE)
+            #conn.execute("DROP TABLE " + config.INCIDENT_TABLE)
             conn.execute("VACUUM")
             conn.commit()
             conn.close()
@@ -170,6 +192,7 @@ class App(object):
         try:
             logger.info('começando a consolidação do planilhão - versão %d.%d.%d', *self.VERSION)
             mesas = self.read_mesas()
+            df_ofertas = self.read_ofertas()
             mesa_evt_mapping = {}
             closed_dumps, open_dump = self.get_dump_files()
             df_open = self.read_dump(open_dump)
@@ -181,6 +204,7 @@ class App(object):
                 logger.info('processsando %s', closed_dump)
                 df = self.read_dump(closed_dump)
                 df = self.apply_cutoff_date_closed(df)
+                df = self.add_dados_oferta(df, df_ofertas)
                 self.update_event_mapping(mesa_evt_mapping, df)
                 dfs_closed.append(df)
             
