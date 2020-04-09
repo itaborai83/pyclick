@@ -17,9 +17,9 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('consolida_planilhao')
 
-
 SQL_CARGA_REL_MEDICAO = util.get_query("CARGA_REL_MEDICAO")
 SQL_CHECK_IMPORTACAO = util.get_query("SQL_CHECK_IMPORTACAO")
+
 class App(object):
     
     VERSION = (0, 0, 0)

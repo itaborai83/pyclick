@@ -1,3 +1,5 @@
+OVERRIDE_SPREADSHEET = "override.xlsx"
+"""
 RESULT_SPREADSHEET = "resultado.xlsx"
 RESULT_DB = "resultado.db"
 KPI_SPREADSHEET = "indicadores.xlsx"
@@ -18,3 +20,4 @@ CORRECTION_CATEGORIES = [
     'CORRIGIR-SEVERIDADE2',
     'REPARAR FALHA',
 ]
+"""
