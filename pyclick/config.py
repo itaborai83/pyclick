@@ -7,6 +7,11 @@ IMPORT_CLOSED_MASK      = "{}-CLOSED.db"
 IMPORT_OPEN_MASK        = "{}-OPEN.db"
 OFFERINGS_SPREADSHEET   = "servicos.xlsx"
 CONSOLIDATED_DB         = "consolidado_mesas.db"
+BEGIN_SQL               = "BEGIN.sql"
+BEFORE_LOAD_SQL         = "BEFORE_LOAD.sql"
+AFTER_LOAD_SQL          = "AFTER_LOAD.sql"
+END_SQL                 = "END.sql"
+
 
 SEPARATOR_HEADER        = "sep="
 INPUT_FILENAME_PREFIX   = "Generate_Report_Query_Medicao_"

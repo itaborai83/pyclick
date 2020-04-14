@@ -24,12 +24,14 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_apuracao, dir_import, start_date, end_date):
+    def __init__(self, dir_apuracao, dir_import, start_date, end_date, datafix, dropflat):
         self.dir_apuracao       = dir_apuracao
         self.dir_import         = dir_import
         self.start_date         = start_date
         self.end_date           = end_date
         self.cutoff_date        = util.next_date(end_date)
+        self.datafix            = datafix
+        self.dropflat           = dropflat
             
     def read_dump(self, dump_file):
         filename = os.path.join(self.dir_import, dump_file)
@@ -167,22 +169,69 @@ class App(object):
         finally:
             os.chdir(currdir)
     
+    def process_begin_sql(self, conn):
+        if not os.path.exists(config.BEGIN_SQL):
+            return
+        logger.warning('running BEGIN HOOK SQL SCRIPT')
+        sql = open(config.BEGIN_SQL).read()
+        conn.executescript(sql)
+            
+    def process_before_load_sql(self, conn):
+        if not os.path.exists(config.BEFORE_LOAD_SQL):
+            return
+        logger.warning('running BEFORE LOAD HOOK SQL SCRIPT')
+        sql = open(config.BEFORE_LOAD_SQL).read()
+        conn.executescript(sql)
+            
+    def process_after_load_sql(self, conn):        
+        if not os.path.exists(config.AFTER_LOAD_SQL):
+            return
+        logger.warning('running AFTER LOAD HOOK SQL SCRIPT')
+        sql = open(config.AFTER_LOAD_SQL).read()
+        conn.executescript(sql)
+            
+    def process_end_sql(self, conn):
+        if not os.path.exists(config.END_SQL):
+            return
+        logger.warning('running END HOOK SQL SCRIPT')
+        sql = open(config.END_SQL).read()
+        conn.executescript(sql)
+    
     def save_consolidado(self, df):
         logger.info('salvando planilhão como %s', config.CONSOLIDATED_DB)
         currdir = os.getcwd()
         os.chdir(self.dir_apuracao)
         try:
+            if os.path.exists(config.CONSOLIDATED_DB):
+                logger.warning("removing older version of the consolidated database")
+                os.unlink(config.CONSOLIDATED_DB)
             conn = sqlite3.connect(config.CONSOLIDATED_DB)
+            self.process_begin_sql(conn)
             df.to_sql(config.INCIDENT_TABLE, conn, index=False, if_exists="replace")
-            conn.executescript(SQL_CARGA_REL_MEDICAO)
             conn.commit()
+            if self.datafix:
+                logger.warning("STOPING LOADING PROCEDURE FOR A DATAFIX TO BE APPLIED")
+                conn.close()
+                while True:
+                    ans = input('type "ok" to continue or ctrl-c to abort > ').strip()
+                    if ans == "ok":
+                        conn = sqlite3.connect(config.CONSOLIDATED_DB)
+                        break
+            self.process_before_load_sql(conn)
+            logger.info("loading data model")
+            conn.executescript(SQL_CARGA_REL_MEDICAO)
             cursor = conn.execute(SQL_CHECK_IMPORTACAO)
+            self.process_after_load_sql(conn)
+            logger.info("running sanity check")
             result = cursor.fetchone()[ 0 ]
             if result != "OK":
                 logger.error("falha na checagem da consolidação do relatório de medição")
                 sys.exit(config.EXIT_CONSOLIDATION_ERROR)
-            #conn.execute("DROP TABLE " + config.INCIDENT_TABLE)
+            if self.dropflat:
+                logger.warning("dropping flat data tabel -> %s", config.INCIDENT_TABLE)
+                conn.execute("DROP TABLE " + config.INCIDENT_TABLE)
             conn.execute("VACUUM")
+            self.process_end_sql(conn)
             conn.commit()
             conn.close()
         finally:
@@ -244,7 +293,10 @@ if __name__ == '__main__':
     parser.add_argument('dir_import', type=str, help='diretório de importação')
     parser.add_argument('start_date', type=str, help='data inicio apuração')
     parser.add_argument('end_date', type=str, help='data fim apuração')
+    parser.add_argument('--datafix', action='store_true', default=False, help='interrompe o processo de carga para manipular o consolidado')
+    parser.add_argument('--dropflat', action='store_true', default=False, help='dropa a tabela rel_medicao após carga')
     
     args = parser.parse_args()
-    app = App(args.dir_apuracao, args.dir_import, args.start_date, args.end_date)
+    app = App(args.dir_apuracao, args.dir_import, args.start_date, args.end_date, args.datafix, args.dropflat)
     app.run()
+    

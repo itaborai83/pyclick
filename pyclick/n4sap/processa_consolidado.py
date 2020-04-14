@@ -49,7 +49,8 @@ class App(object):
         conn = sqlite3.connect(db_in)
         df = pd.read_sql(SQL_EXPORT_OVERRIDE, conn)
         df.to_excel(filename_out, index=False)
-        
+    
+            
     def run(self):
         try:
             logger.info('começando processamento do consolidado - versão %d.%d.%d', *self.VERSION)
