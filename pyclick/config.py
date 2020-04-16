@@ -21,6 +21,8 @@ EXIT_RENAMED_MISMATCH       = 2
 EXIT_TOO_FEW_FILES          = 3
 EXIT_SPLIT_ROW              = 4
 EXIT_CONSOLIDATION_ERROR    = 5
+EXIT_DB_DOES_NOT_EXIST      = 6
+EXIT_DATA_ERROR             = 7
 
 EXPECTED_COLUMNS = [
     'Data Abertura Chamado', 
