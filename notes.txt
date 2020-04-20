@@ -16,24 +16,13 @@ Planilhão
 \\petrobras.biz\Petrobras\TIC\TIC_OI_QOI\NP-1\Relatorios Click
 
 
-Relatórios de Sanity Check
---------------------------
-Verificar que status_de_evento só possui valores Resolvido e Fechado
-Duplicação de Registros no processo de consolidação (olhar por ID_ACAO)
-ID_ACAO não numérico
-Identificar quebra de linha observando se o último campo possui valores nulos
-Ações de Atribuição interna com mesa não preenchida
-
-Relatórios de Exceção
----------------------
-Falhas de Categorização de Corrigir
 
 TODO:
-
- - Preencher status de Cancelamento com base em ações
- - Estudar prazos de serviços (e impacto peso 35)
- - Estudar categorização CORRIGIR e analisar falhas de categorização
- - Desenhar mecanismo de expurgo
- - Criar modelo de dados pós importação
+ - Reduzir consumo de memória do processo de consolidação.
+	Atualmente está consumindo aproximadamente 5 e 6 gigas.
  - Criar grafos de transição de ações
  - Cruzamento de dados com E070
+
+ Relatórios de Sanity Check
+--------------------------
+	Adicionar violação de PK no processo de consolidação. Query já está pronta.
