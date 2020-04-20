@@ -73,6 +73,10 @@ class App(object):
         sql = "SELECT * FROM VW_REL_MEDICAO "
         df = pd.read_sql(sql, conn)
         df.to_excel(xw, sheet_name="REL_MEDICAO", index=False)
+    
+    def vacuum(self, conn):
+        logger.info("vacuuming database")
+        conn.execute("VACUUM")
         
     def run(self):
         try:
@@ -88,6 +92,7 @@ class App(object):
                 self.write_missing_data(conn, xw)
                 self.write_override_data(conn, xw)
                 self.write_source_data(conn, xw)
+                self.vacuum(conn)
             logger.info('finished')
         except:
             logger.exception('an error has occurred')
