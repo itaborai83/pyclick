@@ -18,6 +18,8 @@ Planilhão
 
 
 TODO:
+ - Avaliar adicionar apuração por mesa x encaminhamento. Incongruência do modelo do mentor?
+ - Avaliar adicionar impugos/expurgos numéricos no cálculo de cada indicador. Gambiarra.
  - Reduzir consumo de memória do processo de consolidação.
 	Atualmente está consumindo aproximadamente 5 e 6 gigas.
  - Criar grafos de transição de ações
