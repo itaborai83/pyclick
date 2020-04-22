@@ -218,10 +218,14 @@ class App(object):
                         conn = sqlite3.connect(config.CONSOLIDATED_DB)
                         break
             self.process_before_load_sql(conn)
+            logger.info("removing incidents closed before the start date")
+            sql = "DELETE FROM REL_MEDICAO WHERE DATA_RESOLUCAO_CHAMADO < ?";
+            args=(self.start_date, )
+            conn.execute(sql, args)
             logger.info("loading data model")
             conn.executescript(SQL_CARGA_REL_MEDICAO)
-            cursor = conn.execute(SQL_CHECK_IMPORTACAO)
             self.process_after_load_sql(conn)
+            cursor = conn.execute(SQL_CHECK_IMPORTACAO)
             logger.info("running sanity check")
             result = cursor.fetchone()[ 0 ]
             if result != "OK":
