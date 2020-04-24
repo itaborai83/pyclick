@@ -12,56 +12,69 @@ FROM 	VW_KPI_PRP AS A;
 
 INSERT OR REPLACE INTO INDICADORES(INDICADOR, ORDEM, VALOR, OBSERVACAO)  
 SELECT	'PRO' AS INDICADOR, 2 AS ORDEM, PRO AS VALOR
-,		'Violações ' 					|| VIOLACOES  || 
-		' / Incidentes '				|| INCIDENTES ||
-		' > Encerrados: ' 				|| ENCERRADOS || 
-		' | Resolvidos: ' 				|| RESOLVIDOS || 
-		' | Cancelados: ' 				|| CANCELADOS AS OBSERVACAO
+,		'Violações ' 					|| VIOLACOES  	|| 
+		' / Incidentes '				|| INCIDENTES 	||
+		' > Encerrados: ' 				|| ENCERRADOS 	|| 
+		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
+		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Encaminhados: ' 			|| ENCAMINHADOS	||
+		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRO AS A;
 
 INSERT OR REPLACE INTO INDICADORES(INDICADOR, ORDEM, VALOR, OBSERVACAO)  
 SELECT	'PRC' AS INDICADOR, 3 AS ORDEM, PRC AS VALOR
-,		'Violações ' 					|| VIOLACOES  || 
-		' / Incidentes '				|| INCIDENTES ||
-		' > Encerrados: ' 				|| ENCERRADOS || 
-		' | Resolvidos: ' 				|| RESOLVIDOS || 
-		' | Cancelados: ' 				|| CANCELADOS AS OBSERVACAO
+,		'Violações ' 					|| VIOLACOES  	|| 
+		' / Incidentes '				|| INCIDENTES 	||
+		' > Encerrados: ' 				|| ENCERRADOS 	|| 
+		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
+		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Encaminhados: ' 			|| ENCAMINHADOS	||
+		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRC AS A;
 
 INSERT OR REPLACE INTO INDICADORES(INDICADOR, ORDEM, VALOR, OBSERVACAO)  
 SELECT	'PRS' AS INDICADOR, 4 AS ORDEM, PRS AS VALOR
-,		'Violações '		 			|| VIOLACOES  || 
-		' / Incidentes '				|| INCIDENTES ||
-		' > Encerrados: ' 				|| ENCERRADOS || 
-		' | Resolvidos: ' 				|| RESOLVIDOS || 
-		' | Cancelados: ' 				|| CANCELADOS AS OBSERVACAO
+,		'Violações ' 					|| VIOLACOES  	|| 
+		' / Incidentes '				|| INCIDENTES 	||
+		' > Encerrados: ' 				|| ENCERRADOS 	|| 
+		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
+		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Encaminhados: ' 			|| ENCAMINHADOS	||
+		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRS AS A;
 
 INSERT OR REPLACE INTO INDICADORES(INDICADOR, ORDEM, VALOR, OBSERVACAO)  
 SELECT	'PRS - Simples' AS INDICADOR, 5 AS ORDEM, PRS_SIMPLES AS VALOR
-,		'Violações ' 					|| VIOLACOES  || 
-		' / Incidentes '				|| INCIDENTES ||
-		' > Encerrados: ' 				|| ENCERRADOS || 
-		' | Resolvidos: ' 				|| RESOLVIDOS || 
-		' | Cancelados: ' 				|| CANCELADOS AS OBSERVACAO
+,		'Violações ' 					|| VIOLACOES  	|| 
+		' / Incidentes '				|| INCIDENTES 	||
+		' > Encerrados: ' 				|| ENCERRADOS 	|| 
+		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
+		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Encaminhados: ' 			|| ENCAMINHADOS	||
+		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRS_SIMPLES AS A;
+
 
 INSERT OR REPLACE INTO INDICADORES(INDICADOR, ORDEM, VALOR, OBSERVACAO)  
 SELECT	'PRS - Médio' AS INDICADOR, 6 AS ORDEM, PRS_MEDIO AS VALOR
-,		'Violações ' 					|| VIOLACOES  || 
-		' / Incidentes '				|| INCIDENTES ||
-		' > Encerrados: ' 				|| ENCERRADOS || 
-		' | Resolvidos: '		 		|| RESOLVIDOS || 
-		' | Cancelados: ' 				|| CANCELADOS AS OBSERVACAO
+,		'Violações ' 					|| VIOLACOES  	|| 
+		' / Incidentes '				|| INCIDENTES 	||
+		' > Encerrados: ' 				|| ENCERRADOS 	|| 
+		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
+		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Encaminhados: ' 			|| ENCAMINHADOS	||
+		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRS_MEDIO AS A;
 
 INSERT OR REPLACE INTO INDICADORES(INDICADOR, ORDEM, VALOR, OBSERVACAO)  
 SELECT	'PRS - Complexo' AS INDICADOR, 7 AS ORDEM, PRS_COMPLEXO AS VALOR
-,		'Violações ' 					|| VIOLACOES  || 
-		' / Incidentes '				|| INCIDENTES ||
-		' > Encerrados: ' 				|| ENCERRADOS || 
-		' | Resolvidos: '		 		|| RESOLVIDOS || 
-		' | Cancelados: ' 				|| CANCELADOS AS OBSERVACAO
+,		'Violações ' 					|| VIOLACOES  	|| 
+		' / Incidentes '				|| INCIDENTES 	||
+		' > Encerrados: ' 				|| ENCERRADOS 	|| 
+		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
+		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Encaminhados: ' 			|| ENCAMINHADOS	||
+		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRS_COMPLEXO AS A;
 
 INSERT OR REPLACE INTO INDICADORES(INDICADOR, ORDEM, VALOR, OBSERVACAO)  
