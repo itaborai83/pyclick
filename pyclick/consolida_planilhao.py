@@ -119,16 +119,6 @@ class App(object):
             if not pd.isna(chamado_pai):
                 mesa_evt_mapping[ mesa ].add(chamado_pai)
     
-    def report_event_mapping(self, mesa_evt_mapping):
-        currdir = os.getcwd()
-        os.chdir(util.get_consolidated_dir(self.dir_apuracao))
-        with open("mapa_mesa_evento.tsv", "w") as fh:
-            print("mesa", "evento", sep='\t', file=fh)
-            for mesa, eventos in sorted(mesa_evt_mapping.items()):
-                for evento in eventos:
-                    print(mesa, evento, sep='\t', file=fh)
-        os.chdir(currdir)
-        
     def read_mesas(self):
         logger.info('recuperando a listagem de mesas para apuração')
         return util.read_mesas(self.dir_apuracao)
@@ -242,6 +232,15 @@ class App(object):
         finally:
             os.chdir(currdir)
     
+    def filter_incidents(self, all_events, df_open, dfs_closed):
+        logger.info("filtrando eventos pelo mapeamento de mesa")
+        df_open = df_open[ df_open.id_chamado.isin(all_events) ].copy()
+        for i in range(len(dfs_closed)):
+            df_closed = dfs_closed[i]
+            df_closed = df_closed[ df_closed.id_chamado.isin(all_events) ].copy()
+            dfs_closed[i] = df_closed
+        return df_open, dfs_closed
+        
     def run(self):
         try:
             logger.info('começando a consolidação do planilhão - versão %d.%d.%d', *self.VERSION)
@@ -261,6 +260,16 @@ class App(object):
                 df = self.add_dados_oferta(df, df_ofertas)
                 self.update_event_mapping(mesa_evt_mapping, df)
                 dfs_closed.append(df)
+
+            logger.info('filtrando incidentes com base no mapeamento de mesas')
+            all_events = set()
+            for mesa, events in sorted(mesa_evt_mapping.items()):
+                if mesa in mesas:
+                    logger.info('particionando mesa %s com %d eventos', mesa, len(events))
+                    all_events.update(events)
+            
+            # to speed up duplicated action removal
+            df_open, dfs_closed = self.filter_incidents(all_events, df_open, dfs_closed)
             
             logger.info('concatenando planilhão')
             df_planilhao = self.concat_planilhas(df_open, dfs_closed)
@@ -270,22 +279,8 @@ class App(object):
             logger.info('ordenando planilhão')
             util.sort_rel_medicao(df_planilhao)
                         
-            #logger.info('relatório consolidado')
-            #df = df_planilhao[ df_planilhao.ultima_acao_nome.isin(['Atribuir ao Fornecedor', 'Resolver', 'Encerrar']) ]
-            #currdir = os.getcwd()
-            #os.chdir(util.get_consolidated_dir(self.dir_apuracao))
-            #df.to_excel("consolidado_gustavo.xlsx", index=False)
-            #os.chdir(currdir)
-            #del df
-            
-            logger.info('iniciando loop de particionamento')
-            all_events = set()
-            for mesa, events in sorted(mesa_evt_mapping.items()):
-                if mesa in mesas:
-                    logger.info('particionando mesa %s com %d eventos', mesa, len(events))
-                    all_events.update(events)
             logger.info("consolidando planilhão com %d eventos", len(all_events))
-            df = df_planilhao[ df_planilhao.id_chamado.isin(all_events) ]
+            df = df_planilhao[ df_planilhao.id_chamado.isin(all_events) ] # not necessary
             logger.info("consolidando planilhão com %d linhas", len(df))
             self.save_consolidado(df)
         except:
