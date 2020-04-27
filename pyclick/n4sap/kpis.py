@@ -15,6 +15,7 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 logger = util.get_logger('gerar_indicadores')
 
 SQL_COMPUTE_KPIS = util.get_query("CALCULA_INDICADORES")
+SQL_INCIDENTES_ABERTOS_VELHOS = util.get_query("INCIDENTES_ABERTOS_VELHOS")
 
 class App(object):
     
@@ -73,7 +74,43 @@ class App(object):
         sql = "SELECT * FROM VW_REL_MEDICAO "
         df = pd.read_sql(sql, conn)
         df.to_excel(xw, sheet_name="REL_MEDICAO", index=False)
-    
+
+    def write_source_prp_details(self, conn, xw):
+        logger.info("exporting PRP details")
+        sql = "SELECT * FROM VW_KPI_PRP_DETALHES"
+        df = pd.read_sql(sql, conn)
+        df.to_excel(xw, sheet_name="VW_KPI_PRP_DETALHES", index=False)
+
+    def write_source_pro_details(self, conn, xw):
+        logger.info("exporting PRO details")
+        sql = "SELECT * FROM VW_KPI_PRO_DETALHES;"
+        df = pd.read_sql(sql, conn)
+        df.to_excel(xw, sheet_name="VW_KPI_PRO_DETALHES", index=False)
+
+    def write_source_prc_details(self, conn, xw):
+        logger.info("exporting PRC details")
+        sql = "SELECT * FROM VW_KPI_PRC_DETALHES;"
+        df = pd.read_sql(sql, conn)
+        df.to_excel(xw, sheet_name="VW_KPI_PRC_DETALHES", index=False)
+
+    def write_source_prs_details(self, conn, xw):
+        logger.info("exporting PRS details")
+        sql = "SELECT * FROM VW_KPI_PRS_DETALHES;"
+        df = pd.read_sql(sql, conn)
+        df.to_excel(xw, sheet_name="VW_KPI_PRS_DETALHES", index=False)
+
+    def write_source_cri_details(self, conn, xw):
+        logger.info("exporting CRI details")
+        sql = "SELECT * FROM VW_KPI_CRI_DETALHES;"
+        df = pd.read_sql(sql, conn)
+        df.to_excel(xw, sheet_name="VW_KPI_CRI_DETALHES", index=False)
+
+    def write_source_sit_details(self, conn, xw):
+        logger.info("exporting SIT details")
+        sql = "SELECT * FROM VW_KPI_SIT_DETALHES;"
+        df = pd.read_sql(sql, conn)
+        df.to_excel(xw, sheet_name="VW_KPI_SIT_DETALHES", index=False)
+        
     def vacuum(self, conn):
         logger.info("vacuuming database")
         conn.execute("VACUUM")
@@ -92,6 +129,12 @@ class App(object):
                 self.write_missing_data(conn, xw)
                 self.write_override_data(conn, xw)
                 self.write_source_data(conn, xw)
+                self.write_source_prp_details(conn, xw)
+                self.write_source_pro_details(conn, xw)
+                self.write_source_prc_details(conn, xw)
+                self.write_source_prs_details(conn, xw)
+                self.write_source_cri_details(conn, xw)
+                self.write_source_sit_details(conn, xw)
                 self.vacuum(conn)
             logger.info('finished')
         except:
