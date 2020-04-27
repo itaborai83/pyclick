@@ -211,6 +211,7 @@ class App(object):
             conn.commit()
             if self.datafix:
                 logger.warning("STOPING LOADING PROCEDURE FOR A DATAFIX TO BE APPLIED")
+                logger.warning("(remember to close the database after data analysis)")
                 conn.close()
                 while True:
                     ans = input('type "ok" to continue or ctrl-c to abort > ').strip()
