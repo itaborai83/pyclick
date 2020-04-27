@@ -81,3 +81,6 @@ python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-04-19-OPEN.db DA
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-04-20-OPEN.db DADOS\STAGING\2020-04-21.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-04-21-OPEN.db DADOS\STAGING\2020-04-22.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-04-22-OPEN.db DADOS\STAGING\2020-04-23.csv DADOS\IMPORT
+python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-04-23-OPEN.db DADOS\STAGING\2020-04-24.csv DADOS\IMPORT
+python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-04-24-OPEN.db DADOS\STAGING\2020-04-25.csv DADOS\IMPORT
+python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-04-25-OPEN.db DADOS\STAGING\2020-04-26.csv DADOS\IMPORT
