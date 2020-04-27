@@ -48,7 +48,7 @@ class App(object):
         # if the incident is on the open list but not in the open accumulator, mark it for insertion
         ids_to_add_to_acc = ids_open.difference(ids_open_acc)
         
-        # nothing to be done in the following case. Opened and closed on the same day or it is a bug in the     extraction query
+        # nothing to be done in the following case. Opened and closed on the same day or it is a bug in the  extraction query
         # ids_closed.difference(open_acc)
         
         # remove everything marked for removal and for updating
@@ -191,14 +191,23 @@ class App(object):
         conn.commit()
         conn.execute("VACUUM")
         conn.close()
+        del conn
+        logger.info('compressing...')
+        util.compress(db_name)
         
     def read_open_acc(self):
-        if self.open_acc is None:
-            return None
-        conn = sqlite3.connect(self.open_acc)
+        assert self.open_acc is not None
+        if self.open_acc.endswith('.gz'):
+            decompressed_name = util.decompress(self.open_acc)
+            conn = sqlite3.connect(decompressed_name)
+        else:
+            conn = sqlite3.connect(self.open_acc)
         sql = "SELECT * FROM " + config.INCIDENT_TABLE
         df = pd.read_sql(sql, conn)
         util.sort_rel_medicao(df)
+        conn.close()
+        if self.open_acc.endswith('.gz'):
+            decompressed_name = util.compress(decompressed_name)
         return df
         
     def run(self):
@@ -218,11 +227,16 @@ class App(object):
             util.sort_rel_medicao(df_closed)
             util.sort_rel_medicao(df_open)
             path, filename_ext = os.path.split(fullpath)
-            filename, ext = filename_ext.split('.')
+            if filename_ext.endswith('.gz'):
+                filename, ext, gz = filename_ext.split('.')
+            else:
+                filename, ext = filename_ext.split('.')
             open_filename = os.path.join(self.import_dir, filename + "-OPEN.db")
             closed_filename = os.path.join(self.import_dir, filename + "-CLOSED.db")
             self.save(df_open_acc, open_filename)
             self.save(df_closed, closed_filename)
+            if filename_ext.endswith('.gz'):
+                util.compress(filename + '.' + ext)                
         except:
             logger.exception('an error has occurred')
             raise

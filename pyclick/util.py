@@ -3,6 +3,8 @@ import os.path
 import shutil
 import logging
 import datetime as dt
+import gzip
+import shutil
 
 LOGGER_FORMAT = '%(asctime)s:%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d\n\t%(message)s\n'
 LOGGER_FORMAT = '%(levelname)s - %(filename)s:%(funcName)s:%(lineno)s - %(message)s'
@@ -60,3 +62,42 @@ def read_mesas(dir_apuracao):
 
 def next_date(d):
     return str((dt.datetime.strptime(d, '%Y-%m-%d') + dt.timedelta(1)).date())
+
+
+def decompress(filename):
+    # file needs to be gzipped
+    assert filename.endswith(".gz") 
+    # file needs to exist
+    assert os.path.exists(filename) 
+    parts = filename.split(".") 
+    # file needs to have a name, an extension and .gzip
+    assert len(parts) == 3 
+    name, extension = parts[0], parts[1]
+    decompressed_filename = name + "." + extension
+    # the decompressed file must not exist
+    assert not os.path.exists(decompressed_filename)
+    with gzip.open(filename, 'rb') as f_in:
+        with open(decompressed_filename, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    os.unlink(filename)
+    return decompressed_filename
+    
+def compress(filename):
+    try:
+        # file needs to not be gzipped
+        assert not filename.endswith(".gz") 
+        # file needs to exist
+        assert os.path.exists(filename) 
+        parts = filename.split(".") 
+        # file needs to have a name and an extension
+        assert len(parts) == 2 
+        name, extension = parts[0], parts[1]
+        compressed_filename = name + "." + extension + ".gz"
+        # the compressed file must not exist
+        assert not os.path.exists(compressed_filename)
+        with open(filename, 'rb') as f_in:
+            with gzip.open(compressed_filename, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+        return compressed_filename
+    finally:
+        os.unlink(filename)

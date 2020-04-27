@@ -36,10 +36,13 @@ class App(object):
     def read_dump(self, dump_file):
         filename = os.path.join(self.dir_import, dump_file)
         logger.info('lendo arquivo %s', filename)
-        conn = sqlite3.connect(filename)
+        new_filename = util.decompress(filename)
+        conn = sqlite3.connect(new_filename)
         sql = "SELECT * FROM " + config.INCIDENT_TABLE
         df = pd.read_sql(sql, conn)
         util.sort_rel_medicao(df)
+        del conn
+        util.compress(new_filename)
         return df
     
     def concat_planilhas(self, df_open , dfs_closed):
