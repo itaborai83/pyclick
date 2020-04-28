@@ -96,19 +96,7 @@ class App(object):
         except:
             logger.exception("could not export mesa %s !!! ... skipping", orig_mesa)
             os.chdir(currdir)
-            
-    def read_planilhas(self):
-        logger.info('listando arquivos do planilhao')
-        currdir = os.getcwd()
-        try:
-            path = util.get_input_dir(self.dir_apuracao)
-            os.chdir(path)
-            arquivos = list(sorted(glob.iglob(config.INPUT_FILES_GLOB)))      
-            os.chdir(currdir)
-            return arquivos
-        finally:
-            os.chdir(currdir)
-            
+                        
     def update_event_mapping(self, mesa_evt_mapping, df):
         logger.info('atualizando mapeamento evento mesa')
         df_mesas        = df[ ~(df.mesa.isna()) ]
