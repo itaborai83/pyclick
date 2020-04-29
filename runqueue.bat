@@ -14,9 +14,9 @@ python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-12-OPEN.db.gz
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-13-OPEN.db.gz DADOS\STAGING\2020-02-14.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-14-OPEN.db.gz DADOS\STAGING\2020-02-15.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-15-OPEN.db.gz DADOS\STAGING\2020-02-16.csv DADOS\IMPORT
-python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-15-OPEN.db.gz DADOS\STAGING\2020-02-17.csv DADOS\IMPORT
-python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-16-OPEN.db.gz DADOS\STAGING\2020-02-18.csv DADOS\IMPORT
-python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-17-OPEN.db.gz DADOS\STAGING\2020-02-19.csv DADOS\IMPORT
+python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-16-OPEN.db.gz DADOS\STAGING\2020-02-17.csv DADOS\IMPORT
+python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-17-OPEN.db.gz DADOS\STAGING\2020-02-18.csv DADOS\IMPORT
+python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-18-OPEN.db.gz DADOS\STAGING\2020-02-19.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-19-OPEN.db.gz DADOS\STAGING\2020-02-20.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-20-OPEN.db.gz DADOS\STAGING\2020-02-21.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-02-21-OPEN.db.gz DADOS\STAGING\2020-02-22.csv DADOS\IMPORT
@@ -43,9 +43,9 @@ python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-12-OPEN.db.gz
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-13-OPEN.db.gz DADOS\STAGING\2020-03-14.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-14-OPEN.db.gz DADOS\STAGING\2020-03-15.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-15-OPEN.db.gz DADOS\STAGING\2020-03-16.csv DADOS\IMPORT
-python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-15-OPEN.db.gz DADOS\STAGING\2020-03-17.csv DADOS\IMPORT
-python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-16-OPEN.db.gz DADOS\STAGING\2020-03-18.csv DADOS\IMPORT
-python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-17-OPEN.db.gz DADOS\STAGING\2020-03-19.csv DADOS\IMPORT
+python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-16-OPEN.db.gz DADOS\STAGING\2020-03-17.csv DADOS\IMPORT
+python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-17-OPEN.db.gz DADOS\STAGING\2020-03-18.csv DADOS\IMPORT
+python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-18-OPEN.db.gz DADOS\STAGING\2020-03-19.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-19-OPEN.db.gz DADOS\STAGING\2020-03-20.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-20-OPEN.db.gz DADOS\STAGING\2020-03-21.csv DADOS\IMPORT
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-03-21-OPEN.db.gz DADOS\STAGING\2020-03-22.csv DADOS\IMPORT
