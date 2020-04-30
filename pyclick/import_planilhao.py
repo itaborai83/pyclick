@@ -18,6 +18,9 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('import_planilhao')
 
+SQL_FILE_INDEX_DDL = util.get_query('IMPORT__FILE_INDEX_DDL')
+SQL_FILE_INDEX_INSERT = util.get_query('IMPORT__FILE_INDEX_INSERT')
+
 class App(object):
     
     VERSION = (0, 0, 0)
@@ -29,9 +32,9 @@ class App(object):
         
     def update_open_acc(self, df_open_acc, df_open, df_closed):
         logger.info('updating open incident accumulator')
-        ids_open_acc = set(df_open_acc.id_chamado.to_list())
-        ids_open = set(df_open.id_chamado.to_list())
-        ids_closed = set(df_closed.id_chamado.to_list())
+        ids_open_acc = set(df_open_acc.id_acao.to_list())
+        ids_open = set(df_open.id_acao.to_list())
+        ids_closed = set(df_closed.id_acao.to_list())
         
         # same incident can't be open and closed in the same file
         ids_open_and_closed = ids_open.intersection(ids_closed)
@@ -57,26 +60,25 @@ class App(object):
         
         # add everything marked for insertion and for updating
         ids_to_add_or_update_acc = ids_to_add_to_acc.union(ids_to_update_acc)
-        df_to_add = df_open[ df_open.id_chamado.isin(ids_to_add_or_update_acc) ]
+        df_to_add = df_open[ df_open.id_acao.isin(ids_to_add_or_update_acc) ]
         df_open_acc = df_new_open_acc.append(df_to_add, ignore_index=True, verify_integrity=True)
         
         # sort and return new version
         util.sort_rel_medicao(df_open_acc)
         
-        ids_open_acc = set(df_open_acc.id_chamado.to_list())
-        logger.info('%d events open with %d actions associated', len(ids_open_acc), len(df_open_acc))
+        ids_open_acc = set(df_open_acc.id_acao.to_list())
         return df_open_acc
 
     def process_ids(self, df):
-        def conv(value):
-            if pd.isna(value):
-                return value
-            else:
-                return str(value)
-        df[ 'id_chamado' ] = df['id_chamado'].apply(conv)
-        df[ 'chamado_pai' ] = df['chamado_pai'].apply(conv)
-        df[ 'id_acao'  ] = pd.to_numeric( df[ 'id_acao' ], errors='coerce' )
-        df.dropna(subset = [ 'id_acao' ], inplace=True)
+        def to_str(value):
+            return (value if pd.isna(value) else str(value))
+        def to_int(value):
+            return (value if pd.isna(value) else int(value))
+        df[ 'id_chamado' ]  = df['id_chamado'].apply(to_str)
+        df[ 'chamado_pai' ] = df['chamado_pai'].apply(to_str)
+        df[ 'id_acao'  ]    = df['id_acao'].apply(to_int)
+        #df[ 'id_acao'  ] = pd.to_numeric( df[ 'id_acao' ], errors='coerce' )
+        #df.dropna(subset = [ 'id_acao' ], inplace=True)
     
     def drop_unnanmed_columns(self, df):
         headers = df.columns.to_list()
@@ -209,6 +211,48 @@ class App(object):
         if self.open_acc.endswith('.gz'):
             decompressed_name = util.compress(decompressed_name)
         return df
+
+    def index_file(self, df):
+        logger.info('indexing staging file')
+        db_filename = os.path.join(self.import_dir, config.FILE_INDEX_DB)
+        conn = sqlite3.connect(db_filename)
+        conn.executescript(SQL_FILE_INDEX_DDL)
+        logger.info("clearing stale index data")
+        conn.execute("DELETE FROM FILE_INDEX WHERE NOME_ARQ = ?", (self.staging_file,))
+        chamados = {}
+        logger.debug('computing incident data')
+        for row in df.itertuples():
+            if row.id_chamado not in chamados:
+                chamados[ row.id_chamado ] = {
+                    'staging_file'  : self.staging_file,
+                    'chamado_pai'   : row.chamado_pai,
+                    'aberto'        : 'N' if pd.isna(row.data_resolucao_chamado) else 'S',
+                    'qtd_acoes'     : 1,
+                    'min_id_acao'   : int(row.id_acao),
+                    'max_id_acao'   : int(row.id_acao),
+                }
+            else:
+                chamado = chamados[ row.id_chamado ]
+                chamado[ 'qtd_acoes'   ] += 1
+                chamado[ 'min_id_acao' ] = min(int(row.id_acao), chamado[ 'min_id_acao' ])
+                chamado[ 'max_id_acao' ] = max(int(row.id_acao), chamado[ 'max_id_acao' ])
+        logger.debug('generating sql parameters')
+        params_set = []
+        for chamado, valores in chamados.items():
+            params_set.append((
+                valores[ 'staging_file' ],
+                chamado,
+                valores[ 'chamado_pai'  ],
+                valores[ 'aberto'       ],
+                valores[ 'qtd_acoes'    ],
+                valores[ 'min_id_acao'  ],
+                valores[ 'max_id_acao'  ],
+            ))
+        del chamados
+        logger.debug('inserting index data')
+        conn.executemany(SQL_FILE_INDEX_INSERT, params_set)
+        conn.commit()
+        conn.close()
         
     def run(self):
         try:
@@ -216,6 +260,7 @@ class App(object):
             fullpath = self.preprocess_staging_file(self.staging_file)
             df = self.read_staging_file(fullpath)
             df = self.rename_columns(df)
+            self.index_file(df)
             self.replace_tabs_enters(df)
             self.process_ids(df)
             if self.open_acc is None:
