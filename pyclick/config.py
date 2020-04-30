@@ -11,7 +11,7 @@ BEGIN_SQL               = "BEGIN.sql"
 BEFORE_LOAD_SQL         = "BEFORE_LOAD.sql"
 AFTER_LOAD_SQL          = "AFTER_LOAD.sql"
 END_SQL                 = "END.sql"
-
+FILE_INDEX_DB           = "file_index.db"
 
 SEPARATOR_HEADER        = "sep="
 INPUT_FILENAME_PREFIX   = "Generate_Report_Query_Medicao_"
