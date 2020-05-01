@@ -18,8 +18,10 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('import_planilhao')
 
-SQL_FILE_INDEX_DDL = util.get_query('IMPORT__FILE_INDEX_DDL')
-SQL_FILE_INDEX_INSERT = util.get_query('IMPORT__FILE_INDEX_INSERT')
+SQL_FILE_INDEX_DDL      = util.get_query('IMPORT__FILE_INDEX_DDL')
+SQL_FILE_INDEX_INSERT   = util.get_query('IMPORT__FILE_INDEX_INSERT')
+SQL_REL_MEDICAO_DDL     = util.get_query("IMPORT__REL_MEDICAO_DDL")
+SQL_REL_MEDICAO_UPSERT  = util.get_query("IMPORT__REL_MEDICAO_UPSERT")
 
 class App(object):
     
@@ -32,9 +34,9 @@ class App(object):
         
     def update_open_acc(self, df_open_acc, df_open, df_closed):
         logger.info('updating open incident accumulator')
-        ids_open_acc = set(df_open_acc.id_acao.to_list())
-        ids_open = set(df_open.id_acao.to_list())
-        ids_closed = set(df_closed.id_acao.to_list())
+        ids_open_acc = set(df_open_acc.id_chamado.to_list())
+        ids_open     = set(df_open.id_chamado.to_list())
+        ids_closed   = set(df_closed.id_chamado.to_list())
         
         # same incident can't be open and closed in the same file
         ids_open_and_closed = ids_open.intersection(ids_closed)
@@ -47,20 +49,28 @@ class App(object):
         
         # if the incidente is on the open list and it is in the open accumulator, it has new actions
         ids_to_update_acc = ids_open_acc.intersection(ids_open)
-        
+
         # if the incident is on the open list but not in the open accumulator, mark it for insertion
         ids_to_add_to_acc = ids_open.difference(ids_open_acc)
-        
+
         # nothing to be done in the following case. Opened and closed on the same day or it is a bug in the  extraction query
         # ids_closed.difference(open_acc)
         
-        # remove everything marked for removal and for updating
-        ids_to_remove_or_update_from_acc = ids_to_remove_from_acc.union(ids_to_update_acc)
-        df_new_open_acc = df_open_acc[ ~(df_open_acc.id_chamado.isin(ids_to_remove_or_update_from_acc)) ]
+        # retrieve action ids from the open and open accumulator data sets
+        action_ids_open_acc = set(df_open_acc[ df_open_acc.id_chamado.isin(ids_to_update_acc) ].id_acao.to_list())
+        action_ids_open     = set(df_open[ df_open.id_chamado.isin(ids_to_update_acc) ].id_acao.to_list())
+        # the intersection between the action ids needs to be removed from the accumulator to be reinserted after
+        action_ids_to_remove_from_acc = action_ids_open_acc.intersection(action_ids_open)
         
-        # add everything marked for insertion and for updating
+        # remove closed incident ids and intersecting action ids
+        df_new_open_acc = df_open_acc[ ~(
+                (df_open_acc.id_chamado.isin(ids_to_remove_from_acc)) | 
+                (df_open_acc.id_acao.isin(action_ids_to_remove_from_acc)) 
+        ) ]
+        
+        # add everything marked for insertion
         ids_to_add_or_update_acc = ids_to_add_to_acc.union(ids_to_update_acc)
-        df_to_add = df_open[ df_open.id_acao.isin(ids_to_add_or_update_acc) ]
+        df_to_add = df_open[ df_open.id_chamado.isin(ids_to_add_or_update_acc) ]
         df_open_acc = df_new_open_acc.append(df_to_add, ignore_index=True, verify_integrity=True)
         
         # sort and return new version
@@ -189,7 +199,9 @@ class App(object):
     def save(self, df, db_name):
         logger.info('salvando dataframe como %s', db_name)
         conn = sqlite3.connect(db_name)
-        df.to_sql(config.INCIDENT_TABLE, conn, index=False, if_exists="replace")
+        conn.executescript(SQL_REL_MEDICAO_DDL)
+        param_sets = list(df.itertuples(index=False))
+        conn.executemany(SQL_REL_MEDICAO_UPSERT, param_sets)
         conn.commit()
         conn.execute("VACUUM")
         conn.close()
@@ -260,9 +272,9 @@ class App(object):
             fullpath = self.preprocess_staging_file(self.staging_file)
             df = self.read_staging_file(fullpath)
             df = self.rename_columns(df)
-            self.index_file(df)
             self.replace_tabs_enters(df)
             self.process_ids(df)
+            self.index_file(df)
             if self.open_acc is None:
                 df_open_acc = pd.DataFrame(columns=df.columns)
             else:
