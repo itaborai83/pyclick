@@ -1,6 +1,77 @@
 import bisect
 import unittest
 
+
+class MRangeDiffInstant(object):
+    
+    """
+        from mrange_analysis.xlsx on ./docs
+        invalid states are not represented
+        
+        BEGIN SELF           - bs
+        END SELF             - es
+        BEGIN OTHER          - bo
+        END OTHER            - eo
+        COLLECTING SELF IN   - in_cs
+        COLLECTING OTHER IN  - in_co
+        ->
+        CONSIDER             - cons
+        COLLECTING SELF OUT  - out_cs
+        COLLECTING OTHER OUT - out_co
+    """
+
+    DIFFERENCE_CASES = {
+        # non valid cases are not represented
+        ( True,  True,  True,  True,  False, False ) : ( False, False, False ),
+        ( True,  True,  True,  False, False, False ) : ( False, False, True  ),
+        ( True,  True,  False, True,  False, True  ) : ( False, False, False ),
+        ( True,  True,  False, False, False, True  ) : ( False, False, True  ),
+        ( True,  True,  False, False, False, False ) : ( True,  False, False ),
+        ( True,  False, True,  True,  False, False ) : ( False, True,  False ),
+        ( True,  False, True,  False, False, False ) : ( False, True,  True  ),
+        ( True,  False, False, True,  False, True  ) : ( False, True,  False ),
+        ( True,  False, False, False, False, True  ) : ( False, True,  True  ),
+        ( True,  False, False, False, False, False ) : ( True,  True,  False ),
+        ( False, True,  True,  True,  True,  False ) : ( False, False, False ),
+        ( False, True,  True,  False, True,  False ) : ( False, False, True  ),
+        ( False, True,  False, True,  True,  True  ) : ( False, False, False ),
+        ( False, True,  False, False, True,  True  ) : ( False, False, True  ),
+        ( False, True,  False, False, True,  False ) : ( True,  False, False ),
+        ( False, False, True,  True,  True,  False ) : ( False, True,  False ),
+        ( False, False, True,  True,  False, False ) : ( False, False, True  ),
+        ( False, False, True,  False, True,  False ) : ( False, True,  True  ),
+        ( False, False, True,  False, False, False ) : ( False, False, True  ),
+        ( False, False, False, True,  True,  True  ) : ( False, True,  False ),
+        ( False, False, False, True,  False, True  ) : ( False, False, False ),
+        ( False, False, False, False, True,  True  ) : ( False, True,  True  ),
+        ( False, False, False, False, True,  False ) : ( True,  True,  False ),
+        ( False, False, False, False, False, True  ) : ( False, False, True  ),
+        ( False, False, False, False, False, False ) : ( False, False, False ),
+    }
+    
+    __slots__ = [ 'begin_self', 'end_self', 'begin_other', 'end_other' ]
+    
+    def __init__(self):
+        self.begin_self     = False
+        self.end_self       = False
+        self.begin_other    = False
+        self.end_other      = False
+        
+    def __repr__(self):
+        return f"Row({repr(self.begin_self)}, {repr(self.end_self)}, {repr(self.begin_other)}, {repr(self.end_other)})"
+    
+    def get_transition(self, collecting_self, collecting_other):
+        consider, new_collecting_self, new_collecting_other = self.DIFFERENCE_CASES[ (
+            self.begin_self,
+            self.end_self,
+            self.begin_other,
+            self.end_other,
+            collecting_self,
+            collecting_other
+        ) ]
+        return consider, new_collecting_self, new_collecting_other
+    
+
 class Range(object):
     
     __slots__ = [ 'hi', 'low' ]
@@ -15,6 +86,9 @@ class Range(object):
     
     def copy(self):
         return Range(self.low, self.hi)
+    
+    def list_elements(self):
+        return list(range(self.low, self.hi+1))
         
     def overlaps_with(self, other):
         # TODO: optimize
@@ -132,6 +206,12 @@ class MRange(object):
     
     
         return self.add(Range(low, hi))
+    
+    def copy(self):
+        copy = MRange()
+        for range in self.ranges:
+            copy.add_range(range)
+        return copy
         
     def add(self, low, hi):
         return self.add_range(Range(low, hi))
@@ -179,7 +259,7 @@ class MRange(object):
         else:
             raise ValueError("unmergeable overlap")
         assert 1 == 2 # should not happen            
-    
+            
     def contains(self, elmt):
         if not self.total_range.contains(elmt):
             return False
@@ -194,89 +274,46 @@ class MRange(object):
     def difference(self, other):
         # beware when making changes
         # this is actually harder than it looks
-        BEGIN       = 1
-        END         = 2
-        SELF        = 1
-        OTHER       = 2
-        BEGIN_SELF  = 1
-        BEGIN_OTHER = 2
-        END_OTHER   = 3
-        END_SELF    = 4
-        queue   = []
         
+        if len(other) == 0:
+            return self.copy()
+        if len(self) == 0:
+            return self.copy()
+        Row = MRangeDiffInstant
+        whens = {}
+        for when in self.total_range.list_elements():
+            whens[ when ] = Row()
+        
+        for when in other.total_range.list_elements():
+            if when not in whens:
+                whens[ when ] = Row()
+            
         for range in self.ranges:
-            item = (range.low, BEGIN_SELF)
-            bisect.insort(queue, item)
-            item = (range.hi, END_SELF)
-            bisect.insort(queue, item)
+            whens[ range.low ].begin_self = True
+            whens[ range.hi ].end_self = True
         
         for range in other.ranges:
-            item = (range.low, BEGIN_OTHER)
-            bisect.insort(queue, item)
-            item = (range.hi, END_OTHER)
-            bisect.insort(queue, item)
+            whens[ range.low ].begin_other = True
+            whens[ range.hi ].end_other = True
         
+        collecting_self = False
+        collecting_other = False
+        result_tmp = []
+        for when, row in whens.items():            
+            consider, collecting_self, collecting_other = row.get_transition(collecting_self, collecting_other)
+            if consider:
+                result_tmp.append(when)
         result = MRange()
-        collect_self = False
-        collect_other = False
-        low = None
-        for value, kind_who in queue:
-            if kind_who == BEGIN_SELF:
-                kind, who = BEGIN, SELF
-            elif kind_who == END_SELF:
-                kind, who = END, SELF
-            elif kind_who == BEGIN_OTHER:
-                kind, who = BEGIN, OTHER
-            elif kind_who == END_OTHER:
-                kind, who = END, OTHER
+        if len(result_tmp) == 0:
+            return result
+        low, hi = result_tmp[ 0 ], result_tmp[ 0 ]
+        for when in result_tmp:
+            if hi + 1 == when: # contiguous
+                hi = when
             else:
-                assert 1 == 2 # should not happen
-            if kind == BEGIN and who == SELF:
-                collect_self = True
-            elif kind == END and who == SELF:
-                collect_self = False
-            elif kind == BEGIN and who == OTHER:
-                collect_other = True
-            elif kind == END and who == OTHER:
-                collect_other = False
-            else:
-                assert 1 == 2
-            
-            if collect_self and not collect_other:
-                if low is None and who == SELF:
-                    low = value
-                elif low is None and who == OTHER:
-                    low = value + 1
-                else:
-                    assert 1 == 2
-            elif not collect_self and not collect_other:
-                if low is not None and who == SELF:
-                    if low <= value:
-                        result.add(low, value)
-                    else:
-                        result.add(value, value)
-                    low = None
-                    print("AAA.1")
-                elif low is not None and who == OTHER:
-                    result.add(low, value)
-                    low = None
-                    print("AAA.2")
-            elif collect_other and collect_self: 
-                if low is not None and who == SELF:
-                    result.add(low, value)
-                    low = None
-                    print("BBB.1")
-                elif low is not None and who == OTHER:
-                    result.add(low, value-1)
-                    low = None
-                    print("BBB.2")
-            elif collect_other and not collect_self: 
-                if low is not None:
-                    result.add(low, value)
-                    low = None
-                    print("CCC")
-            else:
-                assert 1 == 2
+                result.add(low, hi)
+                low, hi = when, when
+        result.add(low, hi)
         return result
             
 class RangeTest(unittest.TestCase):
@@ -311,6 +348,9 @@ class RangeTest(unittest.TestCase):
         self.assertTrue(self.r5.overlaps_with(self.r7))
         self.assertFalse(self.r5.overlaps_with(self.r8))
     
+    def test_it_returns_the_elements_in_between(self):
+        self.assertEqual(self.r1.list_elements(), [1, 2, 3])
+        
     def test_it_adds_ranges_to_an_mrange(self):
         m = MRange().add_range(self.r4).add_range(self.r1)
         self.assertEqual(m.total_range, Range(1, 6))
@@ -370,7 +410,7 @@ class RangeTest(unittest.TestCase):
         m = MRange().add(0, 2).add(3, 5)
         with self.assertRaises(ValueError):
             m.add(1, 4)
-    """
+    
     def test_it_returns_itself_when_differencing_against_an_empty_mrange(self):
         m1 = MRange().add(1, 2).add(3, 4)
         m2 = MRange()
@@ -382,7 +422,7 @@ class RangeTest(unittest.TestCase):
         m2 = MRange().add(1, 2).add(3, 4)
         m3 = m1.difference(m2)
         self.assertEqual(m3, m1)
-    
+    """
     def test_it_returns_itself_when_differencing_against_a_non_overlapping_mrange(self):
         m1 = MRange().add(1, 2).add(5, 6)
         m2 = MRange().add(3, 4)
@@ -401,14 +441,14 @@ class RangeTest(unittest.TestCase):
     def test_it_removes_the_weekends_from_may_2020(self):
         may = MRange().add(1, 31)
         weekends = MRange().add(2, 3).add(9, 10).add(16, 17).add(23, 24).add(30, 31)
-        weekdays = MRange().add(1, 1).add(4, 8).add(11, 15).add(18, 22).add(25, 30)
+        weekdays = MRange().add(1, 1).add(4, 8).add(11, 15).add(18, 22).add(25, 29)
         result = may.difference(weekends)
-        print()
-        print('may      ', may)
-        print('weekends ', weekends)
-        print('weekdays ', weekdays)
-        print('result   ', result)
-        print()
+        #print()
+        #print('may      ', may)
+        #print('weekends ', weekends)
+        #print('weekdays ', weekdays)
+        #print('result   ', result)
+        #print()
         self.assertEqual(result, weekdays)
         
         
