@@ -64,18 +64,53 @@ def read_mesas(dir_apuracao):
                 result.append(mesa)
         return result
 
-def next_date(d):
-    return str((dt.datetime.strptime(d, '%Y-%m-%d') + dt.timedelta(1)).date())
-
-def strip_ms(txt):
-    if pd.isna(txt) or txt is None:
+def parse_date(txt):
+    if pd.isna(txt) or txt is None or txt == "":
         return txt
-    else:
-        m = DATETIME_WITH_MS_REGEX.match(txt)
-        if m:
-            return m[ 1 ]
-        else:
-            return txt
+    return dt.datetime.strptime(txt, '%Y-%m-%d').date()
+
+def parse_time(txt):
+    if pd.isna(txt) or txt is None or txt == "":
+        return txt
+    return dt.datetime.strptime(txt, '%H:%M:%S').time()
+
+def parse_datetime(txt):
+    if pd.isna(txt) or txt is None or txt == "":
+        return txt
+    return dt.datetime.strptime(txt, '%Y-%m-%d %H:%M:%S')
+
+def unparse_date(d):
+    if pd.isna(d) or d is None:
+        return d
+    return d.strftime('%Y-%m-%d')
+
+def unparse_time(d):
+    if pd.isna(d) or d is None:
+        return d
+    return d.strftime('%H:%M:%S')
+    
+def unparse_datetime(d):
+    if pd.isna(d) or d is None:
+        return d
+    return d.strftime('%Y-%m-%d %H:%M:%S')
+    
+def next_date(txt):
+    return str((dt.datetime.strptime(txt, '%Y-%m-%d') + dt.timedelta(1)).date())
+
+def datetime2tstamp(txt):
+    dt1 = parse_datetime(txt)
+    return int(dt1.timestamp())
+
+def tstamp2datetime(d):
+    return dt.datetime.fromtimestamp(d).strftime('%Y-%m-%d %H:%M:%S')
+    
+def strip_ms(txt):
+    if pd.isna(txt) or txt is None or txt == "":
+        return txt
+    m = DATETIME_WITH_MS_REGEX.match(txt)
+    if not m:
+        return txt
+    return m[ 1 ]
         
 def decompress(filename):
     # file needs to be gzipped
