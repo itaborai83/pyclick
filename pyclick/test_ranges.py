@@ -1,76 +1,137 @@
 import bisect
 import unittest
+import datetime as dt
+from pyclick.util import parse_datetime
 
-
-class MRangeDiffInstant(object):
+class WorkDay(object):
     
-    """
-        from mrange_analysis.xlsx on ./docs
-        invalid states are not represented
+    # TODO: refactor to use mranges for working hours
+    
+    FIRST_SECOND    = dt.time(0, 0, 0)
+    LAST_SECOND     = dt.time(23, 59, 59)
+    SECONDS_IN_DAY  = 24 * 60 * 60
         
-        BEGIN SELF           - bs
-        END SELF             - es
-        BEGIN OTHER          - bo
-        END OTHER            - eo
-        COLLECTING SELF IN   - in_cs
-        COLLECTING OTHER IN  - in_co
-        ->
-        CONSIDER             - cons
-        COLLECTING SELF OUT  - out_cs
-        COLLECTING OTHER OUT - out_co
-    """
-
-    DIFFERENCE_CASES = {
-        # non valid cases are not represented
-        ( True,  True,  True,  True,  False, False ) : ( False, False, False ),
-        ( True,  True,  True,  False, False, False ) : ( False, False, True  ),
-        ( True,  True,  False, True,  False, True  ) : ( False, False, False ),
-        ( True,  True,  False, False, False, True  ) : ( False, False, True  ),
-        ( True,  True,  False, False, False, False ) : ( True,  False, False ),
-        ( True,  False, True,  True,  False, False ) : ( False, True,  False ),
-        ( True,  False, True,  False, False, False ) : ( False, True,  True  ),
-        ( True,  False, False, True,  False, True  ) : ( False, True,  False ),
-        ( True,  False, False, False, False, True  ) : ( False, True,  True  ),
-        ( True,  False, False, False, False, False ) : ( True,  True,  False ),
-        ( False, True,  True,  True,  True,  False ) : ( False, False, False ),
-        ( False, True,  True,  False, True,  False ) : ( False, False, True  ),
-        ( False, True,  False, True,  True,  True  ) : ( False, False, False ),
-        ( False, True,  False, False, True,  True  ) : ( False, False, True  ),
-        ( False, True,  False, False, True,  False ) : ( True,  False, False ),
-        ( False, False, True,  True,  True,  False ) : ( False, True,  False ),
-        ( False, False, True,  True,  False, False ) : ( False, False, True  ),
-        ( False, False, True,  False, True,  False ) : ( False, True,  True  ),
-        ( False, False, True,  False, False, False ) : ( False, False, True  ),
-        ( False, False, False, True,  True,  True  ) : ( False, True,  False ),
-        ( False, False, False, True,  False, True  ) : ( False, False, False ),
-        ( False, False, False, False, True,  True  ) : ( False, True,  True  ),
-        ( False, False, False, False, True,  False ) : ( True,  True,  False ),
-        ( False, False, False, False, False, True  ) : ( False, False, True  ),
-        ( False, False, False, False, False, False ) : ( False, False, False ),
-    }
+    def __init__(self, dow, start_time, end_time):
+        # Monday == 0 ... Sunday == 6
+        assert 0 <= dow <= 6
+        assert start_time <= end_time
+        self.dow        = dow
+        self.start_time = start_time
+        self.end_time   = end_time
     
-    __slots__ = [ 'begin_self', 'end_self', 'begin_other', 'end_other' ]
-    
+    def has_working_hours(self):
+        return self.start_time != self.end_time
+        
+    def calc_tick(self, when):
+        assert when.weekday() == seld.dow
+        date = when.date()
+        t = when.time()
+        dt_first = dt.datetime.combine(date, self.FIRST_SECOND)
+        dt_start = dt.datetime.combine(date, self.start_time)
+        dt_end   = dt.datetime.combine(date, self.end_time)
+        dt_last  = dt.datetime.combine(date, self.LAST_SECOND)
+        if when < dt_start:
+            duration    = dt.timedelta(0) # non working hours
+            next_tick   = dt_start
+            next_day    = False
+        elif self.start_time <= t < self.end_time:
+            duration    = when - self.dt_start
+            next_tick   = dt_end
+            next_day    = False
+        elif t == self.end_time:
+            duration    = dt.timedelta(0)
+            next_tick   = dt_start
+            next_day    = False
+        elif t > self.end_time:
+            duration    = dt.timedelta(0) # non working hours
+            next_tick   = dt_start
+            next_day    = False
+        else:
+            assert 1 == 2
+        return duration, next_tick, next_day
+        
+class Schedule(object):
     def __init__(self):
-        self.begin_self     = False
-        self.end_self       = False
-        self.begin_other    = False
-        self.end_other      = False
+        self.work_days = [ None ] * 7
+        self.hollydays = set()
         
-    def __repr__(self):
-        return f"Row({repr(self.begin_self)}, {repr(self.end_self)}, {repr(self.begin_other)}, {repr(self.end_other)})"
+    @classmethod
+    def _get_work_day(klass, dow, start_time, end_time):
+        return WorkDay(dow, start_time, end_time)
     
-    def get_transition(self, collecting_self, collecting_other):
-        consider, new_collecting_self, new_collecting_other = self.DIFFERENCE_CASES[ (
-            self.begin_self,
-            self.end_self,
-            self.begin_other,
-            self.end_other,
-            collecting_self,
-            collecting_other
-        ) ]
-        return consider, new_collecting_self, new_collecting_other
+    @classmethod
+    def build(klass, start_time, end_time, skip_weekend=True):
+        ww = klass()
+        ww.set_workday(0, start_time, end_time)
+        ww.set_workday(1, start_time, end_time)
+        ww.set_workday(2, start_time, end_time)
+        ww.set_workday(3, start_time, end_time)
+        ww.set_workday(4, start_time, end_time)
+        if skip_weekend:
+            ww.set_workday(5, start_time, end_time)
+            ww.set_workday(6, start_time, end_time)
+        else:
+            last_second = dt.time(23, 59, 59)
+            ww.set_workday(5, last_second)
+            ww.set_workday(6, last_second)
+        return ww
+        
+    def set_workday(self, dow, start_time, end_time):
+        self.work_days[ dow ] = self._get_work_day(dow, start_time, end_time)
     
+    def get_business_hours(self, start_dt, end_dt):
+        assert start_dt < end_dt
+        start_date  = start_dt.date() 
+        end_date    = end_dt.date()
+        curr_date   = start_date
+        start_time  = start_dt.time()
+        end_time    = end_dt.time()
+        curr_time   = start_time
+        one_day     = dt.timedelta(1)
+        result      = []
+        
+        while curr_date <= end_date:
+            dow = self.work_days[ curr_date.weekday() ]
+            if curr_date in self.hollydays or not dow.has_working_hours():
+                # no business hours in a holliday or in a weeked            
+                pass
+            elif start_date == end_date:
+                if end_time < dow.start_time:
+                    pass # no business hours before dow start time
+                elif start_time > dow.end_time:
+                    pass # no business hours after dow end time
+                else:
+                    bh_start_time = max(start_time, dow.start_time)
+                    bh_end_time = min(end_time, dow.end_time)
+                    bh = (bh_start_time, bh_end_time)
+                    result.append(bh)
+            else:
+                raise NotImplementedError
+            curr_date = curr_date + one_day
+        return result
+        
+    def add_hollyday(self, hd):
+        self.hollydays.add(hd)
+
+class TestSchedule(unittest.TestCase):
+
+    def setUp(self):
+        self.sched1 = Schedule.build(dt.time(8, 0, 0), dt.time(18, 59, 59))
+    
+    def tearDown(self):
+        pass
+    
+    def test_it_returns_no_business_hours_when_after_hours(self):
+        start_dt = parse_datetime('2000-01-02 19:00:00')
+        end_dt = parse_datetime('2000-01-02 19:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        self.assertEqual(bh, [])
+
+    def test_it_returns_no_business_hours_when_before_hours(self):
+        start_dt = parse_datetime('2000-01-02 07:00:00')
+        end_dt = parse_datetime('2000-01-02 07:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        self.assertEqual(bh, [])
 
 class Range(object):
     
@@ -149,6 +210,75 @@ class Range(object):
         assert self.low <= self.hi
         
 class MRange(object):
+
+    class MRangeDiffInstant(object):
+        
+        """
+            from mrange_analysis.xlsx on ./docs
+            invalid states are not represented
+            
+            BEGIN SELF           - bs
+            END SELF             - es
+            BEGIN OTHER          - bo
+            END OTHER            - eo
+            COLLECTING SELF IN   - in_cs
+            COLLECTING OTHER IN  - in_co
+            ->
+            CONSIDER             - cons
+            COLLECTING SELF OUT  - out_cs
+            COLLECTING OTHER OUT - out_co
+        """
+
+        DIFFERENCE_CASES = {
+            # non valid cases are not represented
+            ( True,  True,  True,  True,  False, False ) : ( False, False, False ),
+            ( True,  True,  True,  False, False, False ) : ( False, False, True  ),
+            ( True,  True,  False, True,  False, True  ) : ( False, False, False ),
+            ( True,  True,  False, False, False, True  ) : ( False, False, True  ),
+            ( True,  True,  False, False, False, False ) : ( True,  False, False ),
+            ( True,  False, True,  True,  False, False ) : ( False, True,  False ),
+            ( True,  False, True,  False, False, False ) : ( False, True,  True  ),
+            ( True,  False, False, True,  False, True  ) : ( False, True,  False ),
+            ( True,  False, False, False, False, True  ) : ( False, True,  True  ),
+            ( True,  False, False, False, False, False ) : ( True,  True,  False ),
+            ( False, True,  True,  True,  True,  False ) : ( False, False, False ),
+            ( False, True,  True,  False, True,  False ) : ( False, False, True  ),
+            ( False, True,  False, True,  True,  True  ) : ( False, False, False ),
+            ( False, True,  False, False, True,  True  ) : ( False, False, True  ),
+            ( False, True,  False, False, True,  False ) : ( True,  False, False ),
+            ( False, False, True,  True,  True,  False ) : ( False, True,  False ),
+            ( False, False, True,  True,  False, False ) : ( False, False, True  ),
+            ( False, False, True,  False, True,  False ) : ( False, True,  True  ),
+            ( False, False, True,  False, False, False ) : ( False, False, True  ),
+            ( False, False, False, True,  True,  True  ) : ( False, True,  False ),
+            ( False, False, False, True,  False, True  ) : ( False, False, False ),
+            ( False, False, False, False, True,  True  ) : ( False, True,  True  ),
+            ( False, False, False, False, True,  False ) : ( True,  True,  False ),
+            ( False, False, False, False, False, True  ) : ( False, False, True  ),
+            ( False, False, False, False, False, False ) : ( False, False, False ),
+        }
+        
+        __slots__ = [ 'begin_self', 'end_self', 'begin_other', 'end_other' ]
+        
+        def __init__(self):
+            self.begin_self     = False
+            self.end_self       = False
+            self.begin_other    = False
+            self.end_other      = False
+            
+        def __repr__(self):
+            return f"Row({repr(self.begin_self)}, {repr(self.end_self)}, {repr(self.begin_other)}, {repr(self.end_other)})"
+        
+        def get_transition(self, collecting_self, collecting_other):
+            consider, new_collecting_self, new_collecting_other = self.DIFFERENCE_CASES[ (
+                self.begin_self,
+                self.end_self,
+                self.begin_other,
+                self.end_other,
+                collecting_self,
+                collecting_other
+            ) ]
+            return consider, new_collecting_self, new_collecting_other
     
     # TODO: Treat non disjoint ranges
     __slots__ = [ 'ranges', 'total_range' ]
@@ -283,7 +413,7 @@ class MRange(object):
         if len(self) == 0:
             return self.copy() 
         
-        Row = MRangeDiffInstant
+        Row = self.MRangeDiffInstant
         whens = {}
         # list all time units contained within the total range
         for when in self.total_range.list_elements():
@@ -460,6 +590,3 @@ class RangeTest(unittest.TestCase):
         #print('result   ', result)
         #print()
         self.assertEqual(result, weekdays)
-        
-        
-    
