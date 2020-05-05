@@ -87,9 +87,13 @@ class App(object):
         df[ 'id_chamado' ]  = df['id_chamado'].apply(to_str)
         df[ 'chamado_pai' ] = df['chamado_pai'].apply(to_str)
         df[ 'id_acao'  ]    = df['id_acao'].apply(to_int)
-        #df[ 'id_acao'  ] = pd.to_numeric( df[ 'id_acao' ], errors='coerce' )
-        #df.dropna(subset = [ 'id_acao' ], inplace=True)
     
+    def strip_ms(self, df):
+        df[ 'data_abertura_chamado' ]   = df[ 'data_abertura_chamado' ].apply(util.strip_ms)
+        df[ 'data_resolucao_chamado' ]  = df[ 'data_resolucao_chamado' ].apply(util.strip_ms)
+        df[ 'data_inicio_acao' ]        = df[ 'data_inicio_acao' ].apply(util.strip_ms)
+        df[ 'data_fim_acao' ]           = df[ 'data_fim_acao' ].apply(util.strip_ms)
+
     def drop_unnanmed_columns(self, df):
         headers = df.columns.to_list()
         col_count = len(config.EXPECTED_COLUMNS)
@@ -274,6 +278,7 @@ class App(object):
             df = self.rename_columns(df)
             self.replace_tabs_enters(df)
             self.process_ids(df)
+            self.strip_ms(df)
             self.index_file(df)
             if self.open_acc is None:
                 df_open_acc = pd.DataFrame(columns=df.columns)

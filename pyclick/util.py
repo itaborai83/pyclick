@@ -5,10 +5,14 @@ import logging
 import datetime as dt
 import gzip
 import shutil
+import re
+import pandas as pd
 
 LOGGER_FORMAT = '%(asctime)s:%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d\n\t%(message)s\n'
 LOGGER_FORMAT = '%(levelname)s - %(filename)s:%(funcName)s:%(lineno)s - %(message)s'
 logging.basicConfig(level=logging.DEBUG, format=LOGGER_FORMAT)
+
+DATETIME_WITH_MS_REGEX = re.compile(r"^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\.\d{3}$")
 
 import pyclick.config as config
 
@@ -63,7 +67,16 @@ def read_mesas(dir_apuracao):
 def next_date(d):
     return str((dt.datetime.strptime(d, '%Y-%m-%d') + dt.timedelta(1)).date())
 
-
+def strip_ms(txt):
+    if pd.isna(txt) or txt is None:
+        return txt
+    else:
+        m = DATETIME_WITH_MS_REGEX.match(txt)
+        if m:
+            return m[ 1 ]
+        else:
+            return txt
+        
 def decompress(filename):
     # file needs to be gzipped
     assert filename.endswith(".gz") 
