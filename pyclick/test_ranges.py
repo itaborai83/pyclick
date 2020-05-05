@@ -273,29 +273,37 @@ class MRange(object):
     
     def difference(self, other):
         # beware when making changes
-        # this is actually harder than it looks
+        # this is actually harder than it looks        
         
-        if len(other) == 0:
-            return self.copy()
+        # when differencing against nothing, yield a copy of yourself
+        if len(other) == 0: 
+            return self.copy() 
+        
+        # empty range always yields another empty range
         if len(self) == 0:
-            return self.copy()
+            return self.copy() 
+        
         Row = MRangeDiffInstant
         whens = {}
+        # list all time units contained within the total range
         for when in self.total_range.list_elements():
             whens[ when ] = Row()
-        
-        for when in other.total_range.list_elements():
-            if when not in whens:
-                whens[ when ] = Row()
-            
+        # for each range within the mrange, mark when it begins and end
         for range in self.ranges:
             whens[ range.low ].begin_self = True
             whens[ range.hi ].end_self = True
         
+        # for each range within the mrange, mark when it begins and end,
+        # adding it if needed
         for range in other.ranges:
+            if range.low not in whens:
+                whens[ range.low ] = Row()
+            if range.hi not in whens:
+                whens[ range.hi ] = Row()
             whens[ range.low ].begin_other = True
             whens[ range.hi ].end_other = True
         
+        # for each time unit, check if has a valid transition
         collecting_self = False
         collecting_other = False
         result_tmp = []
@@ -303,11 +311,13 @@ class MRange(object):
             consider, collecting_self, collecting_other = row.get_transition(collecting_self, collecting_other)
             if consider:
                 result_tmp.append(when)
+        # added the list of time units as ranges within an mrange
+        # compacting it when necessary
         result = MRange()
         if len(result_tmp) == 0:
             return result
         low, hi = result_tmp[ 0 ], result_tmp[ 0 ]
-        for when in result_tmp:
+        for when in result_tmp[ 1: ]:
             if hi + 1 == when: # contiguous
                 hi = when
             else:
@@ -422,7 +432,7 @@ class RangeTest(unittest.TestCase):
         m2 = MRange().add(1, 2).add(3, 4)
         m3 = m1.difference(m2)
         self.assertEqual(m3, m1)
-    """
+    
     def test_it_returns_itself_when_differencing_against_a_non_overlapping_mrange(self):
         m1 = MRange().add(1, 2).add(5, 6)
         m2 = MRange().add(3, 4)
@@ -435,9 +445,9 @@ class RangeTest(unittest.TestCase):
         m1 = MRange().add(0, 6)
         m2 = MRange().add(3, 5)
         m3 = m1.difference(m2)
-        m4 = MRange().add(0, 3).add(5, 6)
+        m4 = MRange().add(0, 2).add(6, 6)
         self.assertEqual(m3, m4)
-    """
+    
     def test_it_removes_the_weekends_from_may_2020(self):
         may = MRange().add(1, 31)
         weekends = MRange().add(2, 3).add(9, 10).add(16, 17).add(23, 24).add(30, 31)
