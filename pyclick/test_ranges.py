@@ -1,7 +1,9 @@
 import bisect
 import unittest
 import datetime as dt
-from pyclick.util import parse_datetime
+from pyclick.util import parse_datetime, parse_date, parse_time
+
+pd = parse_datetime
 
 class WorkDay(object):
     
@@ -67,13 +69,13 @@ class Schedule(object):
         ww.set_workday(2, start_time, end_time)
         ww.set_workday(3, start_time, end_time)
         ww.set_workday(4, start_time, end_time)
-        if skip_weekend:
+        if not skip_weekend:
             ww.set_workday(5, start_time, end_time)
             ww.set_workday(6, start_time, end_time)
         else:
             last_second = dt.time(23, 59, 59)
-            ww.set_workday(5, last_second)
-            ww.set_workday(6, last_second)
+            ww.set_workday(5, last_second, last_second)
+            ww.set_workday(6, last_second, last_second)
         return ww
         
     def set_workday(self, dow, start_time, end_time):
@@ -93,8 +95,8 @@ class Schedule(object):
         while curr_date <= end_date:
             dow = self.work_days[ curr_date.weekday() ]
             if curr_date in self.hollydays or not dow.has_working_hours():
-                # no business hours in a holliday or in a weeked            
-                pass
+                pass # no business hours in a holliday or in a weekend
+                
             elif start_date == end_date:
                 if end_time < dow.start_time:
                     pass # no business hours before dow start time
@@ -103,36 +105,40 @@ class Schedule(object):
                 else:
                     bh_start_time = max(start_time, dow.start_time)
                     bh_end_time = min(end_time, dow.end_time)
-                    bh = (bh_start_time, bh_end_time)
+                    bh = (curr_date, bh_start_time, bh_end_time)
+                    result.append(bh)
+                    
+            elif curr_date == start_date:
+                if start_time > dow.end_time:
+                    pass # no business hours after dow end time
+                else:
+                    bh = (curr_date, max(start_time, dow.start_time), dow.end_time)
+                    result.append(bh)
+
+            elif curr_date == end_date:
+                if end_time < dow.start_time:
+                    pass # no business hours before dow start time
+                else:
+                    bh = (curr_date, dow.start_time, min(end_time, dow.end_time))
                     result.append(bh)
             else:
-                raise NotImplementedError
+                bh = (curr_date, dow.start_time, dow.end_time)
+                result.append(bh)
+                
             curr_date = curr_date + one_day
-        return result
+        
+        c = dt.datetime.combine
+        result2 = []
+        for date, begin, end in result:
+            if begin == end:
+                continue
+            bh = c(date, begin), c(date, end)
+            result2.append(bh)
+        return result2
         
     def add_hollyday(self, hd):
         self.hollydays.add(hd)
-
-class TestSchedule(unittest.TestCase):
-
-    def setUp(self):
-        self.sched1 = Schedule.build(dt.time(8, 0, 0), dt.time(18, 59, 59))
-    
-    def tearDown(self):
-        pass
-    
-    def test_it_returns_no_business_hours_when_after_hours(self):
-        start_dt = parse_datetime('2000-01-02 19:00:00')
-        end_dt = parse_datetime('2000-01-02 19:30:00')
-        bh = self.sched1.get_business_hours(start_dt, end_dt)
-        self.assertEqual(bh, [])
-
-    def test_it_returns_no_business_hours_when_before_hours(self):
-        start_dt = parse_datetime('2000-01-02 07:00:00')
-        end_dt = parse_datetime('2000-01-02 07:30:00')
-        bh = self.sched1.get_business_hours(start_dt, end_dt)
-        self.assertEqual(bh, [])
-
+        
 class Range(object):
     
     __slots__ = [ 'hi', 'low' ]
@@ -590,3 +596,196 @@ class RangeTest(unittest.TestCase):
         #print('result   ', result)
         #print()
         self.assertEqual(result, weekdays)
+    
+class TestSchedule(unittest.TestCase):
+
+    """
+        January 2000
+    Sa Su Mo Tu We Th Fr
+     1  2  3  4  5  6  7
+     8  9 10 11 12 13 14
+    15 16 17 18 19 20 21
+    22 23 24 25 26 27 28
+    29 30 31
+    """
+    
+    def setUp(self):
+        self.bh_start_time1 = parse_time("08:00:00")
+        self.bh_end_time1 = parse_time("18:59:59")
+        self.sched1 = Schedule.build(self.bh_start_time1, self.bh_end_time1)
+    def tearDown(self):
+        pass
+    
+    def test_it_returns_no_business_hours_when_after_hours(self):
+        start_dt = parse_datetime('2000-01-03 19:00:00')
+        end_dt = parse_datetime('2000-01-03 19:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        self.assertEqual(bh, [])
+        
+        start_dt = parse_datetime('2000-01-03 19:00:00')
+        end_dt = parse_datetime('2000-01-04 09:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ ( pd('2000-01-04 08:00:00'), pd('2000-01-04 09:30:00') ) ]
+        self.assertEqual(bh, expected)
+
+        start_dt = parse_datetime('2000-01-03 19:00:00')
+        end_dt = parse_datetime('2000-01-05 09:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+            ( pd('2000-01-04 08:00:00'), pd('2000-01-04 18:59:59') ),
+            ( pd('2000-01-05 08:00:00'), pd('2000-01-05 09:30:00') ) 
+        ]
+        self.assertEqual(bh, expected)
+        
+        
+    def test_it_returns_no_business_hours_when_before_hours(self):
+        start_dt = parse_datetime('2000-01-03 07:00:00')
+        end_dt = parse_datetime('2000-01-03 07:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        self.assertEqual(bh, [])
+
+        start_dt = parse_datetime('2000-01-03 07:00:00')
+        end_dt = parse_datetime('2000-01-04 09:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+            ( pd('2000-01-03 08:00:00'), pd('2000-01-03 18:59:59') ),
+            ( pd('2000-01-04 08:00:00'), pd('2000-01-04 09:30:00') ) ,
+        ]
+        self.assertEqual(bh, expected)
+
+        start_dt = parse_datetime('2000-01-03 07:00:00')
+        end_dt = parse_datetime('2000-01-05 09:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+            ( pd('2000-01-03 08:00:00'), pd('2000-01-03 18:59:59') ),
+            ( pd('2000-01-04 08:00:00'), pd('2000-01-04 18:59:59') ) ,
+            ( pd('2000-01-05 08:00:00'), pd('2000-01-05 09:30:00') )
+        ]
+        self.assertEqual(bh, expected)
+        
+    def test_it_returns_the_day_business_hours_when_it_starts_too_early_and_ends_too_late(self):
+        start_dt = pd('2000-01-03 07:00:00')
+        end_dt = pd('2000-01-03 19:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ ( pd('2000-01-03 08:00:00'), pd('2000-01-03 18:59:59') ) ]
+        self.assertEqual(bh, expected)
+
+        start_dt = pd('2000-01-03 07:00:00')
+        end_dt = pd('2000-01-04 19:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+                    ( pd('2000-01-03 08:00:00'), pd('2000-01-03 18:59:59') ), 
+                    ( pd('2000-01-04 08:00:00'), pd('2000-01-04 18:59:59') )
+        ]
+        self.assertEqual(bh, expected)
+
+        start_dt = pd('2000-01-03 07:00:00')
+        end_dt = pd('2000-01-05 19:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+                    ( pd('2000-01-03 08:00:00'), pd('2000-01-03 18:59:59') ), 
+                    ( pd('2000-01-04 08:00:00'), pd('2000-01-04 18:59:59') ),
+                    ( pd('2000-01-05 08:00:00'), pd('2000-01-05 18:59:59') )
+        ]
+        self.assertEqual(bh, expected)
+        
+    def test_it_returns_the_business_when_it_starts_too_early(self):
+        start_dt = pd('2000-01-03 07:00:00')
+        end_dt = pd('2000-01-03 12:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ ( pd('2000-01-03 08:00:00'), pd('2000-01-03 12:30:00') ) ]
+        self.assertEqual(bh, expected)
+
+        start_dt = pd('2000-01-03 07:00:00')
+        end_dt = pd('2000-01-04 12:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+            ( pd('2000-01-03 08:00:00'), pd('2000-01-03 18:59:59') ),
+            ( pd('2000-01-04 08:00:00'), pd('2000-01-04 12:30:00') )
+
+        ]
+        self.assertEqual(bh, expected)
+
+        start_dt = pd('2000-01-03 07:00:00')
+        end_dt = pd('2000-01-05 12:30:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+            ( pd('2000-01-03 08:00:00'), pd('2000-01-03 18:59:59') ),
+            ( pd('2000-01-04 08:00:00'), pd('2000-01-04 18:59:59') ),
+            ( pd('2000-01-05 08:00:00'), pd('2000-01-05 12:30:00') )
+
+        ]
+        self.assertEqual(bh, expected)
+
+    def test_it_returns_the_business_hours_when_it_ends_too_late(self):
+        start_dt = pd('2000-01-03 12:30:00')
+        end_dt = pd('2000-01-03 20:00:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ ( pd('2000-01-03 12:30:00'), pd('2000-01-03 18:59:59') ) ]
+        self.assertEqual(bh, expected)
+
+        start_dt = pd('2000-01-03 12:30:00')
+        end_dt = pd('2000-01-04 20:00:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+            ( pd('2000-01-03 12:30:00'), pd('2000-01-03 18:59:59') ),
+            ( pd('2000-01-04 08:00:00'), pd('2000-01-04 18:59:59') )
+        ]
+        self.assertEqual(bh, expected)
+
+        start_dt = pd('2000-01-03 12:30:00')
+        end_dt = pd('2000-01-05 20:00:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+            ( pd('2000-01-03 12:30:00'), pd('2000-01-03 18:59:59') ),
+            ( pd('2000-01-04 08:00:00'), pd('2000-01-04 18:59:59') ), 
+            ( pd('2000-01-05 08:00:00'), pd('2000-01-05 18:59:59') )
+        ]
+        self.assertEqual(bh, expected)
+        
+    def test_it_returns_no_business_hours_on_a_weekend(self):
+        start_dt = pd('2000-01-01 12:30:00')
+        end_dt = pd('2000-01-02 20:00:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ ]
+        self.assertEqual(bh, expected)
+
+        start_dt = pd('2000-01-01 12:30:00')
+        end_dt = pd('2000-01-03 12:00:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ ( pd('2000-01-03 08:00:00'), pd('2000-01-03 12:00:00') ) ]
+        self.assertEqual(bh, expected)
+
+        start_dt = pd('1999-12-31 12:30:00')
+        end_dt = pd('2000-01-03 12:00:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+            ( pd('1999-12-31 12:30:00'), pd('1999-12-31 18:59:59') ),
+            ( pd('2000-01-03 08:00:00'), pd('2000-01-03 12:00:00') ) 
+        ]
+        self.assertEqual(bh, expected)
+
+    def test_it_returns_no_business_hours_on_a_hollyday(self):
+        hollyday = parse_date('2000-01-03')
+        self.sched1.add_hollyday(hollyday)
+        start_dt = pd('2000-01-01 12:30:00')
+        end_dt = pd('2000-01-03 20:00:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ ]
+        self.assertEqual(bh, expected)
+
+        start_dt = pd('2000-01-01 12:30:00')
+        end_dt = pd('2000-01-04 12:00:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ ( pd('2000-01-04 08:00:00'), pd('2000-01-04 12:00:00') ) ]
+        self.assertEqual(bh, expected)
+        
+        start_dt = pd('1999-12-31 12:30:00')
+        end_dt = pd('2000-01-04 12:00:00')
+        bh = self.sched1.get_business_hours(start_dt, end_dt)
+        expected = [ 
+            ( pd('1999-12-31 12:30:00'), pd('1999-12-31 18:59:59') ), 
+            ( pd('2000-01-04 08:00:00'), pd('2000-01-04 12:00:00') ) 
+        
+        ]
+        self.assertEqual(bh, expected)
