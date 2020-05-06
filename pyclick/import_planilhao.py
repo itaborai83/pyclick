@@ -20,6 +20,7 @@ logger = util.get_logger('import_planilhao')
 
 SQL_FILE_INDEX_DDL      = util.get_query('IMPORT__FILE_INDEX_DDL')
 SQL_FILE_INDEX_INSERT   = util.get_query('IMPORT__FILE_INDEX_INSERT')
+SQL_REL_MEDICAO_SELECT  = util.get_query("IMPORT__REL_MEDICAO_SELECT")
 SQL_REL_MEDICAO_DDL     = util.get_query("IMPORT__REL_MEDICAO_DDL")
 SQL_REL_MEDICAO_UPSERT  = util.get_query("IMPORT__REL_MEDICAO_UPSERT")
 
@@ -220,8 +221,7 @@ class App(object):
             conn = sqlite3.connect(decompressed_name)
         else:
             conn = sqlite3.connect(self.open_acc)
-        sql = "SELECT * FROM " + config.INCIDENT_TABLE
-        df = pd.read_sql(sql, conn)
+        df = pd.read_sql(SQL_REL_MEDICAO_SELECT, conn)
         util.sort_rel_medicao(df)
         conn.close()
         if self.open_acc.endswith('.gz'):

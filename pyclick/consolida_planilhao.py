@@ -17,8 +17,14 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('consolida_planilhao')
 
-SQL_CARGA_REL_MEDICAO = util.get_query("CARGA_REL_MEDICAO")
-SQL_CHECK_IMPORTACAO = util.get_query("SQL_CHECK_IMPORTACAO")
+
+
+SQL_REL_MEDICAO_SELECT  = util.get_query("CONSOLIDA__REL_MEDICAO_SELECT")
+SQL_REL_MEDICAO_DDL     = util.get_query("CONSOLIDA__REL_MEDICAO_DDL")
+SQL_REL_MEDICAO_UPSERT  = util.get_query("CONSOLIDA__REL_MEDICAO_UPSERT")
+SQL_UPDATE_MESA_ATUAL   = util.get_query("CONSOLIDA__UPDATE_MESA_ATUAL")
+SQL_CARGA_REL_MEDICAO   = util.get_query("CONSOLIDA__CARGA_REL_MEDICAO")
+SQL_CHECK_IMPORTACAO    = util.get_query("CONSOLIDA__SQL_CHECK_IMPORTACAO")
 
 class App(object):
     
@@ -38,8 +44,7 @@ class App(object):
         logger.info('lendo arquivo %s', filename)
         new_filename = util.decompress(filename)
         conn = sqlite3.connect(new_filename)
-        sql = "SELECT * FROM " + config.INCIDENT_TABLE
-        df = pd.read_sql(sql, conn)
+        df = pd.read_sql(SQL_REL_MEDICAO_SELECT, conn)
         util.sort_rel_medicao(df)
         del conn
         util.compress(new_filename)
@@ -132,8 +137,7 @@ class App(object):
         logger.info('adicionando dados da oferta')
         ofertas_mapping = df_ofertas.groupby('oferta').prazo.last().to_dict()
         ofertas = df.oferta_catalogo.to_list()
-        prazo_oferta = [ ofertas_mapping.get(oferta, None) for oferta in ofertas ]
-        df.insert(len(df.columns), "prazo_oferta_m", prazo_oferta)
+        df[ 'prazo_oferta_m' ] = [ ofertas_mapping.get(oferta, None) for oferta in ofertas ]
         return df
         
     def get_dump_files(self):
@@ -188,8 +192,14 @@ class App(object):
                 os.unlink(config.CONSOLIDATED_DB)
             conn = sqlite3.connect(config.CONSOLIDATED_DB)
             self.process_begin_sql(conn)
-            df.to_sql(config.INCIDENT_TABLE, conn, index=False, if_exists="replace")
+            logger.info('preenchendo tabela REL_MEDICAO')
+            conn.executescript(SQL_REL_MEDICAO_DDL)
+            param_sets = list(df.itertuples(index=False))
+            #df.to_sql(config.INCIDENT_TABLE, conn, index=False, if_exists="replace")
+            conn.executemany(SQL_REL_MEDICAO_UPSERT, param_sets)
             conn.commit()
+            logger.info('preenchend campo MESA_ATUAL da tabela REL_MEDICAO')
+            conn.executescript(SQL_UPDATE_MESA_ATUAL)
             if self.datafix:
                 logger.warning("STOPING LOADING PROCEDURE FOR A DATAFIX TO BE APPLIED")
                 logger.warning("(remember to close the database after data analysis)")
