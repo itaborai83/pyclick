@@ -186,3 +186,6 @@ python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-05-02-OPEN.db.gz
 if %errorlevel% neq 0 exit /b %errorlevel%
 python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-05-03-OPEN.db.gz DADOS\STAGING\2020-05-04.csv DADOS\IMPORT
 if %errorlevel% neq 0 exit /b %errorlevel%
+python -m pyclick.import_planilhao --open_acc DADOS\IMPORT\2020-05-04-OPEN.db.gz DADOS\STAGING\2020-05-05.csv DADOS\IMPORT
+if %errorlevel% neq 0 exit /b %errorlevel%
+
