@@ -42,6 +42,7 @@ CREATE TABLE "rel_medicao" (
 ,	"data_inicio_acao" 					TEXT
 ,	"ultima_acao" 						TEXT
 ,	"data_fim_acao" 					TEXT
+,	"duracao_m"							INTEGER  -- não exist na base de dados de IMPORT
 ,	"tempo_total_da_acao_h" 			TEXT
 ,	"tempo_total_da_acao_m" 			REAL
 ,	"ultima_acao_nome" 					TEXT
