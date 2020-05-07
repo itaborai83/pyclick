@@ -23,6 +23,7 @@ SQL_REL_MEDICAO_SELECT  = util.get_query("CONSOLIDA__REL_MEDICAO_SELECT")
 SQL_REL_MEDICAO_DDL     = util.get_query("CONSOLIDA__REL_MEDICAO_DDL")
 SQL_REL_MEDICAO_UPSERT  = util.get_query("CONSOLIDA__REL_MEDICAO_UPSERT")
 SQL_UPDATE_MESA_ATUAL   = util.get_query("CONSOLIDA__UPDATE_MESA_ATUAL")
+SQL_UPDATE_USER_STATUS  = util.get_query("CONSOLIDA__UPDATE_ACAO_USER_STATUS")
 SQL_CARGA_REL_MEDICAO   = util.get_query("CONSOLIDA__CARGA_REL_MEDICAO")
 SQL_CHECK_IMPORTACAO    = util.get_query("CONSOLIDA__SQL_CHECK_IMPORTACAO")
 
@@ -200,6 +201,8 @@ class App(object):
             conn.commit()
             logger.info('preenchend campo MESA_ATUAL da tabela REL_MEDICAO')
             conn.executescript(SQL_UPDATE_MESA_ATUAL)
+            logger.info('preenchend campo USER_STATUS da tabela REL_MEDICAO')
+            conn.executescript(SQL_UPDATE_USER_STATUS)            
             if self.datafix:
                 logger.warning("STOPING LOADING PROCEDURE FOR A DATAFIX TO BE APPLIED")
                 logger.warning("(remember to close the database after data analysis)")
