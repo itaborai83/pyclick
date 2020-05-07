@@ -46,6 +46,7 @@ CREATE TABLE "rel_medicao" (
 ,	"tempo_total_da_acao_m" 			REAL
 ,	"ultima_acao_nome" 					TEXT
 ,	"user_status"						TEXT -- não exist na base de dados de IMPORT
+,	"pendencia"							TEXT -- não exist na base de dados de IMPORT
 ,	"motivo_pendencia" 					TEXT
 ,	"campos_alterados" 					TEXT
 ,	"itens_alterados" 					TEXT
