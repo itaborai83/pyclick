@@ -1,9 +1,9 @@
 import bisect
 import unittest
 import datetime as dt
-from pyclick.util import parse_datetime, parse_date, parse_time
+import pandas as pd
 
-pd = parse_datetime
+from pyclick.util import parse_datetime, parse_date, parse_time
 
 class WorkDay(object):
     
@@ -25,9 +25,51 @@ class WorkDay(object):
         return self.start_time != self.end_time
         
 class Schedule(object):
+    
+    SCHEDULES = {}
+    
     def __init__(self):
         self.work_days = [ None ] * 7
         self.hollydays = set()
+    
+    @classmethod
+    def load_spreadsheet(klass, xlsx_file):
+        # TODO: point to the replicated database instead of a spreadsheet
+        df = pd.read_excel(xlsx_file)
+        for row in df.itertuples():
+            sched = klass()
+            sched.set_workday(0, row.MON_BEGIN, row.MON_END)
+            sched.set_workday(1, row.TUE_BEGIN, row.TUE_END)
+            sched.set_workday(2, row.WED_BEGIN, row.WED_END)
+            sched.set_workday(3, row.THR_BEGIN, row.THR_END)
+            sched.set_workday(4, row.FRI_BEGIN, row.FRI_END)
+            sched.set_workday(5, row.SAT_BEGIN, row.SAT_END)
+            sched.set_workday(6, row.SUN_BEGIN, row.SUN_END)
+            if not pd.isna(row.FERIADO_01):  sched.add_hollyday(row.FERIADO_01.date())
+            if not pd.isna(row.FERIADO_02):  sched.add_hollyday(row.FERIADO_02.date())
+            if not pd.isna(row.FERIADO_03):  sched.add_hollyday(row.FERIADO_03.date())
+            if not pd.isna(row.FERIADO_04):  sched.add_hollyday(row.FERIADO_04.date())
+            if not pd.isna(row.FERIADO_05):  sched.add_hollyday(row.FERIADO_05.date())
+            if not pd.isna(row.FERIADO_06):  sched.add_hollyday(row.FERIADO_06.date())
+            if not pd.isna(row.FERIADO_07):  sched.add_hollyday(row.FERIADO_07.date())
+            if not pd.isna(row.FERIADO_08):  sched.add_hollyday(row.FERIADO_08.date())
+            if not pd.isna(row.FERIADO_09):  sched.add_hollyday(row.FERIADO_09.date())
+            if not pd.isna(row.FERIADO_10):  sched.add_hollyday(row.FERIADO_10.date())
+            if not pd.isna(row.FERIADO_11):  sched.add_hollyday(row.FERIADO_11.date())
+            if not pd.isna(row.FERIADO_12):  sched.add_hollyday(row.FERIADO_12.date())
+            if not pd.isna(row.FERIADO_13):  sched.add_hollyday(row.FERIADO_13.date())
+            if not pd.isna(row.FERIADO_14):  sched.add_hollyday(row.FERIADO_14.date())
+            if not pd.isna(row.FERIADO_15):  sched.add_hollyday(row.FERIADO_15.date())
+            if not pd.isna(row.FERIADO_16):  sched.add_hollyday(row.FERIADO_16.date())
+            if not pd.isna(row.FERIADO_17):  sched.add_hollyday(row.FERIADO_17.date())
+            if not pd.isna(row.FERIADO_18):  sched.add_hollyday(row.FERIADO_18.date())
+            if not pd.isna(row.FERIADO_19):  sched.add_hollyday(row.FERIADO_19.date())
+            if not pd.isna(row.FERIADO_20):  sched.add_hollyday(row.FERIADO_20.date())
+            klass.SCHEDULES[ row.MESA ] = sched
+    
+    @classmethod    
+    def get_schedule_for(klass, mesa):
+        return klass.SCHEDULES.get(mesa, None)
         
     @classmethod
     def _get_work_day(klass, dow, start_time, end_time):
