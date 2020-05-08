@@ -1,9 +1,10 @@
+import math
 import bisect
 import unittest
 import datetime as dt
 import pandas as pd
 
-from pyclick.util import parse_datetime, parse_date, parse_time
+from pyclick.util import parse_datetime, parse_date, parse_time, datetime2tstmp, unparse_datetime
 
 class WorkDay(object):
     
@@ -99,7 +100,9 @@ class Schedule(object):
         self.hollydays.add(hd)
         
     def get_business_hours(self, start_dt, end_dt):
-        assert start_dt < end_dt
+        assert start_dt <= end_dt
+        if start_dt == end_dt:
+            return []
         start_date  = start_dt.date() 
         end_date    = end_dt.date()
         curr_date   = start_date
@@ -161,7 +164,10 @@ class Range(object):
         assert low <= hi
         self.low = low
         self.hi = hi
-                
+    
+    def length(self):
+        return self.hi - self.low
+        
     def contains(self, elt):
         return self.low <= elt <= self.hi
     
@@ -230,6 +236,9 @@ class Range(object):
         assert self.low <= self.hi
         
 class MRange(object):
+    
+    # TODO: Treat non disjoint ranges
+    __slots__ = [ 'ranges', 'total_range' ]
 
     class MRangeDiffInstant(object):
         
@@ -299,10 +308,7 @@ class MRange(object):
                 collecting_other
             ) ]
             return consider, new_collecting_self, new_collecting_other
-    
-    # TODO: Treat non disjoint ranges
-    __slots__ = [ 'ranges', 'total_range' ]
-    
+        
     def __init__(self):
         self.ranges = []
         self.total_range = None
@@ -320,7 +326,10 @@ class MRange(object):
         return "MRange({})".format(
             ", ".join(map(repr, self.ranges))
         )
-            
+    
+    def __iter__(self):
+        return iter([ r.copy() for r in self.ranges ])
+        
     def _create_range(self, low, hi):
         return Range(low, hi)
     
@@ -353,9 +362,6 @@ class MRange(object):
             if curr.overlaps_with(r):
                 overlap_count += 1
         return overlap_count
-    
-    
-        return self.add(Range(low, hi))
     
     def copy(self):
         copy = MRange()
@@ -419,7 +425,8 @@ class MRange(object):
         return False
         
     def intersection(self, other):
-        pass
+        # TODO: implement MRange intersection
+        raise NotImplementedError
     
     def difference(self, other):
         # beware when making changes
@@ -475,3 +482,43 @@ class MRange(object):
                 low, hi = when, when
         result.add(low, hi)
         return result
+
+def convert_to_minutes(start_txt, end_txt):
+    start_tstmp   = datetime2tstmp(start_txt)
+    end_tstmp     = datetime2tstmp(end_txt)
+    delta_seconds = end_tstmp - start_tstmp
+    delta_minutes = round(delta_seconds / 60)
+    return delta_minutes
+
+def convert_to_minutes(datetime_txt, round_direction=-1):
+    tstmp = datetime2tstmp(datetime_txt)
+    tstmp_minutes = tstmp // 60
+    return tstmp_minutes
+    
+def calc_duration(sched, on_hold, start, end):
+    assert start <= end
+    
+    if sched is None:
+        return 0
+    if on_hold:
+        return 0
+    start_m, end_m = convert_to_minutes(start), convert_to_minutes(end)
+    if start_m == end_m:
+        return 0
+    
+    action_range = MRange().add(start_m, end_m)
+    business_hours = sched.get_business_hours(parse_datetime(start), parse_datetime(end))
+    if len(business_hours) == 0:
+        return 0
+    
+    business_hours_range = MRange()
+    for bh_begin, bh_end in business_hours:
+        bh_begin_txt, bh_end_txt = unparse_datetime(bh_begin), unparse_datetime(bh_end)
+        bh_begin_m, bh_end_m = convert_to_minutes(bh_begin_txt), convert_to_minutes(bh_end_txt)
+        business_hours_range.add(bh_begin_m, bh_end_m)
+        
+    # TODO: change to use intersection when it is implemented to speed up things
+    result_range = action_range.difference(business_hours_range)
+    result_m = (action_range.ranges[ 0 ].length() - sum([ r.length() for r in result_range ]))
+    return result_m
+    

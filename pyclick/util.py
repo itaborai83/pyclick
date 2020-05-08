@@ -97,11 +97,11 @@ def unparse_datetime(d):
 def next_date(txt):
     return str((dt.datetime.strptime(txt, '%Y-%m-%d') + dt.timedelta(1)).date())
 
-def datetime2tstamp(txt):
+def datetime2tstmp(txt):
     dt1 = parse_datetime(txt)
     return int(dt1.timestamp())
 
-def tstamp2datetime(d):
+def tstmp2datetime(d):
     return dt.datetime.fromtimestamp(d).strftime('%Y-%m-%d %H:%M:%S')
     
 def strip_ms(txt):
