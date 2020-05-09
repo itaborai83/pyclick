@@ -6,6 +6,8 @@ import pandas as pd
 
 from pyclick.util import parse_datetime, parse_date, parse_time, datetime2tstmp, unparse_datetime
 
+PRINT_TRANSITIONS = False
+
 class WorkDay(object):
     
     # TODO: refactor to use mranges for working hours
@@ -240,8 +242,8 @@ class MRange(object):
     
     # TODO: Treat non disjoint ranges
     __slots__ = [ 'ranges', 'total_range' ]
-
-    class MRangeDiffInstant(object):
+    
+    class MRangeInstant(object):
         
         """
             from mrange_analysis.xlsx on ./docs
@@ -258,7 +260,36 @@ class MRange(object):
             COLLECTING SELF OUT  - out_cs
             COLLECTING OTHER OUT - out_co
         """
-
+        
+        INTERSECTION_CASES = {
+            # non valid cases are not represented
+            ( True,  True,  True,  True,  False, False ) : ( True,  False, False ),
+            ( True,  True,  True,  False, False, False ) : ( True,  False, True  ),
+            ( True,  True,  False, True,  False, True  ) : ( True,  False, False ),
+            ( True,  True,  False, False, False, True  ) : ( True,  False, False ),
+            ( True,  True,  False, False, False, False ) : ( False, False, False ),
+            ( True,  False, True,  True,  False, False ) : ( True,  True,  False ),
+            ( True,  False, True,  False, False, False ) : ( True,  True,  True  ),
+            ( True,  False, False, True,  False, True  ) : ( True,  True,  False ),
+            ( True,  False, False, False, False, True  ) : ( True, True,  True  ),
+            ( True,  False, False, False, False, False ) : ( False, True,  False ),
+            ( False, True,  True,  True,  True,  False ) : ( True,  False, False ),
+            ( False, True,  True,  False, True,  False ) : ( True,  False, True  ),
+            ( False, True,  False, True,  True,  True  ) : ( True,  False, False ),
+            ( False, True,  False, False, True,  True  ) : ( True,  False, True  ),
+            ( False, True,  False, False, True,  False ) : ( False, False, False ),
+            ( False, False, True,  True,  True,  False ) : ( True,  True,  False ),
+            ( False, False, True,  True,  False, False ) : ( False, False, False ),
+            ( False, False, True,  False, True,  False ) : ( True,  True,  True  ),
+            ( False, False, True,  False, False, False ) : ( False, False, True  ),
+            ( False, False, False, True,  True,  True  ) : ( True,  True,  False ),
+            ( False, False, False, True,  False, True  ) : ( False, False, False ),
+            ( False, False, False, False, True,  True  ) : ( True,  True,  True  ),
+            ( False, False, False, False, True,  False ) : ( False, True,  False ),
+            ( False, False, False, False, False, True  ) : ( False, False, True  ),
+            ( False, False, False, False, False, False ) : ( False, False, False )            
+        }
+        
         DIFFERENCE_CASES = {
             # non valid cases are not represented
             ( True,  True,  True,  True,  False, False ) : ( False, False, False ),
@@ -299,8 +330,8 @@ class MRange(object):
         def __repr__(self):
             return f"Row({repr(self.begin_self)}, {repr(self.end_self)}, {repr(self.begin_other)}, {repr(self.end_other)})"
         
-        def get_transition(self, collecting_self, collecting_other):
-            consider, new_collecting_self, new_collecting_other = self.DIFFERENCE_CASES[ (
+        def get_transition(self, collecting_self, collecting_other, state_transitions):
+            consider, new_collecting_self, new_collecting_other = state_transitions[ (
                 self.begin_self,
                 self.end_self,
                 self.begin_other,
@@ -424,24 +455,12 @@ class MRange(object):
             if range.contains(elmt):
                 return True
         return False
-        
-    def intersection(self, other):
-        # TODO: implement MRange intersection
-        raise NotImplementedError
     
-    def difference(self, other):
+    def _do_set_operation(self, other, state_transitions):
         # beware when making changes
         # this is actually harder than it looks        
-        
-        # when differencing against nothing, yield a copy of yourself
-        if len(other) == 0: 
-            return self.copy() 
-        
-        # empty range always yields another empty range
-        if len(self) == 0:
-            return self.copy() 
-        
-        Row = self.MRangeDiffInstant
+                
+        Row = self.MRangeInstant
         whens = {}
         # list all time units contained within the total range
         for when in self.total_range.list_elements():
@@ -465,8 +484,12 @@ class MRange(object):
         collecting_self = False
         collecting_other = False
         result_tmp = []
-        for when, row in whens.items():            
-            consider, collecting_self, collecting_other = row.get_transition(collecting_self, collecting_other)
+        for when, row in sorted(whens.items()): # not sorting this was a nasty bug
+            if PRINT_TRANSITIONS:
+                print(when, ')', row, collecting_self, collecting_other, end=' -> ', sep=', ')
+            consider, collecting_self, collecting_other = row.get_transition(collecting_self, collecting_other, state_transitions)
+            if PRINT_TRANSITIONS:
+                print(consider, collecting_self, collecting_other, sep=', ')
             if consider:
                 result_tmp.append(when)
         # added the list of time units as ranges within an mrange
@@ -483,7 +506,25 @@ class MRange(object):
                 low, hi = when, when
         result.add(low, hi)
         return result
-
+        
+    def difference(self, other):
+        # when differencing against nothing, yield a copy of yourself
+        if len(other) == 0: 
+            return self.copy()         
+        # empty range always yields another empty range
+        if len(self) == 0:
+            return self.copy() 
+        return self._do_set_operation(other, self.MRangeInstant.DIFFERENCE_CASES)
+    
+    def intersection(self, other):
+        # when intersecting with nothing, yield nothing
+        if len(other) == 0: 
+            return other.copy() 
+        # empty range always yields another empty range
+        if len(self) == 0:
+            return self.copy()         
+        return self._do_set_operation(other, self.MRangeInstant.INTERSECTION_CASES)
+    
 def convert_to_minutes(start_txt, end_txt):
     start_tstmp   = datetime2tstmp(start_txt)
     end_tstmp     = datetime2tstmp(end_txt)
@@ -521,8 +562,7 @@ def calc_duration(sched, on_hold, start, end):
         bh_begin_m, bh_end_m = convert_to_minutes(bh_begin_txt), convert_to_minutes(bh_end_txt)
         business_hours_range.add(bh_begin_m, bh_end_m)
         
-    # TODO: change to use intersection when it is implemented to speed up things
-    result_range = action_range.difference(business_hours_range)
-    result_m = (action_range.ranges[ 0 ].length() - sum([ r.length() for r in result_range ]))
+    result_range = business_hours_range.intersection(action_range)
+    result_m = sum([ r.length() for r in result_range ])
     return result_m
     
