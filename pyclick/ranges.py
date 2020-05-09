@@ -67,6 +67,7 @@ class Schedule(object):
             if not pd.isna(row.FERIADO_19):  sched.add_hollyday(row.FERIADO_19.date())
             if not pd.isna(row.FERIADO_20):  sched.add_hollyday(row.FERIADO_20.date())
             klass.SCHEDULES[ row.MESA ] = sched
+        return klass.SCHEDULES.copy()
     
     @classmethod    
     def get_schedule_for(klass, mesa):
@@ -494,6 +495,9 @@ def convert_to_minutes(datetime_txt, round_direction=-1):
     tstmp = datetime2tstmp(datetime_txt)
     tstmp_minutes = tstmp // 60
     return tstmp_minutes
+
+def load_spreadsheet(xlsx_file):
+    return Schedule.load_spreadsheet(xlsx_file)
     
 def calc_duration(sched, on_hold, start, end):
     assert start <= end
