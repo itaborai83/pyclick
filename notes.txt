@@ -19,14 +19,8 @@ Planilhão
 
 TODO:
  - CRI
- - Prencher mesa atual na ação (Mesa Atual / Mesa Anterior)
  - Avaliar adicionar apuração por mesa x encaminhamento. Incongruência do modelo do mentor?
- - Avaliar adicionar impugos/expurgos numéricos no cálculo de cada indicador. Gambiarra.
- - Reduzir consumo de memória do processo de consolidação.
-	Atualmente está consumindo aproximadamente 5 e 6 gigas.
- - Criar grafos de transição de ações
- - Cruzamento de dados com E070
-
+ 
  Relatórios de Sanity Check
 --------------------------
 	Adicionar violação de PK no processo de consolidação. Query já está pronta.
