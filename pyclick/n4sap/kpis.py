@@ -133,7 +133,7 @@ class App(object):
                 self.write_source_pro_details(conn, xw)
                 self.write_source_prc_details(conn, xw)
                 self.write_source_prs_details(conn, xw)
-                #self.write_source_cri_details(conn, xw) # suprimido devido erros
+                self.write_source_cri_details(conn, xw) # suprimido devido erros
                 self.write_source_sit_details(conn, xw)
                 self.vacuum(conn)
             logger.info('finished')
