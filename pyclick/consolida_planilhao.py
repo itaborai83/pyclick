@@ -10,14 +10,13 @@ import datetime as dt
 import pandas as pd
 import sqlite3
 
+import pyclick.ranges as ranges
 import pyclick.util as util
 import pyclick.config as config
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('consolida_planilhao')
-
-
 
 SQL_REL_MEDICAO_SELECT  = util.get_query("CONSOLIDA__REL_MEDICAO_SELECT")
 SQL_REL_MEDICAO_DDL     = util.get_query("CONSOLIDA__REL_MEDICAO_DDL")
@@ -27,20 +26,30 @@ SQL_UPDATE_USER_STATUS  = util.get_query("CONSOLIDA__UPDATE_ACAO_USER_STATUS")
 SQL_UPDATE_PENDENCIA    = util.get_query("CONSOLIDA__UPDATE_PENDENCIA")
 SQL_CARGA_REL_MEDICAO   = util.get_query("CONSOLIDA__CARGA_REL_MEDICAO")
 SQL_CHECK_IMPORTACAO    = util.get_query("CONSOLIDA__SQL_CHECK_IMPORTACAO")
+SQL_LISTA_ACOES         = util.get_query("CONSOLIDA__LISTA_ACOES") # remover
 
 class App(object):
     
+    # FIXME: Needs a refactoring. Too much responsability being done here
+    
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_apuracao, dir_import, start_date, end_date, datafix, dropflat):
+    def __init__(self, dir_apuracao, dir_import, start_date, end_date, datafix):
         self.dir_apuracao       = dir_apuracao
         self.dir_import         = dir_import
         self.start_date         = start_date
         self.end_date           = end_date
         self.cutoff_date        = util.next_date(end_date)
         self.datafix            = datafix
-        self.dropflat           = dropflat
-            
+
+    def load_planilha_horarios(self):
+        logger.info('carregando planilha de horários de mesas')
+        fname = os.path.join(self.dir_apuracao, config.BUSINESS_HOURS_SPREADSHEET)
+        if not os.path.exists(fname):
+            logger.error('planilha de horários de mesas  %s não encontrado no diretório de apuração', config.BUSINESS_HOURS_SPREADSHEET)
+            sys.exit(-1)
+        return ranges.load_spreadsheet(fname)
+        
     def read_dump(self, dump_file):
         filename = os.path.join(self.dir_import, dump_file)
         logger.info('lendo arquivo %s', filename)
@@ -157,88 +166,53 @@ class App(object):
             os.chdir(currdir)
     
     def process_begin_sql(self, conn):
-        if not os.path.exists(config.BEGIN_SQL):
-            return
-        logger.warning('running BEGIN HOOK SQL SCRIPT')
-        sql = open(config.BEGIN_SQL).read()
-        conn.executescript(sql)
-            
-    def process_before_load_sql(self, conn):
-        if not os.path.exists(config.BEFORE_LOAD_SQL):
-            return
-        logger.warning('running BEFORE LOAD HOOK SQL SCRIPT')
-        sql = open(config.BEFORE_LOAD_SQL).read()
-        conn.executescript(sql)
-            
-    def process_after_load_sql(self, conn):        
-        if not os.path.exists(config.AFTER_LOAD_SQL):
-            return
-        logger.warning('running AFTER LOAD HOOK SQL SCRIPT')
-        sql = open(config.AFTER_LOAD_SQL).read()
-        conn.executescript(sql)
-            
-    def process_end_sql(self, conn):
-        if not os.path.exists(config.END_SQL):
-            return
-        logger.warning('running END HOOK SQL SCRIPT')
-        sql = open(config.END_SQL).read()
-        conn.executescript(sql)
-    
-    def save_consolidado(self, df):
-        logger.info('salvando planilhão como %s', config.CONSOLIDATED_DB)
         currdir = os.getcwd()
         os.chdir(self.dir_apuracao)
         try:
-            if os.path.exists(config.CONSOLIDATED_DB):
-                logger.warning("removing older version of the consolidated database")
-                os.unlink(config.CONSOLIDATED_DB)
-            conn = sqlite3.connect(config.CONSOLIDATED_DB)
-            self.process_begin_sql(conn)
-            logger.info('preenchendo tabela REL_MEDICAO')
-            conn.executescript(SQL_REL_MEDICAO_DDL)
-            param_sets = list(df.itertuples(index=False))
-            #df.to_sql(config.INCIDENT_TABLE, conn, index=False, if_exists="replace")
-            conn.executemany(SQL_REL_MEDICAO_UPSERT, param_sets)
-            conn.commit()
-            logger.info('preenchend campo MESA_ATUAL da tabela REL_MEDICAO')
-            conn.executescript(SQL_UPDATE_MESA_ATUAL)
-            logger.info('preenchend campo USER_STATUS da tabela REL_MEDICAO')
-            conn.executescript(SQL_UPDATE_USER_STATUS)
-            logger.info('preenchend campo PENDENCIA da tabela REL_MEDICAO')
-            conn.executescript(SQL_UPDATE_PENDENCIA)
-            if self.datafix:
-                logger.warning("STOPING LOADING PROCEDURE FOR A DATAFIX TO BE APPLIED")
-                logger.warning("(remember to close the database after data analysis)")
-                conn.close()
-                while True:
-                    ans = input('type "ok" to continue or ctrl-c to abort > ').strip()
-                    if ans == "ok":
-                        conn = sqlite3.connect(config.CONSOLIDATED_DB)
-                        break
-            self.process_before_load_sql(conn)
-            logger.info("removing incidents closed before the start date")
-            sql = "DELETE FROM REL_MEDICAO WHERE DATA_RESOLUCAO_CHAMADO < ?";
-            args=(self.start_date, )
-            conn.execute(sql, args)
-            logger.info("loading data model")
-            conn.executescript(SQL_CARGA_REL_MEDICAO)
-            self.process_after_load_sql(conn)
-            cursor = conn.execute(SQL_CHECK_IMPORTACAO)
-            logger.info("running sanity check")
-            result = cursor.fetchone()[ 0 ]
-            if result != "OK":
-                logger.error("falha na checagem da consolidação do relatório de medição")
-                sys.exit(config.EXIT_CONSOLIDATION_ERROR)
-            if self.dropflat:
-                logger.warning("dropping flat data tabel -> %s", config.INCIDENT_TABLE)
-                conn.execute("DROP TABLE " + config.INCIDENT_TABLE)
-            conn.execute("VACUUM")
-            self.process_end_sql(conn)
-            conn.commit()
-            conn.close()
+            if not os.path.exists(config.BEGIN_SQL):
+                return
+            logger.warning('running BEGIN HOOK SQL SCRIPT')
+            sql = open(config.BEGIN_SQL).read()
+            conn.executescript(sql)
         finally:
-            os.chdir(currdir)
-    
+            os.chdir(currdir)    
+            
+    def process_before_load_sql(self, conn):
+        currdir = os.getcwd()
+        os.chdir(self.dir_apuracao)
+        try:
+            if not os.path.exists(config.BEFORE_LOAD_SQL):
+                return
+            logger.warning('running BEFORE LOAD HOOK SQL SCRIPT')
+            sql = open(config.BEFORE_LOAD_SQL).read()
+            conn.executescript(sql)
+        finally:
+            os.chdir(currdir)    
+            
+    def process_after_load_sql(self, conn):        
+        currdir = os.getcwd()
+        os.chdir(self.dir_apuracao)
+        try:
+            if not os.path.exists(config.AFTER_LOAD_SQL):
+                return
+            logger.warning('running AFTER LOAD HOOK SQL SCRIPT')
+            sql = open(config.AFTER_LOAD_SQL).read()
+            conn.executescript(sql)
+        finally:
+            os.chdir(currdir)    
+            
+    def process_end_sql(self, conn):
+        currdir = os.getcwd()
+        os.chdir(self.dir_apuracao)
+        try:
+            if not os.path.exists(config.END_SQL):
+                return
+            logger.warning('running END HOOK SQL SCRIPT')
+            sql = open(config.END_SQL).read()
+            conn.executescript(sql)
+        finally:
+            os.chdir(currdir)    
+
     def filter_incidents(self, all_events, df_open, dfs_closed):
         logger.info("filtrando eventos pelo mapeamento de mesa")
         df_open = df_open[ df_open.id_chamado.isin(all_events) ].copy()
@@ -247,17 +221,99 @@ class App(object):
             df_closed = df_closed[ df_closed.id_chamado.isin(all_events) ].copy()
             dfs_closed[i] = df_closed
         return df_open, dfs_closed
+    
+    def get_connection(self):
+        logger.info('creating consolidated db')
+        currdir = os.getcwd()
+        os.chdir(self.dir_apuracao)
+        try:
+            if os.path.exists(config.CONSOLIDATED_DB):
+                logger.warning("removing older version of the consolidated database")
+                os.unlink(config.CONSOLIDATED_DB)
+            conn = sqlite3.connect(config.CONSOLIDATED_DB)
+            return conn
+        finally:
+            os.chdir(currdir)    
+    
+    def fill_table(self, conn, df):
+        logger.info('preenchendo tabela REL_MEDICAO')
+        conn.executescript(SQL_REL_MEDICAO_DDL)
+        param_sets = list(df.itertuples(index=False))
+        #df.to_sql(config.INCIDENT_TABLE, conn, index=False, if_exists="replace")
+        conn.executemany(SQL_REL_MEDICAO_UPSERT, param_sets)
+        conn.commit()
+        logger.info('preenchend campo MESA_ATUAL da tabela REL_MEDICAO')
+        conn.executescript(SQL_UPDATE_MESA_ATUAL)
+        logger.info('preenchend campo USER_STATUS da tabela REL_MEDICAO')
+        conn.executescript(SQL_UPDATE_USER_STATUS)
+        logger.info('preenchend campo PENDENCIA da tabela REL_MEDICAO')
+        conn.executescript(SQL_UPDATE_PENDENCIA)
+        conn.commit()
         
+    def do_datafix(self):
+        logger.warning("STOPING LOADING PROCEDURE FOR A DATAFIX TO BE APPLIED")
+        logger.warning("(remember to close the database after data analysis)")
+        conn.close()
+        while True:
+            ans = input('type "ok" to continue or ctrl-c to abort > ').strip()
+            if ans == "ok":
+                conn = self.get_connection()
+                break
+    
+    def migrate_tables(self, conn):
+        logger.info("migrando dados da tabela REL_MEDICAO para o modelo PyClick")
+        logger.info("removing incidents closed before the start date")
+        sql = "DELETE FROM REL_MEDICAO WHERE DATA_RESOLUCAO_CHAMADO < ?";
+        args=(self.start_date, )
+        conn.execute(sql, args)
+        logger.info("loading data model")
+        conn.executescript(SQL_CARGA_REL_MEDICAO)
+        conn.commit()
+
+    def sanity_check(self, conn):
+        cursor = conn.execute(SQL_CHECK_IMPORTACAO)
+        logger.info("running sanity check")
+        result = cursor.fetchone()[ 0 ]
+        if result != "OK":
+            logger.error("falha na checagem da consolidação do relatório de medição")
+            sys.exit(config.EXIT_CONSOLIDATION_ERROR)        
+            
+    def fill_durations(self, conn, horarios_mesas):
+        logger.info('calculando duração de ações')
+        # retrieving actions
+        df = pd.read_sql(SQL_LISTA_ACOES, conn)
+        logger.info('%s ações recuperadas', len(df))
+        # computing durations
+        durations = []
+        for row in df.itertuples():
+            sched    = horarios_mesas.get(row.mesa_atual)
+            on_hold  = row.pendencia == 'S'
+            start    = row.data_inicio_acao
+            end      = row.DATA_PROXIMA_ACAO
+            duration = ranges.calc_duration(sched, on_hold, start, end)
+            item     = duration, row.id_chamado, row.id_acao
+            durations.append(item)
+        # updating durations
+        sql = "UPDATE REL_MEDICAO SET DURACAO_M = ? WHERE ID_CHAMADO = ? AND ID_ACAO = ?"
+        conn.executemany(sql, durations)
+        logger.info('atualizando INCIDENTE_ACOES')
+        sql = "UPDATE INCIDENTE_ACOES SET DURACAO_M = ? WHERE ID_CHAMADO = ? AND ID_ACAO = ?"
+        conn.executemany(sql, durations)
+        conn.commit()
+    
     def run(self):
         try:
-            logger.info('começando a consolidação do planilhão - versão %d.%d.%d', *self.VERSION)
-            mesas = self.read_mesas()
-            df_ofertas = self.read_ofertas()
             mesa_evt_mapping = {}
+            logger.info('começando a consolidação do planilhão - versão %d.%d.%d', *self.VERSION)
+            mesas           = self.read_mesas()
+            df_ofertas      = self.read_ofertas()
+            horarios_mesas  = self.load_planilha_horarios()
+            
             closed_dumps, open_dump = self.get_dump_files()
             df_open = self.read_dump(open_dump)
             df_open = self.apply_cutoff_date_open(df_open)
             self.update_event_mapping(mesa_evt_mapping, df_open)
+            
             dfs_closed = [ ]
             logger.info('iniciando loop de parsing')
             for closed_dump in closed_dumps:
@@ -289,7 +345,19 @@ class App(object):
             logger.info("consolidando planilhão com %d eventos", len(all_events))
             df = df_planilhao[ df_planilhao.id_chamado.isin(all_events) ] # not necessary
             logger.info("consolidando planilhão com %d linhas", len(df))
-            self.save_consolidado(df)
+            
+            #self.save_consolidado(df, horarios_mesas)
+            conn = self.get_connection()
+            self.process_begin_sql(conn)
+            self.fill_table(conn, df)
+            if self.datafix:
+                self.do_datafix(conn)
+            self.process_before_load_sql(conn)
+            self.migrate_tables(conn)
+            self.process_after_load_sql(conn)
+            self.sanity_check(conn)
+            self.fill_durations(conn, horarios_mesas)
+            self.process_end_sql(conn)
         except:
             logger.exception('an error has occurred')
             raise
@@ -301,9 +369,9 @@ if __name__ == '__main__':
     parser.add_argument('start_date', type=str, help='data inicio apuração')
     parser.add_argument('end_date', type=str, help='data fim apuração')
     parser.add_argument('--datafix', action='store_true', default=False, help='interrompe o processo de carga para manipular o consolidado')
-    parser.add_argument('--dropflat', action='store_true', default=False, help='dropa a tabela rel_medicao após carga')
     
     args = parser.parse_args()
-    app = App(args.dir_apuracao, args.dir_import, args.start_date, args.end_date, args.datafix, args.dropflat)
+    app = App(args.dir_apuracao, args.dir_import, args.start_date, args.end_date, args.datafix)
     app.run()
+    
     
