@@ -268,6 +268,12 @@ class App(object):
         conn.execute(sql, args)
         logger.info("loading data model")
         conn.executescript(SQL_CARGA_REL_MEDICAO)
+        sql = "INSERT INTO PARAMS(PARAM, VALOR, OBS) VALUES ('HORA_INICIO_APURACAO', ?, 'Data Início da Apuração')"
+        args = self.start_date + ' 00:00:00',
+        conn.execute(sql, args)
+        sql = "INSERT INTO PARAMS(PARAM, VALOR, OBS) VALUES ('HORA_FIM_APURACAO',    ?, 'Data Fim da Apuração')"
+        args = self.end_date + ' 23:59:59',
+        conn.execute(sql, args)
         conn.commit()
 
     def sanity_check(self, conn):
@@ -287,7 +293,7 @@ class App(object):
         durations = []
         for row in df.itertuples():
             sched    = horarios_mesas.get(row.mesa_atual)
-            on_hold  = row.pendencia == 'S'
+            on_hold  = False # row.pendencia == 'S'
             start    = row.data_inicio_acao
             end      = row.DATA_PROXIMA_ACAO
             duration = ranges.calc_duration(sched, on_hold, start, end)
