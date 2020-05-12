@@ -307,6 +307,23 @@ class App(object):
         conn.executemany(sql, durations)
         conn.commit()
     
+    def write_business_hours(self, conn, mesas, horarios_mesas):
+        logger.info("escrevendo as horas úteis das mesas")
+        start_dt = util.parse_datetime(self.start_date + " 00:00:00")
+        end_dt = util.parse_datetime(self.end_date + " 23:59:59")
+        param_sets = []
+        for mesa in mesas:
+            sched = horarios_mesas.get(mesa)
+            if not sched:
+                continue
+            bh = sched.get_business_hours(start_dt, end_dt)
+            for bh_start_dt, bh_end_dt in bh:
+                args = mesa, util.unparse_datetime(bh_start_dt), util.unparse_datetime(bh_end_dt)
+                param_sets.append(args)
+        sql = "INSERT INTO HORAS_UTEIS(MESA, HORA_INICIO, HORA_FIM) VALUES (?, ?, ?)"
+        conn.executemany(sql, param_sets)
+        conn.commit()
+    
     def run(self):
         try:
             mesa_evt_mapping = {}
@@ -362,6 +379,7 @@ class App(object):
             self.migrate_tables(conn)
             self.process_after_load_sql(conn)
             self.sanity_check(conn)
+            self.write_business_hours(conn, mesas, horarios_mesas)
             self.fill_durations(conn, horarios_mesas)
             self.process_end_sql(conn)
         except:
