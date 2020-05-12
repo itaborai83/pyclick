@@ -20,6 +20,8 @@ Planilhão
 TODO:
  - CRI
  - Avaliar adicionar apuração por mesa x encaminhamento. Incongruência do modelo do mentor?
+ - Trocar as mensagens de log em inglês para português
+ - Tratar corrupção de arquivos que ocorre durante o processo de compressão/descompressão quando ocorre um cancelamento
  
  Relatórios de Sanity Check
 --------------------------
