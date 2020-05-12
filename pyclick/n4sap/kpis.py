@@ -57,6 +57,18 @@ class App(object):
         df = pd.read_sql(sql, conn)
         df.to_excel(xw, sheet_name="DADOS_MEDICAO", index=False)
 
+    def write_business_time(self, conn, xw):
+        logger.info("exporting tempo útil mesas")
+        sql = "SELECT * FROM VW_TEMPO_UTIL_MESAS"
+        df = pd.read_sql(sql, conn)
+        df.to_excel(xw, sheet_name="TEMPO_UTIL", index=False)
+
+    def write_pending_time(self, conn, xw):
+        logger.info("exporting tempo pendências mesas")
+        sql = "SELECT * FROM VW_TEMPO_PENDENCIAS_MESAS"
+        df = pd.read_sql(sql, conn)
+        df.to_excel(xw, sheet_name="TEMPO_PENDENTE", index=False)
+        
     def write_missing_data(self, conn, xw):
         logger.info("exporting missing data entries")
         sql = "SELECT * FROM VW_DADOS_MEDICAO_FALTANDO"
@@ -125,6 +137,8 @@ class App(object):
                 self.compute_kpis(conn)
             with self.open_spreadsheet() as xw:
                 self.write_kpi(conn, xw)
+                self.write_business_time(conn, xw)
+                self.write_pending_time(conn, xw)                
                 self.write_data(conn, xw)
                 self.write_missing_data(conn, xw)
                 self.write_override_data(conn, xw)
