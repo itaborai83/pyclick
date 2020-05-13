@@ -112,7 +112,7 @@ def strip_ms(txt):
         return txt
     return m[ 1 ]
         
-def decompress(filename):
+def decompress(filename, keep_original=False):
     # file needs to be gzipped
     assert filename.endswith(".gz") 
     # file needs to exist
@@ -127,25 +127,25 @@ def decompress(filename):
     with gzip.open(filename, 'rb') as f_in:
         with open(decompressed_filename, 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
-    os.unlink(filename)
+    if not keep_original:
+        os.unlink(filename)
     return decompressed_filename
     
-def compress(filename):
-    try:
-        # file needs to not be gzipped
-        assert not filename.endswith(".gz") 
-        # file needs to exist
-        assert os.path.exists(filename) 
-        parts = filename.split(".") 
-        # file needs to have a name and an extension
-        assert len(parts) == 2 
-        name, extension = parts[0], parts[1]
-        compressed_filename = name + "." + extension + ".gz"
-        # the compressed file must not exist
-        assert not os.path.exists(compressed_filename)
-        with open(filename, 'rb') as f_in:
-            with gzip.open(compressed_filename, 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-        return compressed_filename
-    finally:
+def compress(filename, keep_original=False):
+    # file needs to not be gzipped
+    assert not filename.endswith(".gz") 
+    # file needs to exist
+    assert os.path.exists(filename) 
+    parts = filename.split(".") 
+    # file needs to have a name and an extension
+    assert len(parts) == 2 
+    name, extension = parts[0], parts[1]
+    compressed_filename = name + "." + extension + ".gz"
+    # the compressed file must not exist
+    assert not os.path.exists(compressed_filename)
+    with open(filename, 'rb') as f_in:
+        with gzip.open(compressed_filename, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+    if not self.keep_original:
         os.unlink(filename)
+    return compressed_filename
