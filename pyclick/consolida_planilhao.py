@@ -53,12 +53,12 @@ class App(object):
     def read_dump(self, dump_file):
         filename = os.path.join(self.dir_import, dump_file)
         logger.info('lendo arquivo %s', filename)
-        new_filename = util.decompress(filename)
+        new_filename = util.decompress(filename, keep_original=True)
         conn = sqlite3.connect(new_filename)
         df = pd.read_sql(SQL_REL_MEDICAO_SELECT, conn)
         util.sort_rel_medicao(df)
         del conn
-        util.compress(new_filename)
+        os.unlink(new_filename)
         return df
     
     def concat_planilhas(self, df_open , dfs_closed):
@@ -291,14 +291,20 @@ class App(object):
         logger.info('%s ações recuperadas', len(df))
         # computing durations
         durations = []
-        for row in df.itertuples():
+        for i, row in enumerate(df.itertuples()):
             sched    = horarios_mesas.get(row.mesa_atual)
             on_hold  = False # row.pendencia == 'S'
             start    = row.data_inicio_acao
             end      = row.DATA_PROXIMA_ACAO
-            duration = ranges.calc_duration(sched, on_hold, start, end)
+            if end < start:
+                logger.warning("chamado %s / acao %s não possui tempo monotonicamente crescente", row.id_chamado, row.id_acao)
+                duration = 0
+            else:
+                duration = ranges.calc_duration(sched, on_hold, start, end)
             item     = duration, row.id_chamado, row.id_acao
             durations.append(item)
+            if i % 10000 == 0:
+                logger.info('calculado %d ações', i)
         # updating durations
         sql = "UPDATE REL_MEDICAO SET DURACAO_M = ? WHERE ID_CHAMADO = ? AND ID_ACAO = ?"
         conn.executemany(sql, durations)
