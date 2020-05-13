@@ -481,29 +481,48 @@ class MRange(object):
             whens[ range.hi ].end_other = True
         
         # for each time unit, check if has a valid transition
-        collecting_self = False
+        collecting_self  = False
         collecting_other = False
+        last_when        = None
+        last_considered  = False
         result_tmp = []
         for when, row in sorted(whens.items()): # not sorting this was a nasty bug
+            
+            # for performance reasons, reconstruct the implied ranges when nothing changes
+            implied_row = Row() # nothing begins and nothing ends
+            if last_when: # no implied rows at the start
+                 consider, still_collecting_self, still_collecting_other = implied_row.get_transition(collecting_self, collecting_other, state_transitions)
+                 assert still_collecting_self == collecting_self # not allowed to change in an implied row
+                 assert still_collecting_other == collecting_other # not allowed to change in an implied row
+                 if consider: # if we're adding time units in the implied rows
+                    low = last_when + 1 # add 1 to start the implied value
+                    hi = when - 1
+                    if low <= hi:
+                        result_tmp.append( (low, hi) )
+            
             if PRINT_TRANSITIONS:
                 print(when, ')', row, collecting_self, collecting_other, end=' -> ', sep=', ')
             consider, collecting_self, collecting_other = row.get_transition(collecting_self, collecting_other, state_transitions)
             if PRINT_TRANSITIONS:
                 print(consider, collecting_self, collecting_other, sep=', ')
             if consider:
-                result_tmp.append(when)
+                result_tmp.append( (when, when) )
+            last_when = when
         # added the list of time units as ranges within an mrange
 
         result = MRange()
         if len(result_tmp) == 0:
             return result
-        low, hi = result_tmp[ 0 ], result_tmp[ 0 ]
-        for when in result_tmp[ 1: ]:
-            if hi + 1 == when: # contiguous
-                hi = when
+        low, hi = result_tmp[ 0 ][ 0 ], result_tmp[ 0 ][ 1 ] 
+        assert low == hi # first is never implied
+        for when_low, when_hi in result_tmp[ 1: ]:
+            if when_low != when_hi:  # implied range speed up
+                result.add(when_low, when_hi)
+            if hi + 1 == when_low: # contiguous
+                hi = when_low
             else:
                 result.add(low, hi)
-                low, hi = when, when
+                low, hi = when_low, when_hi
         result.add(low, hi)
         return result
         

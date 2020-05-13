@@ -471,9 +471,5 @@ class CalcDurationTest(unittest.TestCase):
     def test_it_returns_a_30_minutes_duration_within_office_hours(self):
         d = calc_duration(self.mesa_normal, False, '2000-01-03 07:30:00', '2000-01-03 08:30:00')
         self.assertEqual(d, 30)
-        try:
-            rng.PRINT_TRANSITIONS = True
-            d = calc_duration(self.mesa_normal, False, '2000-01-03 18:30:00', '2000-01-03 19:30:59')
-            self.assertEqual(d, 29) # FIXME: this should be 30
-        finally:
-            rng.PRINT_TRANSITIONS = False
+        d = calc_duration(self.mesa_normal, False, '2000-01-03 18:30:00', '2000-01-03 19:30:59')
+        self.assertEqual(d, 29) # FIXME: this should be 30
