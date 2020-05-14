@@ -18,6 +18,11 @@ Planilhão
 
 
 TODO:
+ - Permitir consolidação em paralelo
+ - Paralelizar cálculo durações
+ - Otimizar Tempo Durações
+ - Usar arquivos descomprimidos temporários durante processo de consolidação
+ - Tratar tempo não monotonicamente crescente na listagem de ações
  - CRI
  - Avaliar adicionar apuração por mesa x encaminhamento. Incongruência do modelo do mentor?
  - Trocar as mensagens de log em inglês para português
