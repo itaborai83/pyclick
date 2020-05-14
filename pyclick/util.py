@@ -146,6 +146,6 @@ def compress(filename, keep_original=False):
     with open(filename, 'rb') as f_in:
         with gzip.open(compressed_filename, 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
-    if not self.keep_original:
+    if not keep_original:
         os.unlink(filename)
     return compressed_filename
