@@ -300,10 +300,17 @@ class App(object):
                 logger.warning("chamado %s / acao %s não possui tempo monotonicamente crescente", row.id_chamado, row.id_acao)
                 duration = 0
             else:
-                duration = ranges.calc_duration(sched, on_hold, start, end)
-            item     = duration, row.id_chamado, row.id_acao
+                try:
+                    duration = ranges.calc_duration(sched, on_hold, start, end)
+                except:
+                    logger.exception(
+                        "erro ao calcular duração da ação %s do evento %s\n\tstart: %s / end: %s",
+                        row.id_acao, row.id_chamado, start, end
+                    )
+                    sys.exit(1)
+            item = duration, row.id_chamado, row.id_acao
             durations.append(item)
-            if i % 10000 == 0:
+            if i % 10000 == 0 and i:
                 logger.info('calculado %d ações', i)
         # updating durations
         sql = "UPDATE REL_MEDICAO SET DURACAO_M = ? WHERE ID_CHAMADO = ? AND ID_ACAO = ?"

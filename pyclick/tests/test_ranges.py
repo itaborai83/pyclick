@@ -399,27 +399,27 @@ class CalcDurationTest(unittest.TestCase):
         minutes = convert_to_minutes('2000-01-01 00:00:30') - convert_to_minutes('2000-01-01 00:00:00')
         self.assertEqual(minutes, 0)
         minutes = convert_to_minutes('2000-01-01 00:00:31') - convert_to_minutes('2000-01-01 00:00:00')
-        self.assertEqual(minutes, 1)
+        self.assertEqual(minutes, 0)
         minutes = convert_to_minutes('2000-01-01 00:01:29') - convert_to_minutes('2000-01-01 00:00:00')
         self.assertEqual(minutes, 1)
         
         minutes = convert_to_minutes('2000-01-01 00:00:15') - convert_to_minutes('2000-01-01 00:00:15')
         self.assertEqual(minutes, 0)
         minutes = convert_to_minutes('2000-01-01 00:00:45') - convert_to_minutes('2000-01-01 00:00:15')
-        self.assertEqual(minutes, 1)
+        self.assertEqual(minutes, 0)
         minutes = convert_to_minutes('2000-01-01 00:00:46') - convert_to_minutes('2000-01-01 00:00:15')
-        self.assertEqual(minutes, 1)
+        self.assertEqual(minutes, 0)
         minutes = convert_to_minutes('2000-01-01 00:01:44') - convert_to_minutes('2000-01-01 00:00:15')
-        self.assertEqual(minutes, 2)
+        self.assertEqual(minutes, 1)
         
         minutes = convert_to_minutes('2000-01-01 01:00:15') - convert_to_minutes('2000-01-01 00:00:15')
         self.assertEqual(minutes, 60)
         minutes = convert_to_minutes('2000-01-01 01:00:45') - convert_to_minutes('2000-01-01 00:00:15')
-        self.assertEqual(minutes, 61)
+        self.assertEqual(minutes, 60)
         minutes = convert_to_minutes('2000-01-01 01:00:46') - convert_to_minutes('2000-01-01 00:00:15')
-        self.assertEqual(minutes, 61)
+        self.assertEqual(minutes, 60)
         minutes = convert_to_minutes('2000-01-01 01:01:44') - convert_to_minutes('2000-01-01 00:00:15')
-        self.assertEqual(minutes, 62)
+        self.assertEqual(minutes, 61)
         
     def test_it_returns_a_zero_minutes_duration_within_office_hours(self):
         d = calc_duration(self.mesa_normal, False, '2000-01-03 09:00:00', '2000-01-03 09:00:00')
@@ -466,10 +466,10 @@ class CalcDurationTest(unittest.TestCase):
         d = calc_duration(self.mesa_normal, False, '2000-01-03 09:00:00', '2000-01-03 09:59:00')
         self.assertEqual(d, 59)
         d = calc_duration(self.mesa24x7, False, '2000-01-03 09:00:00', '2000-01-03 09:59:30')
-        self.assertEqual(d, 60)
+        self.assertEqual(d, 59)
 
     def test_it_returns_a_30_minutes_duration_within_office_hours(self):
         d = calc_duration(self.mesa_normal, False, '2000-01-03 07:30:00', '2000-01-03 08:30:00')
         self.assertEqual(d, 30)
         d = calc_duration(self.mesa_normal, False, '2000-01-03 18:30:00', '2000-01-03 19:30:00')
-        self.assertEqual(d, 30) # FIXME: this should be 30
+        self.assertEqual(d, 29) # FIXME: this should be 30

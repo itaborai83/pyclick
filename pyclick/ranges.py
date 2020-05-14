@@ -546,9 +546,9 @@ class MRange(object):
             return self.copy()         
         return self._do_set_operation(other, self.MRangeInstant.INTERSECTION_CASES)
     
-def convert_to_minutes(datetime_txt, round_direction=-1):
+def convert_to_minutes(datetime_txt):
     tstmp = datetime2tstmp(datetime_txt)
-    tstmp_minutes = round(tstmp / 60)
+    tstmp_minutes = tstmp // 60
     return tstmp_minutes
 
 def load_spreadsheet(xlsx_file):
@@ -566,10 +566,11 @@ def calc_duration(sched, on_hold, start, end):
     if start_m == end_m:
         return 0
     
-    action_range = MRange().add(start_m, end_m)
     business_hours = sched.get_business_hours(parse_datetime(start), parse_datetime(end))
     if len(business_hours) == 0:
         return 0
+    
+    action_range = MRange().add(start_m, end_m)
     
     business_hours_range = MRange()
     for bh_begin, bh_end in business_hours:

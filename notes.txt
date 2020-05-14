@@ -18,7 +18,8 @@ Planilhão
 
 
 TODO:
- - Permitir consolidação em paralelo
+ ! Usar cálculo de duração baseadas em segundos 
+ ! Permitir consolidação em paralelo
  - Paralelizar cálculo durações
  - Otimizar Tempo Durações
  - Usar arquivos descomprimidos temporários durante processo de consolidação
