@@ -463,10 +463,14 @@ class MRange(object):
         Row = self.MRangeInstant
         whens = {}
         # list all time units contained within the total range
-        for when in self.total_range.list_elements():
-            whens[ when ] = Row()
+        #for when in self.total_range.list_elements():
+        #    whens[ when ] = Row()
         # for each range within the mrange, mark when it begins and end
         for range in self.ranges:
+            if range.low not in whens:
+                whens[ range.low ] = Row()
+            if range.hi not in whens:
+                whens[ range.hi ] = Row()
             whens[ range.low ].begin_self = True
             whens[ range.hi ].end_self = True
         
@@ -484,17 +488,16 @@ class MRange(object):
         collecting_self  = False
         collecting_other = False
         last_when        = None
-        last_considered  = False
-        result_tmp = []
+        result_tmp       = []
+        implied_row      = Row() # nothing begins and nothing ends
         for when, row in sorted(whens.items()): # not sorting this was a nasty bug
             
             # for performance reasons, reconstruct the implied ranges when nothing changes
-            implied_row = Row() # nothing begins and nothing ends
-            if last_when: # no implied rows at the start
-                 consider, still_collecting_self, still_collecting_other = implied_row.get_transition(collecting_self, collecting_other, state_transitions)
-                 assert still_collecting_self == collecting_self # not allowed to change in an implied row
-                 assert still_collecting_other == collecting_other # not allowed to change in an implied row
-                 if consider: # if we're adding time units in the implied rows
+            if last_when is not None: # no implied rows at the start. --> Nasty bug here when testing thruthiness instead of nothingness
+                consider, still_collecting_self, still_collecting_other = implied_row.get_transition(collecting_self, collecting_other, state_transitions)
+                assert still_collecting_self == collecting_self # not allowed to change in an implied row
+                assert still_collecting_other == collecting_other # not allowed to change in an implied row
+                if consider: # if we're adding time units in the implied rows
                     low = last_when + 1 # add 1 to start the implied value
                     hi = when - 1
                     if low <= hi:
@@ -509,21 +512,20 @@ class MRange(object):
                 result_tmp.append( (when, when) )
             last_when = when
         # added the list of time units as ranges within an mrange
-
         result = MRange()
         if len(result_tmp) == 0:
             return result
-        low, hi = result_tmp[ 0 ][ 0 ], result_tmp[ 0 ][ 1 ] 
-        assert low == hi # first is never implied
-        for when_low, when_hi in result_tmp[ 1: ]:
-            if when_low != when_hi:  # implied range speed up
-                result.add(when_low, when_hi)
-            if hi + 1 == when_low: # contiguous
-                hi = when_low
+        last_low, last_hi = result_tmp[ 0 ][ 0 ], result_tmp[ 0 ][ 1 ] 
+        assert last_low == last_hi # first is never an implied range
+        for curr_low, curr_hi in result_tmp[ 1: ]:
+            if last_hi + 1 < curr_low: # range does not "touch"
+                result.add(last_low, last_hi)
+                last_low, last_hi = curr_low, curr_hi
+            elif last_hi + 1 == curr_low: # ranges "touch"
+                last_hi = curr_hi
             else:
-                result.add(low, hi)
-                low, hi = when_low, when_hi
-        result.add(low, hi)
+                assert 1 == 2 # should not happen
+        result.add(last_low, last_hi)
         return result
         
     def difference(self, other):
@@ -544,16 +546,9 @@ class MRange(object):
             return self.copy()         
         return self._do_set_operation(other, self.MRangeInstant.INTERSECTION_CASES)
     
-def convert_to_minutes(start_txt, end_txt):
-    start_tstmp   = datetime2tstmp(start_txt)
-    end_tstmp     = datetime2tstmp(end_txt)
-    delta_seconds = end_tstmp - start_tstmp
-    delta_minutes = round(delta_seconds / 60)
-    return delta_minutes
-
 def convert_to_minutes(datetime_txt, round_direction=-1):
     tstmp = datetime2tstmp(datetime_txt)
-    tstmp_minutes = tstmp // 60
+    tstmp_minutes = round(tstmp / 60)
     return tstmp_minutes
 
 def load_spreadsheet(xlsx_file):
@@ -566,6 +561,7 @@ def calc_duration(sched, on_hold, start, end):
         return 0
     if on_hold:
         return 0
+    
     start_m, end_m = convert_to_minutes(start), convert_to_minutes(end)
     if start_m == end_m:
         return 0
@@ -580,7 +576,6 @@ def calc_duration(sched, on_hold, start, end):
         bh_begin_txt, bh_end_txt = unparse_datetime(bh_begin), unparse_datetime(bh_end)
         bh_begin_m, bh_end_m = convert_to_minutes(bh_begin_txt), convert_to_minutes(bh_end_txt)
         business_hours_range.add(bh_begin_m, bh_end_m)
-        
     result_range = business_hours_range.intersection(action_range)
     result_m = sum([ r.length() for r in result_range ])
     return result_m
