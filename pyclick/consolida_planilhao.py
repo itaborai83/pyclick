@@ -71,9 +71,8 @@ class App(object):
     def drop_duplicated_actions(self, df):
         logger.info('dropando ações duplicadas (Comparando status_de_evento)')
         statuses = set(df.status_de_evento.to_list())
-        assert 'Resolvido' in statuses
-        assert 'Fechado' in statuses
-        assert len(statuses) == 2
+        assert (len(statuses) == 2 and 'Resolvido' in statuses and 'Fechado' in statuses) or \
+               (len(statuses) == 1 and ('Resolvido' in statuses or 'Fechado' in statuses))
         df.sort_values(by=[ 'id_acao', 'status_de_evento' ], inplace=True, kind='mergesort', ignore_index=True)
         # keep Resolvido if it exists
         df.drop_duplicates(subset=[ 'id_acao' ], keep='first', inplace=True, ignore_index=True)
@@ -257,6 +256,7 @@ class App(object):
         while True:
             ans = input('type "ok" to continue or ctrl-c to abort > ').strip()
             if ans == "ok":
+                conn.close()
                 conn = self.get_connection()
                 break
     
@@ -406,6 +406,7 @@ class App(object):
             self.drop_rel_medicao(conn)
             self.process_end_sql(conn)
             self.vacuum(conn)
+            conn.close()
         except:
             logger.exception('an error has occurred')
             raise
