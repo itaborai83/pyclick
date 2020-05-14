@@ -330,6 +330,15 @@ class App(object):
         conn.executemany(sql, param_sets)
         conn.commit()
     
+    def drop_rel_medicao(self, conn):
+        logger.info("dropando tabela REL_MEDICAO")
+        conn.execute("DROP TABLE REL_MEDICAO");
+        conn.commit()
+    
+    def vacuum(self, conn):
+        logger.info("compactando a base de dados")
+        conn.execute("VACUUM");
+        
     def run(self):
         try:
             mesa_evt_mapping = {}
@@ -387,7 +396,9 @@ class App(object):
             self.sanity_check(conn)
             self.write_business_hours(conn, mesas, horarios_mesas)
             self.fill_durations(conn, horarios_mesas)
+            self.drop_rel_medicao(conn)
             self.process_end_sql(conn)
+            self.vacuum(conn)
         except:
             logger.exception('an error has occurred')
             raise
