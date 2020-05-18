@@ -97,6 +97,9 @@ def unparse_datetime(d):
 def next_date(txt):
     return str((dt.datetime.strptime(txt, '%Y-%m-%d') + dt.timedelta(1)).date())
 
+def prior_date(txt):
+    return str((dt.datetime.strptime(txt, '%Y-%m-%d') + dt.timedelta(-1)).date())
+
 def datetime2tstmp(txt):
     dt1 = parse_datetime(txt)
     return int(dt1.timestamp())
