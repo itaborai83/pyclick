@@ -1,118 +1,150 @@
-WITH OPEN_INCS AS (
-/*	
-	SELECT	INCIDENT.INCIDENT_ID
+WITH PARAMS AS (
+		SELECT 	CONVERT(DATETIME, '2020-05-04 00:00:00', 120) AS START_DT
+		,		CONVERT(DATETIME, '2020-05-04 23:59:59', 120) AS END_DT
+	),
+INCS AS (
+	/*	-- USE SINGLE LINE COMMENT AT COLUMN 0 TO TEST THE SUBQUERY
+	WITH PARAMS AS (
+		SELECT 	CONVERT(DATETIME, '2020-05-04 00:00:00', 120) AS START_DT
+		,		CONVERT(DATETIME, '2020-05-04 23:59:59', 120) AS END_DT
+	)
+	*/ 	-- USE SINGLE LINE COMMENT AT COLUMN 0 TO TEST THE SUBQUERY
+	-- INCIDENTES ABERTOS NA DATA
+	SELECT	INCIDENT_ID
+	,		INCIDENT_REF
+	,		TYPE_ENUM
+	,		1 AS STATUS_ENUM
+	,		DATE_LOGGED
+	,		NULL AS INC_RESOLVE_ACT
+	,		NULL AS INC_CLOSE_DATE
+	,		SHORT_DESC
+	,		TIME_TO_RESOLVE
+	,		INC_RESOLVE_SLA
+	,		MAJOR_INC
+	,		INC_CAT_ID
+	,		ITEM_ID
+	,		CAUSE_ID
+	,		CAUSE_ITEM_ID
+	,		AFF_USR_ID
+	,		REP_USR_ID
+	,		SECTN_DEPT_ID
+	,		BLDNG_ROOM_ID
 	FROM 	INCIDENT INCIDENT WITH(NOLOCK)
-	WHERE	1=2
+	WHERE	1=1
 			-- ID DE SISTEMA
 	AND		INCIDENT.INCIDENT_ID 	<> 0
-	AND 	INCIDENT.TYPE_ENUM 		IN (1,4,7) -- INCIDENTES, REQUISIÇÕES E TAREFAS
-	AND		INCIDENT.DATE_LOGGED	 < CONVERT(DATETIME, '2020-03-01 23:59:59', 120)
-	AND		( 	(1=1 AND INCIDENT.STATUS_ENUM = 1 AND INCIDENT.INC_RESOLVE_ACT IS NULL) 										OR -- ABERTOS
-				(1=1 AND INCIDENT.STATUS_ENUM = 2 AND INCIDENT.INC_CLOSE_DATE  > CONVERT(DATETIME, '2020-03-01 23:59:59', 120)) OR -- ENCERRADOS 
-				(1=1 AND INCIDENT.STATUS_ENUM = 3 AND INCIDENT.INC_RESOLVE_ACT > CONVERT(DATETIME, '2020-03-01 23:59:59', 120)) )  -- RESOLVIDOS 				
-*/
-	SELECT 	INCIDENT_ID 
-	FROM 	INCIDENT 
-	WHERE 	INCIDENT_REF in (				
-		'110322', '114881',  '11540', '116109', '11718', '117232', '117300', '118217', '119773', '125087',
-		'127610', '129120', '130521', '13134', '132180', '132620', '132740', '136216', '138902', '139132',
-		'13960', '141377', '14459', '144814', '144921', '145367', '146435', '146620', '1473 ', '150117', 
-		'150363', '1508 ', '15211', '155606', '155725', '155877', '156625', '157353', '157786', '163659',
-		'168345', '168484', '169438', '173599', '174792', '176534', '176688', '177895', '178928', '183049',
-		'189776', '197490', '201942', '21030', '213150', '21342', '225713', '23017', '231241', '23448', 
-		'2346', '235649', '243764', '251022', '256558', '268241', '27865', '27881', '279621', '279939', 
-		'28481', '290501', '290888', '292171', '297144', '301946', '303332', '303648', '304842', '305097',
-		'30576', '307555', '307645', '309816', '310299', '310880', '311059', '312607', '314502', '315451',
-		'317886', '317978', '321329', '321773', '322255', '323659', '323808', '324110', '32428', '324825'
-	)				
+	AND 	INCIDENT.TYPE_ENUM 		IN (1, 4, 7) -- INCIDENTES, REQUISIÇÕES E TAREFAS
+	AND		INCIDENT.DATE_LOGGED	< (SELECT END_DT FROM PARAMS)
+	AND		( 	(1=1 AND INCIDENT.STATUS_ENUM = 1 AND INCIDENT.INC_RESOLVE_ACT IS NULL) 						OR -- ABERTOS
+				(1=1 AND INCIDENT.STATUS_ENUM = 2 AND INCIDENT.INC_CLOSE_DATE  > (SELECT END_DT FROM PARAMS)) 	OR -- ENCERRADOS 
+				(1=1 AND INCIDENT.STATUS_ENUM = 3 AND INCIDENT.INC_RESOLVE_ACT > (SELECT END_DT FROM PARAMS)) 	)  -- RESOLVIDOS
+	--
+	UNION
+	--
+	-- INCIDENTES FECHADOS NA DATA
+	SELECT	INCIDENT_ID
+	,		INCIDENT_REF
+	,		TYPE_ENUM
+	,		STATUS_ENUM
+	,		DATE_LOGGED
+	,		INC_RESOLVE_ACT
+	,		INC_CLOSE_DATE
+	,		SHORT_DESC
+	,		TIME_TO_RESOLVE
+	,		INC_RESOLVE_SLA
+	,		MAJOR_INC
+	,		INC_CAT_ID
+	,		ITEM_ID
+	,		CAUSE_ID
+	,		CAUSE_ITEM_ID
+	,		AFF_USR_ID
+	,		REP_USR_ID
+	,		SECTN_DEPT_ID
+	,		BLDNG_ROOM_ID	
+	FROM 	INCIDENT INCIDENT WITH(NOLOCK)
+	WHERE	1=1
+			-- ID DE SISTEMA
+	AND		INCIDENT.INCIDENT_ID 	<> 0
+	AND 	INCIDENT.TYPE_ENUM 		IN (1, 4, 7) -- INCIDENTES, REQUISIÇÕES E TAREFAS
+	AND		INCIDENT.DATE_LOGGED	< (SELECT END_DT FROM PARAMS)
+	AND		( 	(1=1 AND INCIDENT.STATUS_ENUM = 2 AND INCIDENT.INC_CLOSE_DATE  BETWEEN (SELECT START_DT FROM PARAMS) AND (SELECT END_DT FROM PARAMS) ) OR -- ENCERRADOS 
+				(1=1 AND INCIDENT.STATUS_ENUM = 3 AND INCIDENT.INC_RESOLVE_ACT BETWEEN (SELECT START_DT FROM PARAMS) AND (SELECT END_DT FROM PARAMS) ) )  -- RESOLVIDOS
 ),
 ACTION_TYPES AS (
 	SELECT	ACT_TYPE_ID 
 	FROM 	ACT_TYPE
 	WHERE	ACT_TYPE_ID IN (
-				1,		--	ASSIGN	ATRIBUIÇÃO INTERNA
-				4,		--	PENDING-CLOSURE	RESOLVER
-				5,		--	CLOSURE	ENCERRAR
-				6,		--	RE-OPEN	REABRIR
-				11,		--	SUPP-ASSIGN	ATRIBUIR AO FORNECEDOR
-				13,		--	SUPP-RESPONSE	RESPOSTA DO FORNECEDOR
-				14,		--	SUPP-RESOLVE	RESOLVER FORNECEDOR - EXECUTAR ANTES DO "RESOLVER"!
-				15,		--	SUPP-REOPEN	REABERTO PELO FORNECEDOR
-				18,		--	CANCELLED	CANCELADO
-				31,		--	CHGWEBPROPERTY	CAMPO DO FORMULÁRIO ALTERADO
-				51,		--	CHGITEM	ITEM ALTERADO
-				52,		--	CHGCATEGORY	CATEGORIA ALTERADA
-				70,		--	CHGFIELDS	CAMPOS ALTERADOS
-				119,	--	PEN SAN	PENDÊNCIA SANADA
-				120,	--	START.CLOCK	INICIAR RELÓGIO
-				121,	--	STOP.CLOCK	PARAR RELÓGIO
-				122,	--	WAIT ON CUST	AGUARDANDO CLIENTE
-				140,	--	ATEND-PROGRAMADO	ATENDIMENTO PROGRAMADO
-				141,	--	INICIAR-ATENDIMENTO	INICIAR ATENDIMENTO
-				142,	--	ATEND-AGENDADO	ATENDIMENTO AGENDADO
-				146,	--	PENDENCIA FORNECEDOR	PENDENCIA DE FORNECEDOR
-				147,	--	PENDENCIA TAREFA TIC	PENDÊNCIA DE TIC
-				148,	--	PENDENCIA SANADA FERIADO LOCAL	PENDÊNCIA SANADA FERIADO LOCAL
-				149,	--	PENDENCIA FERIADO LOCAL	PENDÊNCIA FERIADO LOCAL
-				150,	--	PENDENCIA SANADA DO FORNECEDOR	PENDÊNCIA SANADA - FORNECEDOR/TIC
-				151,	--	CANCELAR	CANCELAR
-				152,	--	RETORNO USUARIO	RETORNO DO USUÁRIO
-				153,	--	AGUARDANDO USUARIO_APROVACAO	AGUARDANDO CLIENTE - APROVAÇÃO
-				154,	--	AGUARDANDO USUARIO _FORNECEDOR	AGUARDANDO CLIENTE - FORNECEDOR
-				155		--	RETOMAR RELOGIO_APROVACAO	PENDÊNCIA SANADA - APROVAÇÃO
+		1,	 /* ATRIBUIÇÃO INTERNA                */ 4,	  /* RESOLVER                       */	
+		5,	 /* ENCERRAR                          */ 6,	  /* REABRIR                        */	
+		11,	 /* ATRIBUIR AO FORNECEDOR            */ 13,  /* RESPOSTA DO FORNECEDOR         */	
+		14,	 /* RESOLVER FORNECEDOR - EXECUTAR ANTES DO "RESOLVER"!	*/	
+		15,	 /* REABERTO PELO FORNECEDOR          */	
+		18,	 /* CANCELADO                         */ 31,  /* CAMPO DO FORMULÁRIO ALTERADO   */	
+		51,	 /* ALTERADO                          */ 52,  /* CATEGORIA ALTERADA             */	
+		70,	 /* CAMPOS ALTERADOS                  */ 119, /* PENDÊNCIA SANADA               */	
+		120, /* INICIAR RELÓGIO                   */ 121, /* PARAR RELÓGIO                  */	
+		122, /* AGUARDANDO CLIENTE                */ 140, /* ATENDIMENTO PROGRAMADO         */	
+		141, /* INICIAR ATENDIMENTO               */ 142, /* ATENDIMENTO AGENDADO           */	
+		146, /* PENDENCIA DE FORNECEDOR           */ 147, /* PENDÊNCIA DE TIC               */	
+		148, /* PENDÊNCIA SANADA FERIADO LOCAL    */ 149, /* PENDÊNCIA FERIADO LOCAL        */	
+		150, /* PENDÊNCIA SANADA - FORNECEDOR/TIC */ 151, /* CANCELAR                       */	
+		152, /* RETORNO DO USUÁRIO                */ 153, /* AGUARDANDO CLIENTE - APROVAÇÃO */	
+		154, /* AGUARDANDO CLIENTE - FORNECEDOR   */ 155  /* PENDÊNCIA SANADA - APROVAÇÃO   */
 	)
 ),
+ACTIONS AS (
+	SELECT	ACT_REG.ACT_REG_ID
+	,		ACT_REG.INCIDENT_ID
+	,		ACT_REG.DATE_ACTIONED
+	,		ACT_REG.LAST_ACTION
+	,		ACT_REG.SUPPLIER_ID
+	,		ACT_REG.ASS_SVD_ID
+	,		ACT_REG.ASS_USR_ID
+	,		ACT_REG.TIME_TO_RESOLVE
+	,		ACT_REG.ACT_TYPE_ID 
+	,		ACT_REG.ASSIGNMENT_TIME
+	,		ACT_REG.REMARKS	
+	FROM	ACT_REG
+			--
+			INNER JOIN INCS
+			ON	ACT_REG.INCIDENT_ID	= INCS.INCIDENT_ID
+			--
+	WHERE	ACT_REG.date_actioned 	<= (SELECT END_DT FROM PARAMS)
+	AND 	ACT_REG.ACT_TYPE_ID 	IN ( SELECT ACT_TYPE_ID FROM ACTION_TYPES ) --AÇÕES PRESENTES NO RELATORIO
+	
+),
 CHANGE_FIELDS_ACTIONS AS (
-	SELECT	ACT_TYPE_ID 
-	FROM 	ACT_TYPE
-	WHERE	ACT_TYPE_ID IN (
-				31,			-- CHGWEBPROPERTY	Campo do formulário alterado
-				50,			-- CHGUSER			Usuário alterado
-				51,			-- CHGITEM			Item alterado
-				52,			-- CHGCATEGORY		Categoria alterada
-				53,			-- CHGIMPACT		Impacto alterado
-				54,			-- CHGURGENCY		Urgência alterada
-				55,			-- CHGDOWNFLAG		Campo Indicador de inatividade alterado
-				56,			-- CHGLOGDATE		Data de registro alterada
-				58,			-- CHGDESC			Descrição alterada
-				59,			-- CHGLOCATION		Localidade alterada
-				60,			-- CHGSECTDEPT		Departamento de seção alterado
-				61,			-- CHGREMARKS		Observação de Retorno Alterada
-				62,			-- CHGCHARGEFLAG	Campo Cobrável Alterado
-				63,			-- CHGCSG			CSG Alterado
-				70,			-- CHGFIELDS		Campos alterados
-				5000010,	-- CHGREQDBYDATE	Requerido por
-				5000011,	-- CHGSCHDSTADATE	Data de Início Agendada
-				5000012,	-- CHGSCHDENDDATE	Data de Término Agendada
-				5000013,	-- CHGSLA			SLA
-				5000014,	-- CHGPREVDESC		Descrição anterior
-				5000015,	-- CHGADDITIONLUSR	Usuários Vinculados Alterados
-				5000027,	-- CHGCALLBACKFLAG	Flag de Retorno req alterada
-				5000028,	-- CHGSUMMARY		Resumo alterado
-				5000029,	-- CHGRESPSERVDEPT	Dep de serv resp alterado
-				5000030,	-- CHGEVENTSRC		Origem do evento alterada
-				5000031,	-- CHGCOST			Custo alterado
-				5000032,	-- CHGUSERREF		Referência de usuário alterada
-				5000033,	-- CHGAUTHDETAILS	Detalhes de autorização alter.
-				5000034,	-- CHGAUTHDATE		Data de autorizaçao alterada
-				5000035,	-- CHGJUSTIFICATN	Justificativa alterada
-				5000036,	-- CHGADDREQ		Requisições adicionais alteradas
-				5000037,	-- CHGPROJECT		Projeto alterado
-				5000038,	-- CHGCOSTCENTER	Centro de custo alterado
-				5000045,	-- CHGRESPUSER		Usuário responsável alterado
-				5000046,	-- CHGTECHSVD		Dep Serviços Técnico alterado
-				5000047,	-- CHGTECHUSER		Usuário técnico alterado
-				5000048,	-- CHGRESPSVDB		Dep de serv resp B alterado
-				5000049,	-- CHGRESPUSERB		Usuário responsável B alterado
-				5000063		-- CHGPRIORITY		Prioridade alterada			
+			SELECT	ACT_TYPE_ID 
+			FROM 	ACT_TYPE
+			WHERE	ACT_TYPE_ID IN (
+				1,		 /* Campo do formulário alterado   */	50,		 /* Usuário alterado               */	
+				51,		 /* Item alterado                  */	52,		 /* Categoria alterada             */	
+				53,		 /* Impacto alterado               */	54,		 /* Urgência alterada              */	
+				55,		 /* Campo Indicador de inatividade alterado */	
+				56,		 /* Data de registro alterada      */	58,		 /* Descrição alterada             */	
+				59,		 /* Localidade alterada            */	60,		 /* Departamento de seção alterado */	
+				61,		 /* Observação de Retorno Alterada */	62,		 /* Campo Cobrável Alterado        */	
+				63,		 /* CSG Alterado                   */	70,		 /* Campos alterados               */	
+				5000010, /* Requerido por                  */	5000011, /* Data de Início Agendada        */	
+				5000012, /* Data de Término Agendada       */	5000013, /* SLA                            */	
+				5000014, /* Descrição anterior             */	5000015, /* Usuários Vinculados Alterados  */	
+				5000027, /* Flag de Retorno req alterada   */	5000028, /* Resumo alterado                */	
+				5000029, /* Dep de serv resp alterado      */	5000030, /* Origem do evento alterada      */	
+				5000031, /* Custo alterado                 */	5000032, /* Referência de usuário alterada */	
+				5000033, /* Detalhes de autorização alter. */	5000034, /* Data de autorizaçao alterada   */	
+				5000035, /* Justificativa alterada         */	5000036, /* Requisições adicionais alteradas */	
+				5000037, /* Projeto alterado               */	5000038, /* Centro de custo alterado       */	
+				5000045, /* Usuário responsável alterado   */	5000046, /* Dep Serviços Técnico alterado  */	
+				5000047, /* Usuário técnico alterado       */	5000048, /* Dep de serv resp B alterado    */	
+				5000049, /* Usuário responsável B alterado */	5000063	 /* Prioridade alterada			   */	
 			) 
 )
 SELECT 	ACT_REG.act_reg_id
 ,		INCIDENT.type_enum
 ,		INCIDENT.incident_id
 ,		INCIDENT_PAI.incident_id 							AS incident_id_pai
-,		INCIDENT.date_logged 								AS 'Data Abertura Chamado'
-,		INCIDENT.inc_resolve_act 							AS 'Data Resolução Chamado'
+,		(select date_logged 	from incs where incident_id = INCIDENT.incident_id) AS 'Data Abertura Chamado'
+,		(select inc_resolve_act from incs where incident_id = INCIDENT.incident_id) AS 'Data Resolução Chamado'
 ,		CASE	WHEN INCIDENT.type_enum = 1 THEN '' 
 				WHEN INCIDENT.type_enum = 2 THEN 'P'
 				WHEN INCIDENT.type_enum = 3 THEN 'R'
@@ -160,8 +192,7 @@ SELECT 	ACT_REG.act_reg_id
 					where 	act_reg.incident_id = INCIDENT.incident_id 
 					and 	act_reg.act_type_id = 1
 				) > 1 
-				then 'NÃO'
-				ELSE 'Sim'
+				THEN 'NÃO' ELSE 'Sim'
 		END 												AS 'FCR'
 ,		CASE 	WHEN INCIDENT.status_enum = 1 THEN 'Aberto'
 				WHEN INCIDENT.status_enum = 2 THEN 'Fechado'
@@ -228,9 +259,18 @@ SELECT 	ACT_REG.act_reg_id
 		-- Falta Tipo do Movimento
 		-- Falta Movimento Nº
 ,		ACT_REG.date_actioned 								AS 'Data Inicio Ação'
-,		ACT_REG.last_action 								AS 'Ultima Ação'
-,		ACT_REG.next_date_actioned 							AS 'Data Fim Ação'
-,		CAST( CAST((DATEDIFF(minute, ACT_REG.date_actioned, ACT_REG.next_date_actioned)) AS int) AS varchar) 'Tempo Total da Ação (M)'
+,		CASE 	WHEN ACT_REG.act_reg_id = 	MAX(ACT_REG.act_reg_id) -- ACT_REG.last_action
+											OVER (PARTITION BY ACT_REG.INCIDENT_ID) 
+				THEN 'y' ELSE 'n' 
+		END 												AS 'Ultima Ação' 
+,		LEAD(ACT_REG.date_actioned) OVER (
+			PARTITION BY ACT_REG.INCIDENT_ID
+			ORDER BY ACT_REG.DATE_ACTIONED
+		) 													AS 'Data Fim Ação'
+,		CAST( CAST( (DATEDIFF(	minute, 
+								ACT_REG.date_actioned, 
+								LEAD(ACT_REG.date_actioned) OVER (PARTITION BY ACT_REG.INCIDENT_ID ORDER BY ACT_REG.DATE_ACTIONED) -- ACT_REG.next_date_actioned								
+		)) AS int) AS varchar) 'Tempo Total da Ação (M)'
 ,		ACT_TYPE.act_type_n 								AS 'Ultima Ação Nome'
 --		CASE
 --			WHEN ACT_TYPE.user_status IN (SELECT user_status from act_type WHERE user_status IN ('c','u','l')) THEN ACT_REG.remarks
@@ -332,138 +372,140 @@ SELECT 	ACT_REG.act_reg_id
  				then 'Sim' ELSE 'Não'
 		END 												AS 'Vinculo com Incidente Grave?'
 ,		CASE 	WHEN incident.major_inc = 0 
-		then 'Não' else 'Sim' END 							AS 'Incidente Grave?' 
-from 	(
-			SELECT act_reg.*, LEAD(date_actioned) OVER (PARTITION BY incident_id ORDER BY date_actioned) as next_date_actioned FROM act_reg
-		) AS ACT_REG
+				then 	'Não' else 'Sim' END 				AS 'Incidente Grave?' 
+FROM 	ACTIONS AS ACT_REG WITH  (NOLOCK)		
 		--
-		INNER JOIN incident INCIDENT WITH(NOLOCK)
-		ON INCIDENT.incident_id 										= ACT_REG.incident_id 
+		INNER JOIN INCS AS INCIDENT WITH (NOLOCK)
+		ON INCIDENT.INCIDENT_ID 										= ACT_REG.INCIDENT_ID
 		--
-		INNER JOIN serv_dept SERV_DEPT WITH(NOLOCK)
-		ON SERV_DEPT.serv_dept_id 										= ACT_REG.ass_svd_id
+		INNER JOIN INC_DATA  WITH (NOLOCK)
+		ON INC_DATA.INCIDENT_ID 										= INCIDENT.INCIDENT_ID 
 		--
-		INNER JOIN supplier SUPPLIER WITH(NOLOCK)
-		ON SUPPLIER.supplier_id 										= ACT_REG.supplier_id
+		INNER JOIN INCIDENT INCIDENT_PAI  WITH (NOLOCK)
+		ON INCIDENT_PAI.INCIDENT_ID 									= INC_DATA.U_NUM2 
 		--
-		INNER JOIN act_type ACT_TYPE WITH(NOLOCK)
-		ON ACT_TYPE.act_type_id 										= ACT_REG.act_type_id 
+		INNER JOIN INC_DATA INC_DATA_PAI WITH (NOLOCK)
+		ON INC_DATA_PAI.INCIDENT_ID 									= INC_DATA.U_NUM2 		
 		--
-		INNER JOIN inc_data  WITH(NOLOCK)
-		ON inc_data.incident_id 										= INCIDENT.incident_id 
+		INNER JOIN SERV_DEPT SERV_DEPT WITH (NOLOCK)
+		ON SERV_DEPT.SERV_DEPT_ID 										= ACT_REG.ASS_SVD_ID
 		--
-		INNER JOIN incident INCIDENT_PAI  WITH(NOLOCK)
-		ON INCIDENT_PAI.incident_id 									= inc_data.u_num2 
+		INNER JOIN SUPPLIER SUPPLIER WITH (NOLOCK)
+		ON SUPPLIER.SUPPLIER_ID 										= ACT_REG.SUPPLIER_ID
 		--
-		INNER JOIN inc_data INC_DATA_PAI WITH(NOLOCK)
-		ON INC_DATA_PAI.incident_id 									= inc_data.u_num2 
+		INNER JOIN ACT_TYPE ACT_TYPE WITH (NOLOCK)
+		ON 	ACT_TYPE.ACT_TYPE_ID 										= ACT_REG.ACT_TYPE_ID
+		AND	(INCIDENT.status_enum <> 1  
+		-- REMOVER DA LISTAGEM INCIDENTES RESOLVIDOS NA DATA
+		OR ACT_REG.ACT_TYPE_ID NOT IN (											 
+				4,	-- RESOLVER
+				5,	-- ENCERRAR
+				14,	-- RESOLVER FORNECEDOR - EXECUTAR ANTES DO "RESOLVER"!
+				18,	-- CANCELADO
+				151	-- CANCELAR
+			))
 		--
-		INNER JOIN inc_cat INC_CAT_REGISTRO  WITH(NOLOCK)
-		ON INC_CAT_REGISTRO.inc_cat_id 									= INCIDENT.inc_cat_id 
+		INNER JOIN INC_CAT INC_CAT_REGISTRO  WITH (NOLOCK)
+		ON INC_CAT_REGISTRO.INC_CAT_ID 									= INCIDENT.INC_CAT_ID 
 		--
-		INNER JOIN inc_major INC_MAJOR_REGISTRO  WITH(NOLOCK)
-		ON INC_MAJOR_REGISTRO.inc_major_id 								= INC_CAT_REGISTRO.inc_major_id 
+		INNER JOIN INC_MAJOR INC_MAJOR_REGISTRO  WITH (NOLOCK)
+		ON INC_MAJOR_REGISTRO.INC_MAJOR_ID 								= INC_CAT_REGISTRO.INC_MAJOR_ID 
 		--
-		INNER JOIN serv_off SERV_OFF WITH(NOLOCK)
-		ON SERV_OFF.serv_off_id 										= inc_data.serv_off_id 
+		INNER JOIN SERV_OFF SERV_OFF WITH (NOLOCK)
+		ON SERV_OFF.SERV_OFF_ID 										= INC_DATA.SERV_OFF_ID 
 		--
-		INNER JOIN serv SERV WITH(NOLOCK)
-		ON SERV.serv_id 												= SERV_OFF.serv_id 
+		INNER JOIN SERV SERV WITH (NOLOCK)
+		ON SERV.SERV_ID 												= SERV_OFF.SERV_ID 
 		--
-		INNER JOIN item ITEM_REGISTRO  WITH(NOLOCK)
-		ON ITEM_REGISTRO.item_id 										= INCIDENT.item_id 
+		INNER HASH JOIN ITEM ITEM_REGISTRO  WITH(NOLOCK)
+		ON ITEM_REGISTRO.ITEM_ID 										= INCIDENT.ITEM_ID 
 		--
-		INNER JOIN product PRODUTO_REGISTRO WITH(NOLOCK) 
-		ON PRODUTO_REGISTRO.product_id 									= ITEM_REGISTRO.product_id 
+		INNER HASH JOIN PRODUCT PRODUTO_REGISTRO WITH(NOLOCK) 
+		ON PRODUTO_REGISTRO.PRODUCT_ID 									= ITEM_REGISTRO.PRODUCT_ID 
 		--
-		INNER JOIN prod_cls CLASSE_PRODUTO_REGISTRO WITH(NOLOCK)
-		ON CLASSE_PRODUTO_REGISTRO.prod_cls_id 							= PRODUTO_REGISTRO.prod_cls_id 
+		INNER HASH JOIN PROD_CLS CLASSE_PRODUTO_REGISTRO WITH(NOLOCK)
+		ON CLASSE_PRODUTO_REGISTRO.PROD_CLS_ID 							= PRODUTO_REGISTRO.PROD_CLS_ID 
 		--
-		INNER JOIN generic_cls CLASSE_GENERICA_REGISTRO  WITH(NOLOCK)
-		ON CLASSE_GENERICA_REGISTRO.generic_cls_id 						= CLASSE_PRODUTO_REGISTRO.generic_cls_id 
+		INNER HASH JOIN GENERIC_CLS CLASSE_GENERICA_REGISTRO  WITH(NOLOCK)
+		ON 	CLASSE_GENERICA_REGISTRO.GENERIC_CLS_ID 						= CLASSE_PRODUTO_REGISTRO.GENERIC_CLS_ID 
+		AND CLASSE_GENERICA_REGISTRO.GENERIC_CLS_SC IN ('SERVICOS DE TIC', 'SOFTWARE' )
 		--
-		INNER JOIN item ITEM_B  WITH(NOLOCK)
-		ON ITEM_B.item_id 												= inc_data.item_b_id
+		INNER JOIN ITEM ITEM_B  WITH(NOLOCK)
+		ON ITEM_B.ITEM_ID 												= INC_DATA.ITEM_B_ID
 		--
-		INNER JOIN product PRODUTO_B  WITH(NOLOCK)
-		ON PRODUTO_B.product_id 										= ITEM_B.product_id 
+		INNER JOIN PRODUCT PRODUTO_B  WITH(NOLOCK)
+		ON PRODUTO_B.PRODUCT_ID 										= ITEM_B.PRODUCT_ID 
 		--
-		INNER JOIN item ITEM_B_MODELO WITH(NOLOCK)
-		ON ITEM_B_MODELO.item_id 										= PRODUTO_B.model_item_id 
+		INNER JOIN ITEM ITEM_B_MODELO WITH(NOLOCK)
+		ON ITEM_B_MODELO.ITEM_ID 										= PRODUTO_B.MODEL_ITEM_ID 
 		--
-		INNER JOIN prod_cls CLASSE_PRODUTO_B WITH(NOLOCK)
-		ON CLASSE_PRODUTO_B.prod_cls_id 								= PRODUTO_B.prod_cls_id 
+		INNER JOIN PROD_CLS CLASSE_PRODUTO_B WITH(NOLOCK)
+		ON CLASSE_PRODUTO_B.PROD_CLS_ID 								= PRODUTO_B.PROD_CLS_ID 
 		--
-		INNER JOIN generic_cls CLASSE_GENERICA_B WITH(NOLOCK)
-		ON CLASSE_GENERICA_B.generic_cls_id 							= CLASSE_PRODUTO_B.generic_cls_id 
+		INNER JOIN GENERIC_CLS CLASSE_GENERICA_B WITH(NOLOCK)
+		ON CLASSE_GENERICA_B.GENERIC_CLS_ID 							= CLASSE_PRODUTO_B.GENERIC_CLS_ID 
 		--
-		INNER JOIN inc_cat INC_CAT_CAUSA  WITH(NOLOCK)
-		ON INC_CAT_CAUSA.inc_cat_id 									= INCIDENT.cause_id 
+		INNER JOIN INC_CAT INC_CAT_CAUSA  WITH(NOLOCK)
+		ON INC_CAT_CAUSA.INC_CAT_ID 									= INCIDENT.CAUSE_ID 
 		--
-		INNER JOIN supplier SUPPLIER_PRODUCT_B WITH(NOLOCK)
-		ON PRODUTO_B.supplier_id 										= SUPPLIER_PRODUCT_B.supplier_id 
+		INNER JOIN SUPPLIER SUPPLIER_PRODUCT_B WITH(NOLOCK)
+		ON PRODUTO_B.SUPPLIER_ID 										= SUPPLIER_PRODUCT_B.SUPPLIER_ID 
 		--
-		INNER JOIN item ITEM_CAUSA  WITH(NOLOCK)
-		ON ITEM_CAUSA.item_id 											= incident.cause_item_id 
+		INNER JOIN ITEM ITEM_CAUSA  WITH(NOLOCK)
+		ON ITEM_CAUSA.ITEM_ID 											= INCIDENT.CAUSE_ITEM_ID 
 		--
-		INNER JOIN supplier SUPPLIER_CAUSA_ITEM WITH(NOLOCK)
-		ON ITEM_CAUSA.inv_supp_id 										= SUPPLIER_CAUSA_ITEM.supplier_id 
+		INNER JOIN SUPPLIER SUPPLIER_CAUSA_ITEM WITH(NOLOCK)
+		ON ITEM_CAUSA.INV_SUPP_ID 										= SUPPLIER_CAUSA_ITEM.SUPPLIER_ID 
 		--
-		INNER JOIN product PRODUTO_CAUSA  WITH(NOLOCK)
-		ON PRODUTO_CAUSA.product_id 									= ITEM_CAUSA.product_id 
+		INNER JOIN PRODUCT PRODUTO_CAUSA  WITH(NOLOCK)
+		ON PRODUTO_CAUSA.PRODUCT_ID 									= ITEM_CAUSA.PRODUCT_ID 
 		--
-		INNER JOIN prod_cls CLASSE_PRODUTO_CAUSA WITH(NOLOCK)
-		ON CLASSE_PRODUTO_CAUSA.prod_cls_id 							= PRODUTO_CAUSA.prod_cls_id 
+		INNER JOIN PROD_CLS CLASSE_PRODUTO_CAUSA WITH(NOLOCK)
+		ON CLASSE_PRODUTO_CAUSA.PROD_CLS_ID 							= PRODUTO_CAUSA.PROD_CLS_ID 
 		--
-		INNER JOIN item ITEM_CAUSA_MODELO WITH(NOLOCK)
-		ON ITEM_CAUSA_MODELO.item_id 									= PRODUTO_CAUSA.model_item_id
+		INNER JOIN ITEM ITEM_CAUSA_MODELO WITH(NOLOCK)
+		ON ITEM_CAUSA_MODELO.ITEM_ID 									= PRODUTO_CAUSA.MODEL_ITEM_ID
 		--
-		INNER JOIN generic_cls CLASSE_GENERICA_CAUSA  WITH(NOLOCK)
-		ON CLASSE_GENERICA_CAUSA.generic_cls_id 						= CLASSE_PRODUTO_CAUSA.generic_cls_id
+		INNER JOIN GENERIC_CLS CLASSE_GENERICA_CAUSA  WITH(NOLOCK)
+		ON CLASSE_GENERICA_CAUSA.GENERIC_CLS_ID 						= CLASSE_PRODUTO_CAUSA.GENERIC_CLS_ID
 		--
-		INNER JOIN supplier SUPPLIER_PRODUCT_CAUSA WITH(NOLOCK)
-		ON PRODUTO_CAUSA.supplier_id 									= SUPPLIER_PRODUCT_CAUSA.supplier_id
+		INNER JOIN SUPPLIER SUPPLIER_PRODUCT_CAUSA WITH(NOLOCK)
+		ON PRODUTO_CAUSA.SUPPLIER_ID 									= SUPPLIER_PRODUCT_CAUSA.SUPPLIER_ID
 		--
-		INNER JOIN priority_derived PRIORITY_DERIVED WITH(NOLOCK)
-		ON  PRIORITY_DERIVED.priority_derived_id 						= inc_data.priority_derived_id
+		INNER JOIN PRIORITY_DERIVED PRIORITY_DERIVED WITH(NOLOCK)
+		ON  PRIORITY_DERIVED.PRIORITY_DERIVED_ID 						= INC_DATA.PRIORITY_DERIVED_ID
 		--
-		INNER JOIN usr USR_AFFECTED WITH(NOLOCK)
-		ON USR_AFFECTED.usr_id 											= INCIDENT.aff_usr_id
+		INNER JOIN USR USR_AFFECTED WITH(NOLOCK)
+		ON USR_AFFECTED.USR_ID 											= INCIDENT.AFF_USR_ID
 		--
-		INNER JOIN usr USR_REPORTING WITH(NOLOCK)
-		ON USR_REPORTING.usr_id 										= INCIDENT.rep_usr_id
+		INNER JOIN USR USR_REPORTING WITH(NOLOCK)
+		ON USR_REPORTING.USR_ID 										= INCIDENT.REP_USR_ID
 		--
-		INNER JOIN sectn_dept SECTION_DEPT WITH(NOLOCK)
-		ON SECTION_DEPT.sectn_dept_id 									= INCIDENT.sectn_dept_id
+		INNER JOIN SECTN_DEPT SECTION_DEPT WITH(NOLOCK)
+		ON SECTION_DEPT.SECTN_DEPT_ID 									= INCIDENT.SECTN_DEPT_ID
 		--
-		INNER JOIN sectn SECTION WITH(NOLOCK)
-		ON SECTION.sectn_id 											= SECTION_DEPT.sectn_id
+		INNER JOIN SECTN SECTION WITH(NOLOCK)
+		ON SECTION.SECTN_ID 											= SECTION_DEPT.SECTN_ID
 		--
-		INNER JOIN branch BRANCH WITH(NOLOCK)
-		ON BRANCH.branch_id 											= SECTION.branch_id
+		INNER JOIN BRANCH BRANCH WITH(NOLOCK)
+		ON BRANCH.BRANCH_ID 											= SECTION.BRANCH_ID
 		--
-		INNER JOIN division DIVISION WITH(NOLOCK)
-		ON DIVISION.division_id 										= BRANCH.division_id
+		INNER JOIN DIVISION DIVISION WITH(NOLOCK)
+		ON DIVISION.DIVISION_ID 										= BRANCH.DIVISION_ID
 		--
-		INNER JOIN bldng_room BUILDING_ROOM
-		ON BUILDING_ROOM.bldng_room_id 									= INCIDENT.bldng_room_id
+		INNER JOIN BLDNG_ROOM BUILDING_ROOM
+		ON BUILDING_ROOM.BLDNG_ROOM_ID 									= INCIDENT.BLDNG_ROOM_ID
 		--
-		INNER JOIN bldng BUILDING WITH(NOLOCK)
-		ON BUILDING.bldng_id 											= BUILDING_ROOM.bldng_id
+		INNER JOIN BLDNG BUILDING WITH(NOLOCK)
+		ON BUILDING.BLDNG_ID 											= BUILDING_ROOM.BLDNG_ID
 		--
-		INNER JOIN site SITE WITH(NOLOCK)
-		ON SITE.site_id 												= BUILDING.site_id
+		INNER JOIN SITE SITE WITH(NOLOCK)
+		ON SITE.SITE_ID 												= BUILDING.SITE_ID
 		--
-		INNER JOIN site_area SITE_AREA WITH(NOLOCK)
-		ON SITE_AREA.site_area_id 										= SITE.site_area_id
+		INNER JOIN SITE_AREA SITE_AREA WITH(NOLOCK)
+		ON SITE_AREA.SITE_AREA_ID 										= SITE.SITE_AREA_ID
 		--
-WHERE	1=1 
-AND		INCIDENT.incident_id 					> 0 -- Id de sistema
-AND 	INCIDENT.type_enum 						IN ( 1, 4, 7 ) -- Incidentes, requisições e tarefas
-AND 	ACT_REG.act_type_id 					IN ( SELECT ACT_TYPE_ID FROM ACTION_TYPES ) --ações Presentes no relatorio
-AND 	CLASSE_GENERICA_REGISTRO.generic_cls_sc IN ('SERVICOS DE TIC', 'SOFTWARE' )
-AND 	INCIDENT.INCIDENT_ID 					IN ( SELECT INCIDENT_ID FROM OPEN_INCS )
-AND 	ACT_REG.INCIDENT_ID 					IN ( SELECT INCIDENT_ID FROM OPEN_INCS )
+WHERE	1=1
 ORDER	BY ACT_REG.INCIDENT_ID
 ,		ACT_REG.ACT_REG_ID
-
+OPTION 	(MAXDOP 8)
