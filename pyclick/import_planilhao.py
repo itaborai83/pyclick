@@ -28,10 +28,11 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, open_acc, staging_file, import_dir):
-        self.open_acc = open_acc
-        self.staging_file = staging_file
-        self.import_dir = import_dir
+    def __init__(self, open_acc, latin1, staging_file, import_dir):
+        self.open_acc       = open_acc
+        self.latin1         = latin1
+        self.staging_file   = staging_file
+        self.import_dir     = import_dir
         
     def update_open_acc(self, df_open_acc, df_open, df_closed):
         logger.info('updating open incident accumulator')
@@ -132,7 +133,7 @@ class App(object):
                 sep             = config.CSV_SEPARATOR,
                 verbose         = True,
                 header          = 0, 
-                encoding        = "latin_1",
+                encoding        = ("latin_1" if self.latin1 else "utf-8"),
                 error_bad_lines = True, 
                 warn_bad_lines  = True,
                 low_memory      = False
@@ -169,13 +170,14 @@ class App(object):
         try:
             os.chdir(path)
             filename = self.handle_filename(filename)
-            with open(filename, encoding="latin-1") as fh:
+            encoding = ("latin-1" if self.latin1 else "utf-8")
+            with open(filename, encoding=encoding) as fh:
                 line = fh.readline()
                 if not line.startswith(config.SEPARATOR_HEADER):
                     return os.path.join(path, filename)
                 logger.info('removing separator header')
                 filename_tmp = filename + ".tmp"
-                with open(filename_tmp, "w", encoding="latin-1") as fh2:
+                with open(filename_tmp, "w", encoding=encoding) as fh2:
                     logger.warning("removing separator line from staging file")
                     for line in fh:
                         fh2.write(line)
@@ -306,8 +308,9 @@ class App(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--open_acc', type=str, help='open incident accumulator')
+    parser.add_argument('--latin1', action='store_true', default=False, help='use latin-1 encoding')
     parser.add_argument('staging_file', type=str, help='staging file')
     parser.add_argument('import_dir', type=str, help='import directory')
     args = parser.parse_args()
-    app = App(args.open_acc, args.staging_file, args.import_dir)
+    app = App(args.open_acc, args.latin1, args.staging_file, args.import_dir)
     app.run()
