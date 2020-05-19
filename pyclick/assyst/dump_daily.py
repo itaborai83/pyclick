@@ -8,7 +8,7 @@ import logging
 import datetime as dt
 import pyclick.util as util
 import pyclick.config as config
-import pyclick.assyst.config as click_config
+import pyclick.assyst.config as assyst_config
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -20,21 +20,22 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_staging, date):
+    def __init__(self, dir_staging, date, compress):
         self.dir_staging    = dir_staging
         self.date           = date
+        self.compress       = compress
         self.start_dt       = util.prior_date(date) + " 00:00:00"
         self.end_dt         = util.prior_date(date) + " 23:59:59"
     
     def connect_db(self):
         logger.info('connecting to db')
-        conn = click_config.SQLALCHEMY_ENGINE.connect()    
-        return conn
+        return assyst_config.SQLALCHEMY_ENGINE.connect()
         
     def get_daily_dump(self, conn):
         logger.info('retrieving daily dump')
         logger.info('starting ... %s', dt.datetime.now())
-        df = pd.read_sql(SQL_DAILY_DUMP, conn, index_col=None)
+        params = (self.start_dt, self.end_dt)
+        df = pd.read_sql_query(SQL_DAILY_DUMP, conn, index_col=None, params=params)
         logger.info('done ... %s', dt.datetime.now())
         return df
     
@@ -48,8 +49,12 @@ class App(object):
             df.to_csv( 
                 filename,
                 sep         = ";",
-                index       = False
+                index       = False,
+                decimal     = ","
             )
+            if self.compress:
+                logger.info('compressing output file')
+                util.compress(filename)
         finally:
             os.chdir(curdir)
     def run(self):
@@ -65,9 +70,10 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--compress', action='store_true', help='comprimir arquivo de saída' )
     parser.add_argument('dir_staging', type=str, help='diretório de staging')
     parser.add_argument('date', type=str, help='data planilhão')
     args = parser.parse_args()
-    app = App(args.dir_staging, args.date)
+    app = App(args.dir_staging, args.date, args.compress)
     app.run()
     

@@ -1,6 +1,6 @@
 WITH PARAMS AS (
-		SELECT 	CONVERT(DATETIME, '2020-05-04 00:00:00', 120) AS START_DT
-		,		CONVERT(DATETIME, '2020-05-04 23:59:59', 120) AS END_DT
+		SELECT 	CONVERT(DATETIME, ?, 120) AS START_DT
+		,		CONVERT(DATETIME, ?, 120) AS END_DT
 	),
 INCS AS (
 	/*	-- USE SINGLE LINE COMMENT AT COLUMN 0 TO TEST THE SUBQUERY
@@ -33,7 +33,7 @@ INCS AS (
 	WHERE	1=1
 			-- ID DE SISTEMA
 	AND		INCIDENT.INCIDENT_ID 	<> 0
-	AND 	INCIDENT.TYPE_ENUM 		IN (1, 4, 7) -- INCIDENTES, REQUISIÇÕES E TAREFAS
+	AND 	INCIDENT.TYPE_ENUM 		IN (1, 4, 7) -- INCIDENTES, REQUISICOES E TAREFAS
 	AND		INCIDENT.DATE_LOGGED	< (SELECT END_DT FROM PARAMS)
 	AND		( 	(1=1 AND INCIDENT.STATUS_ENUM = 1 AND INCIDENT.INC_RESOLVE_ACT IS NULL) 						OR -- ABERTOS
 				(1=1 AND INCIDENT.STATUS_ENUM = 2 AND INCIDENT.INC_CLOSE_DATE  > (SELECT END_DT FROM PARAMS)) 	OR -- ENCERRADOS 
@@ -65,7 +65,7 @@ INCS AS (
 	WHERE	1=1
 			-- ID DE SISTEMA
 	AND		INCIDENT.INCIDENT_ID 	<> 0
-	AND 	INCIDENT.TYPE_ENUM 		IN (1, 4, 7) -- INCIDENTES, REQUISIÇÕES E TAREFAS
+	AND 	INCIDENT.TYPE_ENUM 		IN (1, 4, 7) -- INCIDENTES, REQUISICOES E TAREFAS
 	AND		INCIDENT.DATE_LOGGED	< (SELECT END_DT FROM PARAMS)
 	AND		( 	(1=1 AND INCIDENT.STATUS_ENUM = 2 AND INCIDENT.INC_CLOSE_DATE  BETWEEN (SELECT START_DT FROM PARAMS) AND (SELECT END_DT FROM PARAMS) ) OR -- ENCERRADOS 
 				(1=1 AND INCIDENT.STATUS_ENUM = 3 AND INCIDENT.INC_RESOLVE_ACT BETWEEN (SELECT START_DT FROM PARAMS) AND (SELECT END_DT FROM PARAMS) ) )  -- RESOLVIDOS
@@ -74,22 +74,22 @@ ACTION_TYPES AS (
 	SELECT	ACT_TYPE_ID 
 	FROM 	ACT_TYPE
 	WHERE	ACT_TYPE_ID IN (
-		1,	 /* ATRIBUIÇÃO INTERNA                */ 4,	  /* RESOLVER                       */	
+		1,	 /* ATRIBUICAO INTERNA                */ 4,	  /* RESOLVER                       */	
 		5,	 /* ENCERRAR                          */ 6,	  /* REABRIR                        */	
 		11,	 /* ATRIBUIR AO FORNECEDOR            */ 13,  /* RESPOSTA DO FORNECEDOR         */	
 		14,	 /* RESOLVER FORNECEDOR - EXECUTAR ANTES DO "RESOLVER"!	*/	
 		15,	 /* REABERTO PELO FORNECEDOR          */	
-		18,	 /* CANCELADO                         */ 31,  /* CAMPO DO FORMULÁRIO ALTERADO   */	
+		18,	 /* CANCELADO                         */ 31,  /* CAMPO DO FORMULARIO ALTERADO   */	
 		51,	 /* ALTERADO                          */ 52,  /* CATEGORIA ALTERADA             */	
-		70,	 /* CAMPOS ALTERADOS                  */ 119, /* PENDÊNCIA SANADA               */	
-		120, /* INICIAR RELÓGIO                   */ 121, /* PARAR RELÓGIO                  */	
+		70,	 /* CAMPOS ALTERADOS                  */ 119, /* PENDENCIA SANADA               */	
+		120, /* INICIAR RELOGIO                   */ 121, /* PARAR RELOGIO                  */	
 		122, /* AGUARDANDO CLIENTE                */ 140, /* ATENDIMENTO PROGRAMADO         */	
 		141, /* INICIAR ATENDIMENTO               */ 142, /* ATENDIMENTO AGENDADO           */	
-		146, /* PENDENCIA DE FORNECEDOR           */ 147, /* PENDÊNCIA DE TIC               */	
-		148, /* PENDÊNCIA SANADA FERIADO LOCAL    */ 149, /* PENDÊNCIA FERIADO LOCAL        */	
-		150, /* PENDÊNCIA SANADA - FORNECEDOR/TIC */ 151, /* CANCELAR                       */	
-		152, /* RETORNO DO USUÁRIO                */ 153, /* AGUARDANDO CLIENTE - APROVAÇÃO */	
-		154, /* AGUARDANDO CLIENTE - FORNECEDOR   */ 155  /* PENDÊNCIA SANADA - APROVAÇÃO   */
+		146, /* PENDENCIA DE FORNECEDOR           */ 147, /* PENDENCIA DE TIC               */	
+		148, /* PENDENCIA SANADA FERIADO LOCAL    */ 149, /* PENDENCIA FERIADO LOCAL        */	
+		150, /* PENDENCIA SANADA - FORNECEDOR/TIC */ 151, /* CANCELAR                       */	
+		152, /* RETORNO DO USUARIO                */ 153, /* AGUARDANDO CLIENTE - APROVACAO */	
+		154, /* AGUARDANDO CLIENTE - FORNECEDOR   */ 155  /* PENDENCIA SANADA - APROVACAO   */
 	)
 ),
 ACTIONS AS (
@@ -110,33 +110,33 @@ ACTIONS AS (
 			ON	ACT_REG.INCIDENT_ID	= INCS.INCIDENT_ID
 			--
 	WHERE	ACT_REG.date_actioned 	<= (SELECT END_DT FROM PARAMS)
-	AND 	ACT_REG.ACT_TYPE_ID 	IN ( SELECT ACT_TYPE_ID FROM ACTION_TYPES ) --AÇÕES PRESENTES NO RELATORIO
+	AND 	ACT_REG.ACT_TYPE_ID 	IN ( SELECT ACT_TYPE_ID FROM ACTION_TYPES ) --ACOES PRESENTES NO RELATORIO
 	
 ),
 CHANGE_FIELDS_ACTIONS AS (
 			SELECT	ACT_TYPE_ID 
 			FROM 	ACT_TYPE
 			WHERE	ACT_TYPE_ID IN (
-				1,		 /* Campo do formulário alterado   */	50,		 /* Usuário alterado               */	
+				1,		 /* Campo do formulario alterado   */	50,		 /* Usuario alterado               */	
 				51,		 /* Item alterado                  */	52,		 /* Categoria alterada             */	
-				53,		 /* Impacto alterado               */	54,		 /* Urgência alterada              */	
+				53,		 /* Impacto alterado               */	54,		 /* Urgencia alterada              */	
 				55,		 /* Campo Indicador de inatividade alterado */	
-				56,		 /* Data de registro alterada      */	58,		 /* Descrição alterada             */	
-				59,		 /* Localidade alterada            */	60,		 /* Departamento de seção alterado */	
-				61,		 /* Observação de Retorno Alterada */	62,		 /* Campo Cobrável Alterado        */	
+				56,		 /* Data de registro alterada      */	58,		 /* Descricao alterada             */	
+				59,		 /* Localidade alterada            */	60,		 /* Departamento de secao alterado */	
+				61,		 /* Observacao de Retorno Alterada */	62,		 /* Campo Cobravel Alterado        */	
 				63,		 /* CSG Alterado                   */	70,		 /* Campos alterados               */	
-				5000010, /* Requerido por                  */	5000011, /* Data de Início Agendada        */	
-				5000012, /* Data de Término Agendada       */	5000013, /* SLA                            */	
-				5000014, /* Descrição anterior             */	5000015, /* Usuários Vinculados Alterados  */	
+				5000010, /* Requerido por                  */	5000011, /* Data de Inicio Agendada        */	
+				5000012, /* Data de Termino Agendada       */	5000013, /* SLA                            */	
+				5000014, /* Descricao anterior             */	5000015, /* Usuarios Vinculados Alterados  */	
 				5000027, /* Flag de Retorno req alterada   */	5000028, /* Resumo alterado                */	
 				5000029, /* Dep de serv resp alterado      */	5000030, /* Origem do evento alterada      */	
-				5000031, /* Custo alterado                 */	5000032, /* Referência de usuário alterada */	
-				5000033, /* Detalhes de autorização alter. */	5000034, /* Data de autorizaçao alterada   */	
-				5000035, /* Justificativa alterada         */	5000036, /* Requisições adicionais alteradas */	
+				5000031, /* Custo alterado                 */	5000032, /* Referencia de usuario alterada */	
+				5000033, /* Detalhes de autorizacao alter. */	5000034, /* Data de autorizacao alterada   */	
+				5000035, /* Justificativa alterada         */	5000036, /* Requisicoes adicionais alteradas */	
 				5000037, /* Projeto alterado               */	5000038, /* Centro de custo alterado       */	
-				5000045, /* Usuário responsável alterado   */	5000046, /* Dep Serviços Técnico alterado  */	
-				5000047, /* Usuário técnico alterado       */	5000048, /* Dep de serv resp B alterado    */	
-				5000049, /* Usuário responsável B alterado */	5000063	 /* Prioridade alterada			   */	
+				5000045, /* Usuario responsavel alterado   */	5000046, /* Dep Servicos Tecnico alterado  */	
+				5000047, /* Usuario tecnico alterado       */	5000048, /* Dep de serv resp B alterado    */	
+				5000049, /* Usuario responsavel B alterado */	5000063	 /* Prioridade alterada			   */	
 			) 
 ),
 REPORT AS (
@@ -145,14 +145,14 @@ REPORT AS (
 	,		INCIDENT.INCIDENT_ID
 	,		INCIDENT_PAI.INCIDENT_ID 							AS INCIDENT_ID_PAI
 	,		(SELECT DATE_LOGGED 	FROM INCS WHERE INCIDENT_ID = INCIDENT.INCIDENT_ID) AS 'Data Abertura Chamado'
-	,		(SELECT INC_RESOLVE_ACT FROM INCS WHERE INCIDENT_ID = INCIDENT.INCIDENT_ID) AS 'Data Resolução Chamado'
+	,		(SELECT INC_RESOLVE_ACT FROM INCS WHERE INCIDENT_ID = INCIDENT.INCIDENT_ID) AS 'Data Resolucao Chamado'
 	,		CASE	WHEN INCIDENT.TYPE_ENUM = 1 THEN '' 
 					WHEN INCIDENT.TYPE_ENUM = 2 THEN 'P'
 					WHEN INCIDENT.TYPE_ENUM = 3 THEN 'R'
 					WHEN INCIDENT.TYPE_ENUM = 7 THEN 'S'
 					WHEN INCIDENT.TYPE_ENUM = 5 THEN 'D'
 					ELSE 'T' 
-			END + CAST(INCIDENT.incident_ref AS varchar(10)) 	AS 'ID Chamado'
+			END + CAST(INCIDENT.incident_ref AS NVARCHAR(254)) 	AS 'ID Chamado'
 	,		CASE	WHEN INC_DATA.U_NUM2 		= 0 THEN NULL
 					WHEN INCIDENT_PAI.TYPE_ENUM = 1 THEN '' 
 					WHEN INCIDENT_PAI.TYPE_ENUM = 2 THEN 'P'
@@ -164,24 +164,24 @@ REPORT AS (
 				SELECT 	INCIDENT_PAI.incident_ref 
 				FROM 	INCIDENT 
 				WHERE 	INCIDENT_ID = INC_DATA.U_NUM2 
-				AND 	INC_DATA.U_NUM2 <> 0) AS VARCHAR(10)
+				AND 	INC_DATA.U_NUM2 <> 0) AS NVARCHAR(254)
 			)													AS 'Chamado Pai'
 	,		CASE
 				WHEN INC_DATA.RECEIVE_TYPE = 't' THEN 'Telefone'
 				WHEN INC_DATA.RECEIVE_TYPE = 'e' THEN 'Email'
 				WHEN INC_DATA.RECEIVE_TYPE = 'l' THEN 'Carta'
-				WHEN INC_DATA.RECEIVE_TYPE = 'f' THEN 'Monitoração'
+				WHEN INC_DATA.RECEIVE_TYPE = 'f' THEN 'Monitoracao'
 				WHEN INC_DATA.RECEIVE_TYPE = 'n' THEN 'assystNET'
 				WHEN INC_DATA.RECEIVE_TYPE = 'o' THEN 'Outro'
-				WHEN INC_DATA.RECEIVE_TYPE = 'i' THEN 'Processador de importação'
+				WHEN INC_DATA.RECEIVE_TYPE = 'i' THEN 'Processador de importacao'
 				WHEN INC_DATA.RECEIVE_TYPE = 'c' THEN 'Chat'
 				WHEN INC_DATA.RECEIVE_TYPE = 'a' THEN 'Registro de Cobertura'
 			END 												AS 'Origem Chamado'
-	,		USR_AFFECTED.USR_SC 								AS 'Usuário Afetado'
-	,		USR_AFFECTED.USR_N 									AS 'Nome do Usuário Afetado'
-	,		USR_REPORTING.USR_SC 								AS 'Usuário Informante'
-	,		USR_REPORTING.USR_N									AS 'Nome do Usuário Informante'
-	,		DIVISION.DIVISION_N 								AS 'Organização Cliente'
+	,		USR_AFFECTED.USR_SC 								AS 'Usuario Afetado'
+	,		USR_AFFECTED.USR_N 									AS 'Nome do Usuario Afetado'
+	,		USR_REPORTING.USR_SC 								AS 'Usuario Informante'
+	,		USR_REPORTING.USR_N									AS 'Nome do Usuario Informante'
+	,		DIVISION.DIVISION_N 								AS 'Organizacao Cliente'
 	,		CASE	WHEN SECTION_DEPT.DEPT_N IS NULL THEN SECTION_DEPT.SECTN_N
 					ELSE SECTION_DEPT.DEPT_N
 			END 												AS 'Departamento Cliente'
@@ -193,7 +193,7 @@ REPORT AS (
 						WHERE 	ACT_REG.INCIDENT_ID = INCIDENT.INCIDENT_ID 
 						AND 	ACT_REG.ACT_TYPE_ID = 1
 					) > 1 
-					THEN 'NÃO' ELSE 'Sim'
+					THEN 'NAO' ELSE 'Sim'
 			END 												AS 'FCR'
 	,		CASE 	WHEN INCIDENT.STATUS_ENUM = 1 THEN 'Aberto'
 					WHEN INCIDENT.STATUS_ENUM = 2 THEN 'Fechado'
@@ -202,11 +202,11 @@ REPORT AS (
 			END 												AS 'Status de evento'
 	,		INC_MAJOR_REGISTRO.INC_MAJOR_N	 					AS 'Categoria Maior'
 	,		INCIDENT.SHORT_DESC 								AS 'Resumo'
-		--replace(inc_data.remarks,'<==# ADD','') AS 'Descrição Detalhada',
+		--replace(inc_data.remarks,'<==# ADD','') AS 'Descricao Detalhada',
 	--	CASE
 	--		WHEN inc_data.remarks like '%No description entered. No Additional Information available.%' then NULL
 	--		ELSE inc_data.remarks
-	--	END 'Descrição Detalhada',
+	--	END 'Descricao Detalhada',
 	,		CASE	WHEN INCIDENT.TYPE_ENUM IN (4,6) THEN ( 
 						SELECT 	SERV_N 
 						from 	INC_DATA
@@ -220,10 +220,10 @@ REPORT AS (
 						WHERE 	INC_DATA.INCIDENT_ID = INC_DATA_PAI.INCIDENT_ID
 					)
 					ELSE SERV.SERV_N
-			END 												AS 'Serviço Catálogo'
-	,	CLASSE_PRODUTO_REGISTRO.PROD_CLS_N 						AS 'Classe de Produto de Serviço'
-	,	PRODUTO_REGISTRO.PRODUCT_N 								AS 'Produto de Serviço'
-	,	ITEM_REGISTRO.ITEM_N 									AS 'Item de Serviço'
+			END 												AS 'Servico Catalogo'
+	,	CLASSE_PRODUTO_REGISTRO.PROD_CLS_N 						AS 'Classe de Produto de Servico'
+	,	PRODUTO_REGISTRO.PRODUCT_N 								AS 'Produto de Servico'
+	,	ITEM_REGISTRO.ITEM_N 									AS 'Item de Servico'
 	,	INC_CAT_REGISTRO.INC_CAT_N 								AS 'Categoria'
 	,	CASE	WHEN INCIDENT.TYPE_ENUM IN (4,6) THEN ( 
 					SELECT 	SERV_OFF_N 
@@ -235,15 +235,15 @@ REPORT AS (
 							WHERE INC_DATA.INCIDENT_ID = INC_DATA_PAI.INCIDENT_ID
 					)
 				ELSE SERV_OFF.SERV_OFF_N
-		END 													AS 'Oferta Catálogo'
-	,		CLASSE_GENERICA_B.GENERIC_CLS_N 					AS 'Classe Genérica B'
+		END 													AS 'Oferta Catalogo'
+	,		CLASSE_GENERICA_B.GENERIC_CLS_N 					AS 'Classe Generica B'
 	,		CLASSE_PRODUTO_B.PROD_CLS_N 						AS 'Classe de Produto B'
 	,		PRODUTO_B.PRODUCT_N 								AS 'Produto B'
 	,		SUPPLIER_PRODUCT_B.SUPPLIER_N 						AS 'Fabricante B'
 	,		ITEM_B_MODELO.ITEM_N 								AS 'Item Modelo B'
 	,		ITEM_B.ITEM_N 										AS 'Item B'
 	,		INC_CAT_CAUSA.INC_CAT_N				 				AS 'Categoria Causa'
-	,		CLASSE_GENERICA_CAUSA.GENERIC_CLS_N 				AS 'Classe Genérica Causa'
+	,		CLASSE_GENERICA_CAUSA.GENERIC_CLS_N 				AS 'Classe Generica Causa'
 	,		CLASSE_PRODUTO_CAUSA.PROD_CLS_N 					AS 'Classe de Produto Causa'
 	,		PRODUTO_CAUSA.PRODUCT_N 							AS 'Produto Causa'
 	,		SUPPLIER_PRODUCT_CAUSA.SUPPLIER_N 					AS 'Fabricante Causa'
@@ -252,27 +252,27 @@ REPORT AS (
 	--	CASE
 	--		WHEN ACT_TYPE.act_type_sc = (SELECT act_type_sc from act_type WHERE act_type_sc = 'PENDING-CLOSURE') THEN ACT_REG.remarks
 	--		ELSE NULL
-	--	END 'Resolução',
+	--	END 'Resolucao',
 	,		CASE	WHEN ACT_TYPE.ACT_TYPE_ID = 4 THEN ACT_REG.REMARKS
 					ELSE NULL
-			END 												AS 'Resolução'
-	,		ACT_REG.ACT_REG_ID AS 'ID Ação'
+			END 												AS 'Resolucao'
+	,		ACT_REG.ACT_REG_ID AS 'ID Acao'
 			-- Falta Tipo do Movimento
-			-- Falta Movimento Nº
-	,		ACT_REG.DATE_ACTIONED 								AS 'Data Inicio Ação'
+			-- Falta Movimento No
+	,		ACT_REG.DATE_ACTIONED 								AS 'Data Inicio Acao'
 	,		CASE 	WHEN ACT_REG.ACT_REG_ID = 	MAX(ACT_REG.ACT_REG_ID) -- ACT_REG.LAST_ACTION
 												OVER (PARTITION BY ACT_REG.INCIDENT_ID) 
 					THEN 'y' ELSE 'n' 
-			END 												AS 'Ultima Ação' 
+			END 												AS 'Ultima Acao' 
 	,		LEAD(ACT_REG.DATE_ACTIONED) OVER (
 				PARTITION BY ACT_REG.INCIDENT_ID
 				ORDER BY ACT_REG.DATE_ACTIONED
-			) 													AS 'Data Fim Ação'
+			) 													AS 'Data Fim Acao'
 	,		CAST( CAST( (DATEDIFF(	MINUTE, 
 									ACT_REG.DATE_ACTIONED, 
 									LEAD(ACT_REG.DATE_ACTIONED) OVER (PARTITION BY ACT_REG.INCIDENT_ID ORDER BY ACT_REG.DATE_ACTIONED) -- ACT_REG.NEXT_DATE_ACTIONED
-			)) AS INT) AS varchar) 'Tempo Total da Ação (M)'
-	,		ACT_TYPE.act_type_n 								AS 'Ultima Ação Nome'
+			)) AS INT) AS NVARCHAR) 'Tempo Total da Acao (M)'
+	,		ACT_TYPE.act_type_n 								AS 'Ultima Acao Nome'
 	--		CASE
 	--			WHEN ACT_TYPE.user_status IN (SELECT user_status from act_type WHERE user_status IN ('c','u','l')) THEN ACT_REG.remarks
 	--			ELSE NULL
@@ -334,7 +334,7 @@ REPORT AS (
 									--
 							WHERE SUPPLIER_ID = ACT_REG.SUPPLIER_ID )
 					ELSE NULL
-			END 												AS 'Descrição da Prioridade do CA' -- Remarks do CA aplicado ao fornecedor
+			END 												AS 'Descricao da Prioridade do CA' -- Remarks do CA aplicado ao fornecedor
 	,		INCIDENT.TIME_TO_RESOLVE 							AS 'Prazo Prioridade ANS (m)'	
 	,		CASE	WHEN ACT_TYPE.ACT_TYPE_SC = (SELECT ACT_TYPE_SC FROM ACT_TYPE WHERE ACT_TYPE_SC = 'ASSIGN') 
 					THEN  ACT_REG.TIME_TO_RESOLVE
@@ -345,17 +345,17 @@ REPORT AS (
 			END 												AS 'Prazo Prioridade CA (m)'
 	,		DATEDIFF(MINUTE, INCIDENT.DATE_LOGGED, INCIDENT.INC_RESOLVE_ACT) AS 'Tempo Total Evento (m)'
 	,		INCIDENT.INC_RESOLVE_SLA 							AS 'Tempo Util Evento (m)'
-			-- Falta Tempo Total de Atribuição Mesa (m)
+			-- Falta Tempo Total de Atribuicao Mesa (m)
 	,		CASE	WHEN ACT_TYPE.ACT_TYPE_SC = (SELECT ACT_TYPE_SC FROM ACT_TYPE WHERE ACT_TYPE_SC = 'ASSIGN') THEN  ACT_REG.ASSIGNMENT_TIME
 					ELSE NULL
-			END 												AS 'Tempo Util Atribuição Mesa (m)'
-			-- Falta Tempo Total de Atribuição CA (m)
+			END 												AS 'Tempo Util Atribuicao Mesa (m)'
+			-- Falta Tempo Total de Atribuicao CA (m)
 	,		CASE	WHEN ACT_TYPE.ACT_TYPE_SC = (SELECT ACT_TYPE_SC FROM ACT_TYPE WHERE ACT_TYPE_SC = 'SUPP-ASSIGN') THEN  ACT_REG.ASSIGNMENT_TIME
 					ELSE NULL
-			END 												AS 'Tempo Util Atribuição CA (m)'
+			END 												AS 'Tempo Util Atribuicao CA (m)'
 	,		CASE	WHEN (	SELECT COUNT(LINK_INC_ID) FROM LINK_INC 
 							WHERE LINK_INC.INCIDENT_ID = INCIDENT.INCIDENT_ID) > 0 
-					THEN 'Sim' ELSE 'Não'
+					THEN 'Sim' ELSE 'Nao'
 			END 												AS 'Vinculo'
 	,		CASE 	WHEN (
 						SELECT 	COUNT(LINK_INC.INCIDENT_ID) 
@@ -370,10 +370,10 @@ REPORT AS (
 	     				WHERE 	link_rsn.link_rsn_n LIKE 'Incidente Grave'  -- CUIDADO COM UPPER CASE!!!
 	     				AND 	link_inc.incident_id = INCIDENT.incident_id
 	     				) > 0 
-	 				THEN 'Sim' ELSE 'Não'
+	 				THEN 'Sim' ELSE 'Nao'
 			END 												AS 'Vinculo com Incidente Grave?'
 	,		CASE 	WHEN INCIDENT.MAJOR_INC = 0 
-					then 	'Não' else 'Sim' END 				AS 'Incidente Grave?' 
+					then 	'Nao' else 'Sim' END 				AS 'Incidente Grave?' 
 	FROM 	ACTIONS AS ACT_REG WITH  (NOLOCK)		
 			--
 			INNER JOIN INCS AS INCIDENT WITH (NOLOCK)
@@ -507,67 +507,67 @@ REPORT AS (
 			ON SITE_AREA.SITE_AREA_ID 										= SITE.SITE_AREA_ID
 )
 SELECT 	REPORT."Data Abertura Chamado" 				AS "Data Abertura Chamado"
-,		REPORT."Data Resolução Chamado" 			AS "Data Resolução Chamado"
+,		REPORT."Data Resolucao Chamado" 			AS "Data Resolução Chamado"
 ,		REPORT."ID Chamado" 						AS "ID Chamado"
 ,		REPORT."Chamado Pai" 						AS "Chamado Pai"
 ,		REPORT."Origem Chamado" 					AS "Origem Chamado"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Usuário Afetado" 						AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"' 					
+,		TRANSLATE(CAST(REPORT."Usuario Afetado" 								AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Usuário Afetado"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Nome do Usuário Afetado" 				AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"'
+,		TRANSLATE(CAST(REPORT."Nome do Usuario Afetado" 						AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Nome do Usuário Afetado" 
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Usuário Informante" 						AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"'
+,		TRANSLATE(CAST(REPORT."Usuario Informante" 								AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Usuário Informante"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Nome do Usuário Informante" 				AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"'
+,		TRANSLATE(CAST(REPORT."Nome do Usuario Informante" 						AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Nome do Usuário Informante"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Organização Cliente" 					AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"'
+,		TRANSLATE(CAST(REPORT."Organizacao Cliente" 							AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Organização Cliente"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Departamento Cliente" 					AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"'
+,		TRANSLATE(CAST(REPORT."Departamento Cliente" 							AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Departamento Cliente"
 ,		REPORT."Estado" 							AS "Estado"
 ,		REPORT."Site" 								AS "Site"
 ,		REPORT."FCR" 								AS "FCR"
 ,		REPORT."Status de evento" 					AS "Status de evento"
 ,		REPORT."Categoria Maior" 					AS "Categoria Maior"
-,		'"' + REPLACE(REPLACE(REPORT."Resumo", CHAR(13),' '),CHAR(10),' ') + '"'
+,		TRANSLATE(REPORT."Resumo", 																	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Resumo"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Serviço Catálogo" 						AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"'
+,		TRANSLATE(CAST(REPORT."Servico Catalogo" 								AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Serviço Catálogo"
-,		REPORT."Classe de Produto de Serviço" 		AS "Classe de Produto de Serviço"
-,		REPORT."Produto de Serviço" 				AS "Produto de Serviço"
-,		REPORT."Item de Serviço" 					AS "Item de Serviço"
+,		REPORT."Classe de Produto de Servico" 		AS "Classe de Produto de Serviço"
+,		REPORT."Produto de Servico" 				AS "Produto de Serviço"
+,		REPORT."Item de Servico" 					AS "Item de Serviço"
 ,		REPORT."Categoria" 							AS "Categoria"
-,		REPORT."Oferta Catálogo" 					AS "Oferta Catálogo"
-,		REPORT."Classe Genérica B" 					AS "Classe Genérica B"
+,		REPORT."Oferta Catalogo" 					AS "Oferta Catálogo"
+,		REPORT."Classe Generica B" 					AS "Classe Genérica B"
 ,		REPORT."Classe de Produto B" 				AS "Classe de Produto B"
 ,		REPORT."Produto B" 							AS "Produto B"
 ,		REPORT."Fabricante B" 						AS "Fabricante B"
 ,		REPORT."Item Modelo B" 						AS "Item Modelo B"
 ,		REPORT."Item B" 							AS "Item B"
 ,		REPORT."Categoria Causa" 					AS "Categoria Causa"
-,		REPORT."Classe Genérica Causa" 				AS "Classe Genérica Causa"
+,		REPORT."Classe Generica Causa" 				AS "Classe Genérica Causa"
 ,		REPORT."Classe de Produto Causa" 			AS "Classe de Produto Causa"
 ,		REPORT."Produto Causa" 						AS "Produto Causa"
 ,		REPORT."Fabricante Causa" 					AS "Fabricante Causa"
 ,		REPORT."Item Modelo Causa" 					AS "Item Modelo Causa"
 ,		REPORT."Item Causa" 						AS "Item Causa"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Resolução" 								AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"'
+,		TRANSLATE(CAST(REPORT."Resolucao" 										AS NVARCHAR(254)),	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Resolução"
-,		REPORT."ID Ação" 							AS "ID Ação"
-,		REPORT."Data Inicio Ação" 					AS "Data Inicio Ação"
-,		REPORT."Ultima Ação" 						AS "Ultima Ação"
-,		REPORT."Data Fim Ação" 						AS "Data Fim Ação"
+,		REPORT."ID Acao" 							AS "ID Ação"
+,		REPORT."Data Inicio Acao" 					AS "Data Inicio Ação"
+,		REPORT."Ultima Acao" 						AS "Ultima Ação"
+,		REPORT."Data Fim Acao" 						AS "Data Fim Ação"
 -->>-------------------------------------------------------------------------------------------------------------------
-,		CAST(            CAST((REPORT."Tempo Total da Ação (M)") 						AS int) / 60 AS varchar) + ':'  
-+ 		RIGHT('0' + CAST(CAST((REPORT."Tempo Total da Ação (M)") 						AS int) % 60 AS varchar(2)), 2)
+,		CAST(            CAST((REPORT."Tempo Total da Acao (M)") 						AS int) / 60 AS NVARCHAR(254)) + ':'  
++ 		RIGHT('0' + CAST(CAST((REPORT."Tempo Total da Acao (M)") 						AS int) % 60 AS NVARCHAR(254)), 2)
 													AS "Tempo Total da Ação (h)"
 --<<-------------------------------------------------------------------------------------------------------------------
-,		REPORT."Tempo Total da Ação (M)"			AS "Tempo Total da Ação (M)"
-,		REPORT."Ultima Ação Nome" 					AS "Ultima Ação Nome"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Motivo Pendencia" 						AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"'
+,		REPORT."Tempo Total da Acao (M)"			AS "Tempo Total da Ação (M)"
+,		REPORT."Ultima Acao Nome" 					AS "Ultima Ação Nome"
+,		TRANSLATE(CAST(REPORT."Motivo Pendencia" 								AS NVARCHAR(254)),	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Motivo Pendencia"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Campos alterados" 						AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"' 					
+,		TRANSLATE(CAST(REPORT."Campos alterados" 								AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Campos alterados"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Itens alterados" 						AS VARCHAR(254)),CHAR(13),' '),CHAR(10),' ') + '"'					
+,		TRANSLATE(CAST(REPORT."Itens alterados" 								AS NVARCHAR(254)),	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Itens alterados"
 ,		REPORT."Nome do CA" 						AS "Nome do CA"
 ,		REPORT."Contrato" 							AS "Contrato"
@@ -575,48 +575,48 @@ SELECT 	REPORT."Data Abertura Chamado" 				AS "Data Abertura Chamado"
 ,		REPORT."Designado" 							AS "Designado"
 ,		REPORT."Grupo Default" 						AS "Grupo Default"
 ,		REPORT."Prioridade do CA" 					AS "Prioridade do CA"
-,		'"' + REPLACE(REPLACE(CAST(REPORT."Descrição da Prioridade do CA" 			AS VARCHAR(254)), CHAR(13),' '), CHAR(10),' ') + '"'
+,		TRANSLATE(CAST(REPORT."Descricao da Prioridade do CA" 					AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Descrição da Prioridade do CA"
 ,		REPORT."Prazo Prioridade ANS (m)" 			AS "Prazo Prioridade ANS (m)"
 -->>-------------------------------------------------------------------------------------------------------------------
-,		CAST(            CAST((REPORT."Prazo Prioridade ANS (m)") 						AS int) / 60 AS varchar) + ':'  
-+ 		RIGHT('0' + CAST(CAST((REPORT."Prazo Prioridade ANS (m)") 						AS int) % 60 AS varchar(2)), 2)
+,		CAST(            CAST((REPORT."Prazo Prioridade ANS (m)") 						AS int) / 60 AS NVARCHAR(254)) + ':'  
++ 		RIGHT('0' + CAST(CAST((REPORT."Prazo Prioridade ANS (m)") 						AS int) % 60 AS NVARCHAR(254)), 2)
 													AS "Prazo Prioridade ANS (h)"
 --<<-------------------------------------------------------------------------------------------------------------------
 ,		REPORT."Prazo Prioridade ANO (m)" 			AS "Prazo Prioridade ANO (m)"
 -->>-------------------------------------------------------------------------------------------------------------------
-,		CAST(            CAST((REPORT."Prazo Prioridade ANO (m)") 						AS int) / 60 AS varchar) + ':'  
-+ 		RIGHT('0' + CAST(CAST((REPORT."Prazo Prioridade ANO (m)") 						AS int) % 60 AS varchar(2)), 2)
+,		CAST(            CAST((REPORT."Prazo Prioridade ANO (m)") 						AS int) / 60 AS NVARCHAR(254)) + ':'  
++ 		RIGHT('0' + CAST(CAST((REPORT."Prazo Prioridade ANO (m)") 						AS int) % 60 AS NVARCHAR(254)), 2)
 													AS "Prazo Prioridade ANO (h)"
 --<<-------------------------------------------------------------------------------------------------------------------
 ,		REPORT."Prazo Prioridade CA (m)" 			AS "Prazo Prioridade CA (m)"
 -->>-------------------------------------------------------------------------------------------------------------------
-,		CAST(            CAST((REPORT."Prazo Prioridade CA (m)") 						AS int) / 60 AS varchar) + ':'  
-+ 		RIGHT('0' + CAST(CAST((REPORT."Prazo Prioridade CA (m)") 						AS int) % 60 AS varchar(2)), 2)													
+,		CAST(            CAST((REPORT."Prazo Prioridade CA (m)") 						AS int) / 60 AS NVARCHAR(254)) + ':'  
++ 		RIGHT('0' + CAST(CAST((REPORT."Prazo Prioridade CA (m)") 						AS int) % 60 AS NVARCHAR(254)), 2)													
 													AS "Prazo Prioridade CA (h)"
 --<<-------------------------------------------------------------------------------------------------------------------
 ,		REPORT."Tempo Total Evento (m)" 			AS "Tempo Total Evento (m)"
 -->>-------------------------------------------------------------------------------------------------------------------
-,		CAST(            CAST((REPORT."Tempo Total Evento (m)") 						AS int) / 60 AS varchar) + ':'  
-+ 		RIGHT('0' + CAST(CAST((REPORT."Tempo Total Evento (m)") 						AS int) % 60 AS varchar(2)), 2)													
+,		CAST(            CAST((REPORT."Tempo Total Evento (m)") 						AS int) / 60 AS NVARCHAR(254)) + ':'  
++ 		RIGHT('0' + CAST(CAST((REPORT."Tempo Total Evento (m)") 						AS int) % 60 AS NVARCHAR(254)), 2)													
 													AS "Tempo Total Evento (h)"
 --<<-------------------------------------------------------------------------------------------------------------------
 ,		REPORT."Tempo Util Evento (m)" 				AS "Tempo Util Evento (m)"
 -->>-------------------------------------------------------------------------------------------------------------------
-,		CAST(            CAST((REPORT."Tempo Util Evento (m)") 							AS int) / 60 AS varchar) + ':'  
-+ 		RIGHT('0' + CAST(CAST((REPORT."Tempo Util Evento (m)") 							AS int) % 60 AS varchar(2)), 2)													
+,		CAST(            CAST((REPORT."Tempo Util Evento (m)") 							AS int) / 60 AS NVARCHAR(254)) + ':'  
++ 		RIGHT('0' + CAST(CAST((REPORT."Tempo Util Evento (m)") 							AS int) % 60 AS NVARCHAR(254)), 2)													
 													AS "Tempo Util Evento (h)"
 --<<-------------------------------------------------------------------------------------------------------------------
-,		REPORT."Tempo Util Atribuição Mesa (m)" 	AS "Tempo Util Atribuição Mesa (m)"
+,		REPORT."Tempo Util Atribuicao Mesa (m)" 	AS "Tempo Util Atribuição Mesa (m)"
 -->>-------------------------------------------------------------------------------------------------------------------
-,		CAST( 		     CAST((REPORT."Tempo Util Atribuição Mesa (m)") 				AS int) / 60 AS varchar) + ':'  
-+ 		RIGHT('0' + CAST(CAST((REPORT."Tempo Util Atribuição Mesa (m)") 				AS int) % 60 AS varchar(2)), 2)
+,		CAST( 		     CAST((REPORT."Tempo Util Atribuicao Mesa (m)") 				AS int) / 60 AS NVARCHAR(254)) + ':'  
++ 		RIGHT('0' + CAST(CAST((REPORT."Tempo Util Atribuicao Mesa (m)") 				AS int) % 60 AS NVARCHAR(254)), 2)
 													AS "Tempo Util Atribuição Mesa (h)"
 --<<-------------------------------------------------------------------------------------------------------------------
-,		REPORT."Tempo Util Atribuição CA (m)" 		AS "Tempo Util Atribuição CA (m)"
+,		REPORT."Tempo Util Atribuicao CA (m)" 		AS "Tempo Util Atribuição CA (m)"
 -->>-------------------------------------------------------------------------------------------------------------------
-,		CAST(            CAST((REPORT."Tempo Util Atribuição CA (m)") 					AS int) / 60 AS varchar) + ':'  
-+ 		RIGHT('0' + CAST(CAST((REPORT."Tempo Util Atribuição CA (m)") 					AS int) % 60 AS varchar(2)), 2)													
+,		CAST(            CAST((REPORT."Tempo Util Atribuicao CA (m)") 					AS int) / 60 AS NVARCHAR(254)) + ':'  
++ 		RIGHT('0' + CAST(CAST((REPORT."Tempo Util Atribuicao CA (m)") 					AS int) % 60 AS NVARCHAR(254)), 2)													
 													AS "Tempo Util Atribuição CA (h)"
 --<<-------------------------------------------------------------------------------------------------------------------													
 ,		REPORT."Vinculo" 							AS "Vinculo"
