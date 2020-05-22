@@ -39,7 +39,7 @@ class App(object):
             logger.info('excel2db - versão %d.%d.%d', *self.VERSION)
             dump_schedules.App(self.dir_apuracao).run()
             dump_slas.App(self.dir_apuracao).run()
-            consolida_planilhao.App(self.dir_apuracao, self.dir_import, self.start, self.end, False)
+            consolida_planilhao.App(self.dir_apuracao, self.dir_import, self.start, self.end, False).run()
             db = os.path.join(self.dir_apuracao, config.CONSOLIDATED_DB)
             excel = os.path.join(self.dir_apuracao, "export_{}-{}.xlsx".format(self.start, self.end))
             db2excel.App(db, VIEW_MEDICOES, excel, "PyClick", overwrite=True).run()
