@@ -18,17 +18,20 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('runuser')
 
-DIR_IMPORT = "DADOS/IMPORTv2"
+
+DIR_IMPORT_V1 = "DADOS/IMPORT"
+DIR_IMPORT_V2 = "DADOS/IMPORTv2"
 VIEW_MEDICOES = "VW_REL_MEDICAO"
 
 class App(object):
     
     VERSION = (0, 0, 0)
         
-    def __init__(self, dir_apuracao, start, end):
+    def __init__(self, dir_apuracao, start, end, v1):
         self.dir_apuracao = dir_apuracao
         self.start = start
         self.end = end
+        self.dir_import = (DIR_IMPORT_V1 if v1 else DIR_IMPORT_V2)
     
         
     def run(self):
@@ -36,7 +39,7 @@ class App(object):
             logger.info('excel2db - versão %d.%d.%d', *self.VERSION)
             dump_schedules.App(self.dir_apuracao).run()
             dump_slas.App(self.dir_apuracao).run()
-            consolida_planilhao.App(self.dir_apuracao, DIR_IMPORT, self.start, self.end, False)
+            consolida_planilhao.App(self.dir_apuracao, self.dir_import, self.start, self.end, False)
             db = os.path.join(self.dir_apuracao, config.CONSOLIDATED_DB)
             excel = os.path.join(self.dir_apuracao, "export_{}-{}.xlsx".format(self.start, self.end))
             db2excel.App(db, VIEW_MEDICOES, excel, "PyClick", overwrite=True).run()
@@ -46,9 +49,10 @@ class App(object):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--v1', action='store_true', default=False, help='usar diretório de importatação antigo')
     parser.add_argument('dir_apuracao', type=str, help='diretório apuração')
     parser.add_argument('start', type=str, help='start date')
     parser.add_argument('end', type=str, help='end date')
     args = parser.parse_args()
-    app = App(args.dir_apuracao, args.start, args.end)
+    app = App(args.dir_apuracao, args.start, args.end, args.v1)
     app.run()
