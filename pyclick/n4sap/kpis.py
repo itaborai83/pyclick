@@ -21,7 +21,7 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_apuracao, skip_calc):
+    def __init__(self, dir_apuracao, skip_calc=False):
         self.dir_apuracao = dir_apuracao
         self.skip_calc = skip_calc
     
