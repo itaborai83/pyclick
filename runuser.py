@@ -19,8 +19,8 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 logger = util.get_logger('runuser')
 
 
-DIR_IMPORT_V1 = "DADOS/IMPORT"
-DIR_IMPORT_V2 = "DADOS/IMPORTv2"
+DIR_IMPORT_V1 = r"DADOS\IMPORT"
+DIR_IMPORT_V2 = r"DADOS\IMPORTv2"
 VIEW_MEDICOES = "VW_REL_MEDICAO"
 
 class App(object):
