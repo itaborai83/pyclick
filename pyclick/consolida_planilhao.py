@@ -28,6 +28,8 @@ SQL_CARGA_REL_MEDICAO   = util.get_query("CONSOLIDA__CARGA_REL_MEDICAO")
 SQL_CHECK_IMPORTACAO    = util.get_query("CONSOLIDA__SQL_CHECK_IMPORTACAO")
 SQL_LISTA_ACOES         = util.get_query("CONSOLIDA__LISTA_ACOES") # remover
 
+WORK_DB = "__work.db"
+
 class App(object):
     
     # FIXME: Needs a refactoring. Too much responsability being done here
@@ -52,13 +54,14 @@ class App(object):
         
     def read_dump(self, dump_file):
         filename = os.path.join(self.dir_import, dump_file)
+        decompressed_filename = os.path.join(self.dir_apuracao, WORK_DB)
         logger.info('lendo arquivo %s', filename)
-        new_filename = util.decompress(filename, keep_original=True)
-        conn = sqlite3.connect(new_filename)
+        util.decompress_to(filename, decompressed_filename)
+        conn = sqlite3.connect(decompressed_filename)
         df = pd.read_sql(SQL_REL_MEDICAO_SELECT, conn)
         util.sort_rel_medicao(df)
         del conn
-        os.unlink(new_filename)
+        os.unlink(decompressed_filename)
         return df
     
     def concat_planilhas(self, df_open , dfs_closed):

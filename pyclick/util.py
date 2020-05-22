@@ -114,41 +114,62 @@ def strip_ms(txt):
     if not m:
         return txt
     return m[ 1 ]
-        
-def decompress(filename, keep_original=False):
-    # file needs to be gzipped
-    assert filename.endswith(".gz") 
-    # file needs to exist
-    assert os.path.exists(filename) 
-    parts = filename.split(".") 
-    # file needs to have a name, an extension and .gzip
+
+def _decompress_to(filename, new_filename):
+    with gzip.open(filename, 'rb') as f_in:
+        with open(new_filename, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+
+def _compress_to(filename, new_filename):
+    with open(filename, 'rb') as f_in:
+        with gzip.open(new_filename, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+            
+def decompress_to(filename, new_filename):
+    assert filename.endswith(".gz") # file needs to be gzipped
+    assert os.path.exists(filename) # file needs to exist
+    parts = filename.split(".") # file needs to have a name, an extension and .gzip
     assert len(parts) == 3 
+    _, extension = parts[0], parts[1]
+    assert new_filename.endswith(extension)
+    # actually decompress
+    _decompress_to(filename, new_filename)
+
+def compress_to(filename, new_filename):
+    assert not filename.endswith(".gz") # file needs to not be gzipped
+    assert os.path.exists(filename) # file needs to exist
+    parts = filename.split(".") # file needs to have a name and an extension
+    assert len(parts) == 2 
+    _, extension = parts[0], parts[1]
+    assert new_filename.ends_with(extension + ".gz")
+    # actually compress
+    _compress_to(filename, new_filename)
+            
+def decompress(filename, keep_original=False):
+    assert filename.endswith(".gz") # file needs to be gzipped
+    assert os.path.exists(filename) # file needs to exist
+    parts = filename.split(".") 
+    
+    assert len(parts) == 3 # file needs to have a name, an extension and .gzip
     name, extension = parts[0], parts[1]
     decompressed_filename = name + "." + extension
-    # the decompressed file must not exist
-    assert not os.path.exists(decompressed_filename)
-    with gzip.open(filename, 'rb') as f_in:
-        with open(decompressed_filename, 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
+    assert not os.path.exists(decompressed_filename) # the decompressed file must not exist
+    # actually decompress
+    _decompress_to(filename, decompressed_filename)
     if not keep_original:
         os.unlink(filename)
     return decompressed_filename
     
 def compress(filename, keep_original=False):
-    # file needs to not be gzipped
-    assert not filename.endswith(".gz") 
-    # file needs to exist
-    assert os.path.exists(filename) 
-    parts = filename.split(".") 
-    # file needs to have a name and an extension
+    assert not filename.endswith(".gz") # file needs to not be gzipped
+    assert os.path.exists(filename) # file needs to exist
+    parts = filename.split(".") # file needs to have a name and an extension
     assert len(parts) == 2 
     name, extension = parts[0], parts[1]
-    compressed_filename = name + "." + extension + ".gz"
-    # the compressed file must not exist
-    assert not os.path.exists(compressed_filename)
-    with open(filename, 'rb') as f_in:
-        with gzip.open(compressed_filename, 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
+    compressed_filename = name + "." + extension + ".gz"    
+    assert not os.path.exists(compressed_filename) # the compressed file must not exist
+    # actually compress
+    _compress_to(filename, compressed_filename)
     if not keep_original:
         os.unlink(filename)
     return compressed_filename
