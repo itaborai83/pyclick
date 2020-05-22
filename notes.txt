@@ -23,13 +23,5 @@ TODO:
  - Paralelizar cálculo durações
  - Otimizar Tempo Durações
  - Usar arquivos descomprimidos temporários durante processo de consolidação
- - Tratar tempo não monotonicamente crescente na listagem de ações
- - CRI
- - Avaliar adicionar apuração por mesa x encaminhamento. Incongruência do modelo do mentor?
  - Trocar as mensagens de log em inglês para português
- - Tratar corrupção de arquivos que ocorre durante o processo de compressão/descompressão quando ocorre um cancelamento
- - Usar o index.db para filtrar os incidentes que precisam ser filtrados do arquivos de filtrados e abertos
- 
- Relatórios de Sanity Check
---------------------------
-	Adicionar violação de PK no processo de consolidação. Query já está pronta.
+  
