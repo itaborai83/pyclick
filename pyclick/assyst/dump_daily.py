@@ -44,7 +44,7 @@ class App(object):
         curdir = os.getcwd()
         try:
             os.chdir(self.dir_staging)
-            filename = "__" + self.date + ".csv"
+            filename = self.date + ".csv"
             logger.info("saving file %s to dir %s", self.date, self.dir_staging)
             df.to_csv( 
                 filename,

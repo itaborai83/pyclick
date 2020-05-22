@@ -37,7 +37,7 @@ class App(object):
         curdir = os.getcwd()
         try:
             os.chdir(self.dir_apuracao)
-            df.to_excel("__" + config.OFFERINGS_SPREADSHEET, index=False)
+            df.to_excel(config.OFFERINGS_SPREADSHEET, index=False)
         finally:
             os.chdir(curdir)
     def run(self):
