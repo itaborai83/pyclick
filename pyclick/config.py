@@ -18,7 +18,7 @@ FILE_INDEX_DB               = "file_index.db"
 SEPARATOR_HEADER            = "sep="
 INPUT_FILENAME_PREFIX       = "Generate_Report_Query_Medicao_"
 
-UNTIMED_ACTIONS             = set([ 'Resolver', 'Encerrar' ])
+UNTIMED_ACTIONS             = set([ 'Cancelar', 'Cancelado', 'Encerrar', 'Resolver' ])
 
 EXIT_FILE_MISMATCH          = 1
 EXIT_RENAMED_MISMATCH       = 2
