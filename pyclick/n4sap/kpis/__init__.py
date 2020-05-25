@@ -119,7 +119,13 @@ class App(object):
         sql = "SELECT * FROM VW_KPI_PRS_DETALHES;"
         df = pd.read_sql(sql, conn)
         df.to_excel(xw, sheet_name="VW_KPI_PRS_DETALHES", index=False)
-
+    
+    def write_source_ids_details(self, conn, xw):
+        logger.info("exporting PRS details")
+        sql = "SELECT * FROM VW_KPI_IDS_DETALHES;"
+        df = pd.read_sql(sql, conn)
+        df.to_excel(xw, sheet_name="VW_KPI_IDS_DETALHES", index=False)
+    
     def write_source_cri_details(self, conn, xw):
         logger.info("exporting CRI details")
         sql = "SELECT * FROM VW_KPI_CRI_DETALHES;"
@@ -157,6 +163,7 @@ class App(object):
                 self.write_source_pro_details(conn, xw)
                 self.write_source_prc_details(conn, xw)
                 self.write_source_prs_details(conn, xw)
+                self.write_source_ids_details(conn, xw)
                 self.write_source_cri_details(conn, xw) # suprimido devido erros
                 self.write_source_sit_details(conn, xw)
                 self.vacuum(conn)
