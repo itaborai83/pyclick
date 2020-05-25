@@ -18,6 +18,7 @@ from pyclick.n4sap.kpis.prp import PrpHandler
 logger = util.get_logger('gerar_indicadores')
 
 SQL_COMPUTE_KPIS = util.get_query("CALCULA_INDICADORES")
+SQL_ACTION_TIMES = util.get_query("N4SAP__TEMPOS_ACOES")
 SQL_INCIDENTES_ABERTOS_VELHOS = util.get_query("INCIDENTES_ABERTOS_VELHOS")
 
 class App(object):
@@ -72,6 +73,11 @@ class App(object):
         df = pd.read_sql(sql, conn)
         df.to_excel(xw, sheet_name="TEMPO_PENDENTE", index=False)
         
+    def write_action_times(self, conn, xw):
+        logger.info("exporting tempo ações")
+        df = pd.read_sql(SQL_ACTION_TIMES, conn)
+        df.to_excel(xw, sheet_name="TEMPO_ACOES", index=False)
+    
     def write_missing_data(self, conn, xw):
         logger.info("exporting missing data entries")
         sql = "SELECT * FROM VW_DADOS_MEDICAO_FALTANDO"
@@ -141,7 +147,8 @@ class App(object):
             with self.open_spreadsheet() as xw:
                 self.write_kpi(conn, xw)
                 self.write_business_time(conn, xw)
-                self.write_pending_time(conn, xw)                
+                self.write_pending_time(conn, xw)
+                self.write_action_times(conn, xw)
                 self.write_data(conn, xw)
                 self.write_missing_data(conn, xw)
                 self.write_override_data(conn, xw)
