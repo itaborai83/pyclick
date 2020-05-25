@@ -9,27 +9,28 @@ class Handler(object):
     def new_day(self, date):
         pass
         
-    def begin_event(self, id_chamado):
+    def begin_event(self, row):
         pass
         
     def process_action(self, row):
         pass
     
-    def end_event(self, id_chamado):
+    def end_event(self, row):
         pass
         
     def end(self):
         pass
-    
+
+    def write_details(self, sheet_name, xw):
+        df = self.get_kpi_details()
+        df.to_excel(xw, sheet_name=sheet_name, index=False)
+        
     def compute_kpi(self):
         raise NotImplementedError
     
     def get_kpi_details(self):
         raise NotImplementedError
 
-    def write_details(self, sheet_name, xw):
-        df = self.get_kpi_details()
-        df.to_excel(xw, sheet_name=sheet_name, index=False)
 
 class Runner(object):
 
@@ -66,7 +67,7 @@ class Runner(object):
             if row.ID_CHAMADO not in self.seen:
                 assert row.ID_CHAMADO not in self.done
                 self.seen.add(row.ID_CHAMADO)
-                self.do_begin_event(row.ID_CHAMADO)
+                self.do_begin_event(row)
                 self.do_process_action(row)
                 
             
@@ -76,9 +77,9 @@ class Runner(object):
                     self.do_process_action(row)    
                 elif row.ULTIMA_ACAO == 'y':
                     self.seen.remove(row.ID_CHAMADO)
-                    self.done.add(row.ID_CHAMADO)
+                    self.done.add(row)
                     self.do_process_action(row)
-                    self.do_end_event(row.ID_CHAMADO)
+                    self.do_end_event(row)
                 else:
                     assert 1 == 2 # should not happen
             
@@ -96,9 +97,9 @@ class Runner(object):
         for h in self.handlers:
             h.new_day(date)
     
-    def do_begin_event(self, id_chamado):
+    def do_begin_event(self, row):
         for h in self.handlers:
-            h.begin_event(id_chamado)
+            h.begin_event(row)
     
     def do_filter(self, row):
         return self.filter(row)
@@ -107,9 +108,9 @@ class Runner(object):
         for h in self.handlers:
             h.process_action(row)
     
-    def do_end_event(self, id_chamado):
+    def do_end_event(self, row):
         for h in self.handlers:
-            h.end_event(id_chamado)
+            h.end_event(row)
         
     def do_end(self):
         for h in self.handlers:
