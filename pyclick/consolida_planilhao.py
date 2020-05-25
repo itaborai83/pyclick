@@ -302,6 +302,8 @@ class App(object):
             if end < start:
                 logger.warning("chamado %s / acao %s não possui tempo monotonicamente crescente", row.id_chamado, row.id_acao)
                 duration = 0
+            elif row.ultima_acao_nome in config.UNTIMED_ACTIONS:
+                duration = 0
             else:
                 try:
                     duration = ranges.calc_duration(sched, on_hold, start, end)
