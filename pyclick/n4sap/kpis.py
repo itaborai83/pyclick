@@ -13,8 +13,6 @@ import pyclick.n4sap.config as n4_config
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
-from pyclick.n4sap.kpis.prp import PrpHandler
-
 logger = util.get_logger('gerar_indicadores')
 
 SQL_COMPUTE_KPIS = util.get_query("CALCULA_INDICADORES")
