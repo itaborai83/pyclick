@@ -7,7 +7,8 @@ SELECT	'PRP' AS INDICADOR, 1 AS ORDEM, PRP AS VALOR, 10.0 as SLA
 		' / Incidentes '				|| INCIDENTES ||
 		' > Encerrados: ' 				|| ENCERRADOS || 
 		' | Resolvidos: ' 				|| RESOLVIDOS || 
-		' | Cancelados: ' 				|| CANCELADOS AS OBSERVACAO
+		' | Cancelados: ' 				|| CANCELADOS ||
+		' | Abertos: ' 				    || ABERTOS 	  AS OBSERVACAO
 FROM 	VW_KPI_PRP AS A;
 
 INSERT OR REPLACE INTO INDICADORES(INDICADOR, ORDEM, VALOR, SLA, OBSERVACAO)  
@@ -17,6 +18,7 @@ SELECT	'PRO' AS INDICADOR, 2 AS ORDEM, PRO AS VALOR, 15.0 as SLA
 		' > Encerrados: ' 				|| ENCERRADOS 	|| 
 		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
 		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Abertos: ' 					|| ABERTOS 		||
 		' | Encaminhados: ' 			|| ENCAMINHADOS	||
 		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRO AS A;
@@ -28,6 +30,7 @@ SELECT	'PRC' AS INDICADOR, 3 AS ORDEM, PRC AS VALOR, 25.0 as SLA
 		' > Encerrados: ' 				|| ENCERRADOS 	|| 
 		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
 		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Abertos: ' 					|| ABERTOS 		||
 		' | Encaminhados: ' 			|| ENCAMINHADOS	||
 		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRC AS A;
@@ -39,6 +42,7 @@ SELECT	'PRS' AS INDICADOR, 4 AS ORDEM, PRS AS VALOR, 10.0 AS SLA
 		' > Encerrados: ' 				|| ENCERRADOS 	|| 
 		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
 		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Abertos: ' 					|| ABERTOS		||
 		' | Encaminhados: ' 			|| ENCAMINHADOS	||
 		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRS AS A;
@@ -50,6 +54,7 @@ SELECT	'PRS - Simples' AS INDICADOR, 5 AS ORDEM, PRS_SIMPLES AS VALOR
 		' > Encerrados: ' 				|| ENCERRADOS 	|| 
 		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
 		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Abertos: ' 					|| ABERTOS 		||		
 		' | Encaminhados: ' 			|| ENCAMINHADOS	||
 		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRS_SIMPLES AS A;
@@ -62,6 +67,7 @@ SELECT	'PRS - Médio' AS INDICADOR, 6 AS ORDEM, PRS_MEDIO AS VALOR
 		' > Encerrados: ' 				|| ENCERRADOS 	|| 
 		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
 		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Abertos: ' 					|| ABERTOS 		||
 		' | Encaminhados: ' 			|| ENCAMINHADOS	||
 		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRS_MEDIO AS A;
@@ -73,6 +79,7 @@ SELECT	'PRS - Complexo' AS INDICADOR, 7 AS ORDEM, PRS_COMPLEXO AS VALOR
 		' > Encerrados: ' 				|| ENCERRADOS 	|| 
 		' | Resolvidos: ' 				|| RESOLVIDOS 	|| 
 		' | Cancelados: ' 				|| CANCELADOS 	||
+		' | Abertos: ' 					|| ABERTOS 		||		
 		' | Encaminhados: ' 			|| ENCAMINHADOS	||
 		' | Priorizados: ' 				|| PRIORIZADOS 	AS OBSERVACAO
 FROM 	VW_KPI_PRS_COMPLEXO AS A;

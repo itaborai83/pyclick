@@ -49,7 +49,7 @@ class App(object):
     
     def write_kpi(self, conn, xw):
         logger.info("exporting KPI's")
-        sql = "SELECT INDICADOR, VALOR, OBSERVACAO FROM INDICADORES ORDER BY ORDEM"
+        sql = "SELECT INDICADOR, VALOR, SLA, OBSERVACAO FROM INDICADORES ORDER BY ORDEM"
         df = pd.read_sql(sql, conn)
         df.to_excel(xw, sheet_name="INDICADORES", index=False)
 
