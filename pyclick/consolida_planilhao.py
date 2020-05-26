@@ -362,6 +362,7 @@ class App(object):
             closed_dumps, open_dump = self.get_dump_files()
             df_open = self.read_dump(open_dump)
             df_open = self.apply_cutoff_date_open(df_open)
+            df_open = self.add_dados_oferta(df_open, df_ofertas)
             self.update_event_mapping(mesa_evt_mapping, df_open)
             
             dfs_closed = [ ]
