@@ -18,15 +18,16 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('consolida_planilhao')
 
-SQL_REL_MEDICAO_SELECT  = util.get_query("CONSOLIDA__REL_MEDICAO_SELECT")
-SQL_REL_MEDICAO_DDL     = util.get_query("CONSOLIDA__REL_MEDICAO_DDL")
-SQL_REL_MEDICAO_UPSERT  = util.get_query("CONSOLIDA__REL_MEDICAO_UPSERT")
-SQL_UPDATE_MESA_ATUAL   = util.get_query("CONSOLIDA__UPDATE_MESA_ATUAL")
-SQL_UPDATE_USER_STATUS  = util.get_query("CONSOLIDA__UPDATE_ACAO_USER_STATUS")
-SQL_UPDATE_PENDENCIA    = util.get_query("CONSOLIDA__UPDATE_PENDENCIA")
-SQL_CARGA_REL_MEDICAO   = util.get_query("CONSOLIDA__CARGA_REL_MEDICAO")
-SQL_CHECK_IMPORTACAO    = util.get_query("CONSOLIDA__SQL_CHECK_IMPORTACAO")
-SQL_LISTA_ACOES         = util.get_query("CONSOLIDA__LISTA_ACOES") # remover
+SQL_REL_MEDICAO_SELECT      = util.get_query("CONSOLIDA__REL_MEDICAO_SELECT")
+SQL_REL_MEDICAO_DDL         = util.get_query("CONSOLIDA__REL_MEDICAO_DDL")
+SQL_REL_MEDICAO_UPSERT      = util.get_query("CONSOLIDA__REL_MEDICAO_UPSERT")
+SQL_UPDATE_MESA_ATUAL       = util.get_query("CONSOLIDA__UPDATE_MESA_ATUAL")
+SQL_DROP_UNACTIONED_EVTS    = util.get_query("CONSOLIDA__DROP_UNACTIONED_EVTS")
+SQL_UPDATE_USER_STATUS      = util.get_query("CONSOLIDA__UPDATE_ACAO_USER_STATUS")
+SQL_UPDATE_PENDENCIA        = util.get_query("CONSOLIDA__UPDATE_PENDENCIA")
+SQL_CARGA_REL_MEDICAO       = util.get_query("CONSOLIDA__CARGA_REL_MEDICAO")
+SQL_CHECK_IMPORTACAO        = util.get_query("CONSOLIDA__SQL_CHECK_IMPORTACAO")
+SQL_LISTA_ACOES             = util.get_query("CONSOLIDA__LISTA_ACOES") 
 
 WORK_DB = "__work.db"
 
@@ -132,6 +133,14 @@ class App(object):
         logger.info('recuperando a listagem de mesas para apuração')
         return util.read_mesas(self.dir_apuracao)
     
+    def write_mesas(self, conn, mesas):
+        logger.info('criando tabela MESAS com as mesas da consolidação')
+        sql = 'CREATE TABLE MESAS(MESA TEXT PRIMARY KEY)'
+        conn.execute(sql)
+        sql = 'INSERT INTO MESAS(MESA) VALUES (?)'
+        for mesa in mesas:
+            conn.execute(sql, [ mesa ])
+        conn.commit()
     def read_ofertas(self):
         logger.info('recuperando a listagem de ofertas de serviços') # Assistente de Relatórios > Catálogo de Serviços > Criar Relatório (Catálogo Completo e Prazos)
         currdir = os.getcwd()
@@ -251,7 +260,7 @@ class App(object):
         logger.info('preenchend campo PENDENCIA da tabela REL_MEDICAO')
         conn.executescript(SQL_UPDATE_PENDENCIA)
         conn.commit()
-        
+    
     def do_datafix(self):
         logger.warning("STOPING LOADING PROCEDURE FOR A DATAFIX TO BE APPLIED")
         logger.warning("(remember to close the database after data analysis)")
@@ -270,13 +279,13 @@ class App(object):
         args=(self.start_date, )
         conn.execute(sql, args)
         logger.info("loading data model")
+        conn.execute(sql, args)        
         conn.executescript(SQL_CARGA_REL_MEDICAO)
         sql = "INSERT INTO PARAMS(PARAM, VALOR, OBS) VALUES ('HORA_INICIO_APURACAO', ?, 'Data Início da Apuração')"
         args = self.start_date + ' 00:00:00',
         conn.execute(sql, args)
         sql = "INSERT INTO PARAMS(PARAM, VALOR, OBS) VALUES ('HORA_FIM_APURACAO',    ?, 'Data Fim da Apuração')"
         args = self.end_date + ' 23:59:59',
-        conn.execute(sql, args)
         conn.commit()
 
     def sanity_check(self, conn):
@@ -286,19 +295,25 @@ class App(object):
         if result != "OK":
             logger.error("falha na checagem da consolidação do relatório de medição")
             sys.exit(config.EXIT_CONSOLIDATION_ERROR)        
-            
+    
+    def drop_unactioned_events(self, conn):
+        logger.info('dropando incidentes que passaram pela mesa antes do período de apuração')
+        conn.executescript(SQL_DROP_UNACTIONED_EVTS)        
+        conn.commit()
+        
     def fill_durations(self, conn, horarios_mesas):
         logger.info('calculando duração de ações')
         # retrieving actions
         df = pd.read_sql(SQL_LISTA_ACOES, conn)
         logger.info('%s ações recuperadas', len(df))
         # computing durations
+        end_dt = self.end_date + ' 23:59:59'
         durations = []
         for i, row in enumerate(df.itertuples()):
             sched    = horarios_mesas.get(row.mesa_atual)
             on_hold  = False # row.pendencia == 'S'
             start    = row.data_inicio_acao
-            end      = row.DATA_PROXIMA_ACAO
+            end      = end_dt if row.DATA_PROXIMA_ACAO is None else row.DATA_PROXIMA_ACAO
             if end < start:
                 logger.warning("chamado %s / acao %s não possui tempo monotonicamente crescente", row.id_chamado, row.id_acao)
                 duration = 0
@@ -399,6 +414,7 @@ class App(object):
             
             #self.save_consolidado(df, horarios_mesas)
             conn = self.get_connection()
+            self.write_mesas(conn, mesas)
             self.process_begin_sql(conn)
             self.fill_table(conn, df)
             if self.datafix:
@@ -407,6 +423,7 @@ class App(object):
             self.migrate_tables(conn)
             self.process_after_load_sql(conn)
             self.sanity_check(conn)
+            self.drop_unactioned_events(conn)
             self.write_business_hours(conn, mesas, horarios_mesas)
             self.fill_durations(conn, horarios_mesas)
             self.drop_rel_medicao(conn)
