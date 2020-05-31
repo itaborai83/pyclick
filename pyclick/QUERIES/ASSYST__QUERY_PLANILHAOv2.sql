@@ -532,7 +532,7 @@ SELECT 	REPORT."Data Abertura Chamado" 				AS "Data Abertura Chamado"
 ,		REPORT."Categoria Maior" 					AS "Categoria Maior"
 ,		TRANSLATE(REPORT."Resumo", 																	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Resumo"
-,		TRANSLATE(CAST(REPORT."Servico Catalogo" 								AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
+,		TRANSLATE(CAST(REPORT."Servico Catalogo" 								AS NVARCHAR(2048)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Serviço Catálogo"
 ,		REPORT."Classe de Produto de Servico" 		AS "Classe de Produto de Serviço"
 ,		REPORT."Produto de Servico" 				AS "Produto de Serviço"
@@ -552,7 +552,7 @@ SELECT 	REPORT."Data Abertura Chamado" 				AS "Data Abertura Chamado"
 ,		REPORT."Fabricante Causa" 					AS "Fabricante Causa"
 ,		REPORT."Item Modelo Causa" 					AS "Item Modelo Causa"
 ,		REPORT."Item Causa" 						AS "Item Causa"
-,		TRANSLATE(CAST(REPORT."Resolucao" 										AS NVARCHAR(254)),	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
+,		TRANSLATE(CAST(REPORT."Resolucao" 										AS NVARCHAR(2048)),	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Resolução"
 ,		REPORT."ID Acao" 							AS "ID Ação"
 ,		REPORT."Data Inicio Acao" 					AS "Data Inicio Ação"
@@ -565,11 +565,11 @@ SELECT 	REPORT."Data Abertura Chamado" 				AS "Data Abertura Chamado"
 --<<-------------------------------------------------------------------------------------------------------------------
 ,		REPORT."Tempo Total da Acao (M)"			AS "Tempo Total da Ação (M)"
 ,		REPORT."Ultima Acao Nome" 					AS "Ultima Ação Nome"
-,		TRANSLATE(CAST(REPORT."Motivo Pendencia" 								AS NVARCHAR(254)),	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
+,		TRANSLATE(CAST(REPORT."Motivo Pendencia" 								AS NVARCHAR(2048)),	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Motivo Pendencia"
-,		TRANSLATE(CAST(REPORT."Campos alterados" 								AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
+,		TRANSLATE(CAST(REPORT."Campos alterados" 								AS NVARCHAR(2048)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Campos alterados"
-,		TRANSLATE(CAST(REPORT."Itens alterados" 								AS NVARCHAR(254)),	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
+,		TRANSLATE(CAST(REPORT."Itens alterados" 								AS NVARCHAR(2048)),	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Itens alterados"
 ,		REPORT."Nome do CA" 						AS "Nome do CA"
 ,		REPORT."Contrato" 							AS "Contrato"
@@ -577,7 +577,7 @@ SELECT 	REPORT."Data Abertura Chamado" 				AS "Data Abertura Chamado"
 ,		REPORT."Designado" 							AS "Designado"
 ,		REPORT."Grupo Default" 						AS "Grupo Default"
 ,		REPORT."Prioridade do CA" 					AS "Prioridade do CA"
-,		TRANSLATE(CAST(REPORT."Descricao da Prioridade do CA" 					AS NVARCHAR(254)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
+,		TRANSLATE(CAST(REPORT."Descricao da Prioridade do CA" 					AS NVARCHAR(2048)), 	'"'+CHAR(9)+CHAR(10)+CHAR(13), '    ')
 													AS "Descrição da Prioridade do CA"
 ,		REPORT."Prazo Prioridade ANS (m)" 			AS "Prazo Prioridade ANS (m)"
 -->>-------------------------------------------------------------------------------------------------------------------
