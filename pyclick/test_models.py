@@ -127,6 +127,11 @@ class Incidente(object):
     
     def calc_duration_mesas(self, mesas):
         return sum([ a.duracao_m for a in self.acoes if a.pendencia == 'N' and a.mesa_atual in mesas ])
+    
+    @property
+    def mesa_atual(self):
+        assert self.action_count() > 0
+        return self.acoes[ -1 ].mesa_atual
         
     @classmethod
     def build_from(klass, evt):
@@ -138,24 +143,63 @@ class Incidente(object):
         ,   prazo               = evt.prazo_oferta_m
         )
 
+class Mesa(object):
+
+    def __init__(self, name):
+        self.name = name
+        self.incidentes = {}
+    
+    def add_incidente(self, inc):
+        assert inc.id_chamado not in self.incidentes
+        self.incidentes[ inc.id_chamado ] = inc
+    
+    def remove_incidente(self, inc):
+        assert inc.id_chamado in self.incidentes
+        del self.incidentes[ inc.id_chamado ]
+    
+    def get_incidente(self, id_chamado):
+        return self.incidentes.get(id_chamado, None)
+    
+    def has_incident(self, id_chamado):
+        return id_chamado in self.incidentes
+        
+    
 class Click(object):
     
     def __init__(self):
         self.incidentes = {}
+        self.mesas = {}
         self.seen_actions = set()
     
     def update(self, event):
+        if event.mesa_atual not in self.mesas:
+            self.mesas[ event.mesa_atual ] = Mesa(event.mesa_atual)
+        mesa_atual = self.mesas[ event.mesa_atual ]
+        
         if event.id_chamado not in self.incidentes:
             self.incidentes[ event.id_chamado ] = Incidente.build_from(event)
         incidente = self.incidentes[ event.id_chamado ]
+        
         acao = Acao.build_from(event)
-        incidente.add_acao(acao)
+        
+        if incidente.action_count() == 0:
+            incidente.add_acao(acao)
+            mesa_atual.add_incidente(incidente)
+        else:
+            mesa_anterior = self.mesas[ incidente.mesa_atual ] # should I switch to nome_mesa_atual???
+            incidente.add_acao(acao)
+            if mesa_anterior != mesa_atual:
+                mesa_anterior.remove_incidente(incidente)
+                mesa_atual.add_incidente(incidente)
     
     def incident_count(self):
         return len(self.incidentes)
         
     def get_incidente(self, id_chamado):
         return self.incidentes.get(id_chamado, None)
+
+    def get_mesa(self, mesa):
+        return self.mesas.get(mesa, None)
         
 class TestEvento(unittest.TestCase):
 
@@ -297,24 +341,8 @@ class TestIncident(unittest.TestCase):
         ,   oferta          = self.evt1.oferta_catalogo
         ,   prazo           = self.evt1.prazo_oferta_m
         )
-        
-    def tearDown(self):
-        pass
-        
-    def test_it_implements_equality(self):
-        self.assertEqual(self.inc1, self.inc1)
-        self.assertNotEqual(self.inc1, self.inc2)
-        self.assertEqual(self.inc1, self.inc3)
-    
-    def test_it_buils_an_action_from_an_event(self):
-        inc = Incidente.build_from(self.evt1)
-        self.assertEqual(self.inc1, inc)
-        inc = Incidente.build_from(self.evt2)
-        self.assertEqual(self.inc2, inc)
-    
-    def test_it_calcutate_durations(self):
-        inc = Incidente(id_chamado="123", chamado_pai=None, categoria="CORRIGIR-NÃO EMERGENCIAL", oferta="Suporte ao Serviço de SAP", prazo=540)
-        actions = [
+        self.inc = Incidente(id_chamado="123", chamado_pai=None, categoria="CORRIGIR-NÃO EMERGENCIAL", oferta="Suporte ao Serviço de SAP", prazo=540)
+        self.actions = [
             Acao(id_acao=1,  acao_nome="ação 1",  pendencia="N", mesa_atual="MESA 1", data_acao="2020-01-01 09:10:00", data_fim_acao="2020-01-01 09:20:00", duracao_m=10*60),
             Acao(id_acao=2,  acao_nome="ação 2",  pendencia="S", mesa_atual="MESA 1", data_acao="2020-01-01 09:20:00", data_fim_acao="2020-01-01 09:30:00", duracao_m=10*60),
             Acao(id_acao=3,  acao_nome="ação 3",  pendencia="N", mesa_atual="MESA 1", data_acao="2020-01-01 09:30:00", data_fim_acao="2020-01-01 09:40:00", duracao_m=10*60),
@@ -331,31 +359,45 @@ class TestIncident(unittest.TestCase):
             Acao(id_acao=11, acao_nome="ação 11", pendencia="S", mesa_atual="MESA 4", data_acao="2020-01-01 10:50:00", data_fim_acao="2020-01-01 11:00:00", duracao_m=10*60),
             Acao(id_acao=12, acao_nome="ação 12", pendencia="N", mesa_atual="MESA 4", data_acao="2020-01-01 11:00:00", data_fim_acao=None,                  duracao_m=10*60)
         ]
-        for action in actions:
-            inc.add_acao(action)
         
-        duration = inc.calc_duration()
+    def tearDown(self):
+        pass
+        
+    def test_it_implements_equality(self):
+        self.assertEqual(self.inc1, self.inc1)
+        self.assertNotEqual(self.inc1, self.inc2)
+        self.assertEqual(self.inc1, self.inc3)
+    
+    def test_it_buils_an_action_from_an_event(self):
+        inc = Incidente.build_from(self.evt1)
+        self.assertEqual(self.inc1, inc)
+        inc = Incidente.build_from(self.evt2)
+        self.assertEqual(self.inc2, inc)
+    
+    def test_it_calcutate_durations(self):
+        for action in self.actions:
+            self.inc.add_acao(action)
+        
+        duration = self.inc.calc_duration()
         self.assertEqual(duration, 70 * 60)
         
-        duration = inc.calc_duration_mesas([ "MESA 1" ])
+        duration = self.inc.calc_duration_mesas([ "MESA 1" ])
         self.assertEqual(duration, 20 * 60)
         
-        duration = inc.calc_duration_mesas([ "MESA 2" ])
+        duration = self.inc.calc_duration_mesas([ "MESA 2" ])
         self.assertEqual(duration, 20 * 60)
         
-        duration = inc.calc_duration_mesas([ "MESA 3" ])
+        duration = self.inc.calc_duration_mesas([ "MESA 3" ])
         self.assertEqual(duration, 10 * 60)
         
-        duration = inc.calc_duration_mesas([ "MESA 4" ])
+        duration = self.inc.calc_duration_mesas([ "MESA 4" ])
         self.assertEqual(duration, 20 * 60)
         
-        duration = inc.calc_duration_mesas([ "MESA 1", "MESA 3" ])
+        duration = self.inc.calc_duration_mesas([ "MESA 1", "MESA 3" ])
         self.assertEqual(duration, 30 * 60)
         
-        duration = inc.calc_duration_mesas([ "MESA 2", "MESA 4" ])
+        duration = self.inc.calc_duration_mesas([ "MESA 2", "MESA 4" ])
         self.assertEqual(duration, 40 * 60)
-        
-        
         
 class TestClick(unittest.TestCase):
     
@@ -421,6 +463,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(2, self.click.incident_count())
         
         incidente = self.click.get_incidente('119773')
+        mesa = self.click.get_mesa('N4-SAP-SUSTENTACAO-APOIO_OPERACAO')
         self.assertEqual(incidente.id_chamado, '119773')
         self.assertEqual(incidente.chamado_pai, None)
         self.assertEqual(incidente.categoria, 'CORRIGIR-NÃO EMERGENCIAL')
@@ -429,8 +472,20 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.action_count(), 25)
         self.assertEqual(incidente.calc_duration(), 31320)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 31287)
+        self.assertEqual(incidente.mesa_atual, mesa.name)
+        self.assertTrue(mesa.has_incident(incidente.id_chamado))
+        self.assertFalse(self.click.get_mesa('N1-SD2_EMAIL').has_incident(incidente.id_chamado))
+        self.assertFalse(self.click.get_mesa('N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC').has_incident(incidente.id_chamado))
+        self.assertFalse(self.click.get_mesa('N2-SD2_SAP_SERV').has_incident(incidente.id_chamado))
+        self.assertFalse(self.click.get_mesa('N2-SD2_SAP_PRAPO').has_incident(incidente.id_chamado))
+        
+        self.assertIn('N1-SD2_EMAIL', self.click.mesas)
+        self.assertIn('N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC', self.click.mesas)
+        self.assertIn('N2-SD2_SAP_SERV', self.click.mesas)
+        self.assertIn('N2-SD2_SAP_PRAPO', self.click.mesas)
         
         incidente = self.click.get_incidente('110322')
+        mesa = self.click.get_mesa('N4-SAP-SUSTENTACAO-APOIO_OPERACAO')
         self.assertEqual(incidente.id_chamado, '110322')
         self.assertEqual(incidente.chamado_pai, None)
         self.assertEqual(incidente.categoria, 'CORRIGIR-NÃO EMERGENCIAL')
@@ -439,4 +494,11 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.action_count(), 22)
         self.assertEqual(incidente.calc_duration(), 14282)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 14237)
+        self.assertTrue(mesa.has_incident(incidente.id_chamado))
+        self.assertFalse(self.click.get_mesa('N1-SD2_WEB').has_incident(incidente.id_chamado))	
+        self.assertFalse(self.click.get_mesa('N2-SD2_SAP_PRAPO').has_incident(incidente.id_chamado))
+        
+        self.assertIn('N1-SD2_WEB', self.click.mesas)
+        self.assertIn('N2-SD2_SAP_PRAPO', self.click.mesas)
+        self.assertIn('N4-SAP-SUSTENTACAO-APOIO_OPERACAO', self.click.mesas)
         
