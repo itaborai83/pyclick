@@ -251,10 +251,10 @@ class Mesa(object):
         else:
             return self.incidentes.get(id_chamado, None)
     
-    def has_incident(self, id_chamado):
+    def has_incidente(self, id_chamado):
         return id_chamado in self.incidentes
     
-    def seen_incident(self, id_chamado):
+    def seen_incidente(self, id_chamado):
         return id_chamado in self.seen_incs
     
     def get_incidentes(self):
@@ -344,7 +344,10 @@ class N4SapKpi(object):
             return 'CORRIGIR'
         else:
             return 'ORIENTAR'
-
+    
+    def evaluate(self, click):
+        pass
+        
 class Prp(N4SapKpi):
     
     PRAZO_M = 9 * 60
@@ -369,6 +372,7 @@ class Prp(N4SapKpi):
         return msg
         
     def evaluate(self, click):
+        super().evaluate(click)
         mesa = click.get_mesa(self.MESA_PRIORIDADE)
         if mesa is None:
             return
@@ -730,12 +734,12 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.calc_duration(), 31320)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 31287)
         self.assertEqual(incidente.mesa_atual, mesa.name)
-        self.assertTrue(mesa.has_incident(incidente.id_chamado))
-        self.assertTrue(mesa.seen_incident(incidente.id_chamado))
-        self.assertFalse(self.click.get_mesa('N1-SD2_EMAIL').has_incident(incidente.id_chamado))
-        self.assertFalse(self.click.get_mesa('N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC').has_incident(incidente.id_chamado))
-        self.assertFalse(self.click.get_mesa('N2-SD2_SAP_SERV').has_incident(incidente.id_chamado))
-        self.assertFalse(self.click.get_mesa('N2-SD2_SAP_PRAPO').has_incident(incidente.id_chamado))
+        self.assertTrue(mesa.has_incidente(incidente.id_chamado))
+        self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
+        self.assertFalse(self.click.get_mesa('N1-SD2_EMAIL').has_incidente(incidente.id_chamado))
+        self.assertFalse(self.click.get_mesa('N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC').has_incidente(incidente.id_chamado))
+        self.assertFalse(self.click.get_mesa('N2-SD2_SAP_SERV').has_incidente(incidente.id_chamado))
+        self.assertFalse(self.click.get_mesa('N2-SD2_SAP_PRAPO').has_incidente(incidente.id_chamado))
         
         self.assertIn('N1-SD2_EMAIL', self.click.mesas)
         self.assertIn('N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC', self.click.mesas)
@@ -752,10 +756,10 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.action_count(), 22)
         self.assertEqual(incidente.calc_duration(), 14282)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 14237)
-        self.assertFalse(mesa.has_incident(incidente.id_chamado)) # incident was closed
-        self.assertTrue(mesa.seen_incident(incidente.id_chamado))
-        self.assertFalse(self.click.get_mesa('N1-SD2_WEB').has_incident(incidente.id_chamado))	
-        self.assertFalse(self.click.get_mesa('N2-SD2_SAP_PRAPO').has_incident(incidente.id_chamado))
+        self.assertFalse(mesa.has_incidente(incidente.id_chamado)) # incident was closed
+        self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
+        self.assertFalse(self.click.get_mesa('N1-SD2_WEB').has_incidente(incidente.id_chamado))	
+        self.assertFalse(self.click.get_mesa('N2-SD2_SAP_PRAPO').has_incidente(incidente.id_chamado))
         
         self.assertIn('N1-SD2_WEB', self.click.mesas)
         self.assertIn('N2-SD2_SAP_PRAPO', self.click.mesas)
@@ -906,6 +910,7 @@ class TestPrp(unittest.TestCase):
             489119		ABAST - Faturamento - Impacto Fiscal	Suporte aos serviços críticos	540	8779635	Encerrar	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-07 19:29:54	2020-05-07 19:30:04	0
             489119		ABAST - Faturamento - Impacto Fiscal	Suporte aos serviços críticos	540	8779640	Cancelado	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-07 19:30:04		0        
         """)
+        
         self.violated_cancelled_inc_events = Event.parse_events(r"""
             489120		ABAST - Faturamento - Impacto Fiscal	Suporte aos serviços críticos	540	8772322	Atribuição interna	N	N1-SD2_WEB	2020-05-07 17:28:56	2020-05-07 17:28:56	0
             489120		ABAST - Faturamento - Impacto Fiscal	Suporte aos serviços críticos	540	8772324	Atribuir ao Fornecedor	N	N1-SD2_WEB	2020-05-07 17:28:56	2020-05-07 17:28:58	0
@@ -944,6 +949,7 @@ class TestPrp(unittest.TestCase):
             418348		ORIENTAR	Dúvida sobre o serviço	99960	8991593	Resolver	S	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-11 15:41:10	2020-05-13 15:43:01	0
             418348		ORIENTAR	Dúvida sobre o serviço	99960	9192079	Encerrar	S	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-13 15:43:01		0        
         """)
+        
         self.violated_deprioritized_inc_events = Event.parse_events(r"""
             418349		ORIENTAR	Dúvida sobre o serviço	99960	7643434	Atribuição interna	N	N1-SD2_CHAT_HUMANO	2020-04-22 11:05:40	2020-04-22 11:05:40	0
             418349		ORIENTAR	Dúvida sobre o serviço	99960	7643435	Atribuir ao Fornecedor	N	N1-SD2_CHAT_HUMANO	2020-04-22 11:05:40	2020-04-22 11:26:45	21
