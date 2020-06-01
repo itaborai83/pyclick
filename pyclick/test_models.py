@@ -75,6 +75,50 @@ class Event(object):
     def __eq__(self, other):
         return util.shallow_equality_test(self, other, self.__slots__)
     
+    @classmethod
+    def parse_events(klass, txt):
+        result = []
+        lines = txt.split('\n')
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            evt = klass.parse_event(line)
+            result.append(evt)
+        return result
+    
+    @classmethod
+    def parse_event(klass, txt):
+        txt = txt.strip()
+        fields = txt.split('\t')
+        assert len(fields) == 12 # len(self.__slots__)
+        id_chamado      = None if not fields[  0 ] else fields[  0 ]
+        chamado_pai     = None if not fields[  1 ] else fields[  1 ]
+        categoria       = None if not fields[  2 ] else fields[  2 ]
+        oferta_catalogo = None if not fields[  3 ] else fields[  3 ]
+        prazo_oferta_m  = None if not fields[  4 ] else int(fields[  4 ])
+        id_acao         = None if not fields[  5 ] else int(fields[  5 ])
+        acao_nome       = None if not fields[  6 ] else fields[  6 ]
+        pendencia       = None if not fields[  7 ] else fields[  7 ]
+        mesa_atual      = None if not fields[  8 ] else fields[  8 ]
+        data_acao       = None if not fields[  9 ] else fields[  9 ]
+        data_fim_acao   = None if not fields[ 10 ] else fields[ 10 ]
+        duracao_m       = None if not fields[ 11 ] else int(fields[ 11 ])
+        return klass(
+            id_chamado      = id_chamado
+        ,   chamado_pai     = chamado_pai
+        ,   categoria       = categoria
+        ,   oferta_catalogo = oferta_catalogo
+        ,   prazo_oferta_m  = prazo_oferta_m
+        ,   id_acao         = id_acao
+        ,   acao_nome       = acao_nome
+        ,   pendencia       = pendencia
+        ,   mesa_atual      = mesa_atual
+        ,   data_acao       = data_acao
+        ,   data_fim_acao   = data_fim_acao
+        ,   duracao_m       = duracao_m
+        )
+        
 class Acao(object):
     
     __slots__ = [
@@ -212,6 +256,12 @@ class Mesa(object):
     
     def seen_incident(self, id_chamado):
         return id_chamado in self.seen_incs
+    
+    def get_incidentes(self):
+        return self.incidentes.values()
+
+    def get_seen_incidentes(self):
+        return self.seen_incs.values()
         
 class Click(object):
     
@@ -265,7 +315,10 @@ class Kpi(object):
         
     def evaluate(self, click):
         raise NotImplementedError
-        
+    
+    def get_result(self):
+        raise NotImplementedError
+    
 class N4SapKpi(object):
     
     MESA_PRIORIDADE = 'N4-SAP-SUSTENTACAO-PRIORIDADE'
@@ -291,7 +344,46 @@ class N4SapKpi(object):
             return 'CORRIGIR'
         else:
             return 'ORIENTAR'
-            
+
+class Prp(N4SapKpi):
+    
+    PRAZO_M = 9 * 60
+    SLA     = 10.0
+    
+    def __init__(self):
+        super().__init__()
+        self.numerator = 0
+        self.denominator = 0
+    
+    def update_details(self, inc, duration_m):
+        pass
+    
+    def get_details(self):
+        pass
+    
+    def get_description(self):
+        if self.denominator == 0:
+            msg = "Nenhum incidente processado"
+        else:
+            msg = f"{self.numerator} / {self.denominator}"
+        return msg
+        
+    def evaluate(self, click):
+        mesa = click.get_mesa(self.MESA_PRIORIDADE)
+        assert mesa is not None
+        for inc in mesa.get_seen_incidentes():
+            duration_m = inc.calc_duration_mesas([ self.MESA_PRIORIDADE ])
+            self.numerator   += (1 if duration > self.PRAZO_M else 0)
+            self.denominator += 1
+            self.update_details(inc, duration_m)
+
+    def get_result(self):
+        if self.denominator == 0:
+            return None, "Nenhum incidente peso 35 processado"
+        else:
+            result = 100.0 * (self.numerator / self.denominator)
+            msg = self.get_description()
+            return result, msg
         
 class TestEvento(unittest.TestCase):
 
@@ -329,6 +421,50 @@ class TestEvento(unittest.TestCase):
         self.assertNotEqual(self.evt1, self.evt2)
         self.assertEqual(self.evt1, self.evt3)
     
+    def test_it_parse_an_event(self):
+        txt_evento = r"400982		ORIENTAR	Dúvida sobre o serviço	99960	7322803	Atribuição interna	N	N1-SD2_SAP	2020-04-16 16:09:32	2020-04-16 16:09:32	0"
+        evt = Event.parse_event(txt_evento)
+        self.assertEqual(evt.id_chamado      , '400982')
+        self.assertEqual(evt.chamado_pai     , None)
+        self.assertEqual(evt.categoria       , 'ORIENTAR')
+        self.assertEqual(evt.oferta_catalogo , 'Dúvida sobre o serviço')
+        self.assertEqual(evt.prazo_oferta_m  , 99960)
+        self.assertEqual(evt.id_acao         , 7322803)
+        self.assertEqual(evt.acao_nome       , 'Atribuição interna')
+        self.assertEqual(evt.pendencia       , 'N')
+        self.assertEqual(evt.mesa_atual      , 'N1-SD2_SAP')
+        self.assertEqual(evt.data_acao       , '2020-04-16 16:09:32')
+        self.assertEqual(evt.data_fim_acao   , '2020-04-16 16:09:32')
+        self.assertEqual(evt.duracao_m       , 0)
+
+    def test_it_parse_events(self):
+        txt_eventos = r"""            
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	7322803	Atribuição interna	N	N1-SD2_SAP	2020-04-16 16:09:32	2020-04-16 16:09:32	0
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	7322804	Atribuir ao Fornecedor	N	N1-SD2_SAP	2020-04-16 16:09:32	2020-04-16 16:20:18	11
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	7324671	Atribuição interna	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-04-16 16:20:18	2020-04-16 16:20:18	0
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	7324673	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-04-16 16:20:18	2020-04-16 16:23:08	3
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	7325015	Atribuição interna	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-04-16 16:23:08	2020-04-17 11:02:00	219
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	7380505	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-17 11:02:00	2020-04-17 11:02:00	0
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	7380508	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-17 11:02:00	2020-04-17 17:59:49	417
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	7437217	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-17 17:59:49	2020-04-17 17:59:50	0
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	7437218	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-17 17:59:50	2020-05-04 21:31:00	24692
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	8474333	Resolver	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 21:31:00	2020-05-06 21:32:56	0
+            400982		ORIENTAR	Dúvida sobre o serviço	99960	8678175	Encerrar	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 21:32:56		0        
+        """
+        evts = Event.parse_events(txt_eventos)
+        self.assertEqual(11, len(evts))
+        self.assertEqual(evts[ -1 ].id_chamado      , '400982')
+        self.assertEqual(evts[ -1 ].chamado_pai     , None)
+        self.assertEqual(evts[ -1 ].categoria       , 'ORIENTAR')
+        self.assertEqual(evts[ -1 ].oferta_catalogo , 'Dúvida sobre o serviço')
+        self.assertEqual(evts[ -1 ].prazo_oferta_m  , 99960)
+        self.assertEqual(evts[ -1 ].id_acao         , 8678175)
+        self.assertEqual(evts[ -1 ].acao_nome       , 'Encerrar')
+        self.assertEqual(evts[ -1 ].pendencia       , 'S')
+        self.assertEqual(evts[ -1 ].mesa_atual      , 'N4-SAP-SUSTENTACAO-PRIORIDADE')
+        self.assertEqual(evts[ -1 ].data_acao       , '2020-05-06 21:32:56')
+        self.assertEqual(evts[ -1 ].data_fim_acao   , None)
+        self.assertEqual(evts[ -1 ].duracao_m       , 0)        
 class TestAcao(unittest.TestCase):
 
     def setUp(self):
@@ -666,3 +802,12 @@ class TestN4SapKpi(unittest.TestCase):
         self.n4.set_override_categoria("123", "ATENDER")
         categoria = self.n4.categorizar(inc)
         self.assertEqual("ATENDER", categoria)
+
+class TestPrp(unittest.TestCase):
+    
+    def setUp(self):
+        pass
+    
+    def tearDown(self):
+        pass
+    
