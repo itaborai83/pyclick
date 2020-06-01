@@ -1,6 +1,39 @@
 import pyclick.util as util
 import unittest
-        
+
+STATUS_MAPPING = {
+    'Atribuição interna'                                    : 'ABERTO',
+    'Atribuir ao Fornecedor'                                : 'ABERTO',
+    'Resolver'                                              : 'RESOLVIDO',
+    'Encerrar'                                              : 'ENCERRADO',
+    'Aguardando Cliente - Fornecedor '                      : 'ABERTO',
+    'Pendência Sanada - Fornecedor/TIC'                     : 'ABERTO',
+    'Aguardando Cliente'                                    : 'ABERTO',
+    'Campo do formulário alterado'                          : 'ABERTO',
+    'Iniciar Atendimento'                                   : 'ABERTO',
+    'Item alterado'                                         : 'ABERTO',
+    'Pendência Sanada'                                      : 'ABERTO',
+    'Cancelar'                                              : 'CANCELADO',
+    'Campos alterados'                                      : 'ABERTO',
+    'Aguardando Cliente - Aprovação'                        : 'ABERTO',
+    'Pendência Sanada - Aprovação'                          : 'ABERTO',
+    'Cancelado'                                             : 'CANCELADO',
+    'Retorno do usuário'                                    : 'ABERTO',
+    'Pendência de TIC'                                      : 'ABERTO',
+    'Atendimento Agendado'                                  : 'ABERTO',
+    'Reabrir'                                               : 'ABERTO',
+    'Reaberto pelo Fornecedor'                              : 'ABERTO',
+    'Pendencia de Fornecedor'                               : 'ABERTO',
+    'Categoria alterada'                                    : 'ABERTO',
+    'Pendência Feriado Local'                               : 'ABERTO',
+    'Pendência Sanada Feriado Local'                        : 'ABERTO',
+    'Resposta do Fornecedor'                                : 'ABERTO',
+    'Resolver Fornecedor - Executar antes do "Resolver"!'   : 'RESOLVIDO',
+    'Iniciar Relógio'                                       : 'ABERTO',
+    'Parar Relógio'                                         : 'ABERTO',
+    'Atendimento Programado'                                : 'ABERTO'
+}
+
 class Event(object):
     
     __slots__ = [    
@@ -75,7 +108,11 @@ class Acao(object):
         
     def __eq__(self, other):
         return util.shallow_equality_test(self, other, self.__slots__)
-    
+
+    @property
+    def status(self):
+        return STATUS_MAPPING[ self.acao_nome ]
+        
     @classmethod
     def build_from(klass, evt):
         return klass(
@@ -132,6 +169,11 @@ class Incidente(object):
     def mesa_atual(self):
         assert self.action_count() > 0
         return self.acoes[ -1 ].mesa_atual
+    
+    @property
+    def status(self):
+        assert self.action_count() > 0
+        return self.acoes[ -1 ].status
         
     @classmethod
     def build_from(klass, evt):
@@ -300,6 +342,27 @@ class TestAcao(unittest.TestCase):
         self.assertEqual(self.act1, act)
         act = Acao.build_from(self.evt2)
         self.assertEqual(self.act2, act)
+    
+    def test_it_has_an_status(self):
+        self.act1.acao_nome = 'Resolver'
+        self.assertEqual(self.act1.status, 'RESOLVIDO')
+        
+        self.act1.acao_nome = 'Resolver Fornecedor - Executar antes do "Resolver"!'
+        self.assertEqual(self.act1.status, 'RESOLVIDO')    
+        
+        self.act1.acao_nome = 'Encerrar'
+        self.assertEqual(self.act1.status, 'ENCERRADO')
+        
+        self.act1.acao_nome = 'Cancelar'
+        self.assertEqual(self.act1.status, 'CANCELADO')
+
+        self.act1.acao_nome = 'Cancelado'
+        self.assertEqual(self.act1.status, 'CANCELADO')
+        
+        for nome, status in STATUS_MAPPING.items():
+            self.act1.acao_nome = nome
+            self.assertEqual(self.act1.status, status)
+        
 
 class TestIncident(unittest.TestCase):
 
@@ -398,7 +461,14 @@ class TestIncident(unittest.TestCase):
         
         duration = self.inc.calc_duration_mesas([ "MESA 2", "MESA 4" ])
         self.assertEqual(duration, 40 * 60)
-        
+    
+    def test_it_has_an_status(self):
+        for action in self.actions:
+            self.inc.add_acao(action)
+        for nome, status in STATUS_MAPPING.items():
+            self.inc.acoes[ -1 ].acao_nome = nome
+            self.assertEqual(self.inc.status, status)
+    
 class TestClick(unittest.TestCase):
     
     def setUp(self):
