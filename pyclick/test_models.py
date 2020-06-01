@@ -268,6 +268,17 @@ class Click(object):
     def __init__(self):
         self.incidentes = {}
         self.mesas = {}
+        self.children_of = {}
+    
+    def update_children_mapping(self, evt):
+        if evt.chamado_pai is None:
+            return
+        if evt.chamado_pai not in self.children_of:
+            assert evt.chamado_pai.startswith('S')
+            self.children_of[ evt.chamado_pai ] = set()
+        if evt.id_chamado not in self.children_of[ evt.chamado_pai ]:
+            assert evt.id_chamado.startswith('T')
+            self.children_of[ evt.chamado_pai ].add(evt.id_chamado)
     
     def update(self, event):
         if event.mesa_atual not in self.mesas:
@@ -276,6 +287,7 @@ class Click(object):
         
         if event.id_chamado not in self.incidentes:
             self.incidentes[ event.id_chamado ] = Incidente.build_from(event)
+            self.update_children_mapping(event)
         incidente = self.incidentes[ event.id_chamado ]
         
         acao = Acao.build_from(event)
@@ -301,7 +313,18 @@ class Click(object):
 
     def get_mesa(self, mesa):
         return self.mesas.get(mesa, None)
-
+    
+    def calc_children_duration_mesas(self, id_chamado, mesas):
+        if id_chamado not in self.children_of:
+            return 0
+        result_m = 0
+        for child_id in self.children_of[ id_chamado ]:
+            child = self.incidentes.get(child_id)
+            if not child:
+                continue
+            result_m += child.calc_duration_mesas(mesas)
+        return result_m
+    
 class Kpi(object):
     
     def __init__(self):
@@ -663,56 +686,75 @@ class TestClick(unittest.TestCase):
     
     def setUp(self):
         self.click = Click()
-        self.eventos = [
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2210767, 'Atribuição interna',                  'N', 'N1-SD2_EMAIL',	                                '2020-03-01 02:06:57', '2020-03-01 02:06:57', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2210768, 'Atribuir ao Fornecedor',              'N', 'N1-SD2_EMAIL',	                                '2020-03-01 02:06:57', '2020-03-01 02:08:32', 2     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2210771, 'Atribuição interna',                  'N', 'N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC',	'2020-03-01 02:08:32', '2020-03-01 02:08:32', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2210773, 'Atribuir ao Fornecedor',              'N', 'N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC',	'2020-03-01 02:08:32', '2020-03-01 02:15:40', 7     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2210795, 'Atribuição interna',                  'N', 'N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC',	'2020-03-01 02:15:40', '2020-03-01 02:17:59', 2     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2210798, 'Atribuição interna',                  'N', 'N2-SD2_SAP_SERV',	                                '2020-03-01 02:17:59', '2020-03-01 02:17:59', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2210800, 'Atribuir ao Fornecedor',              'N', 'N2-SD2_SAP_SERV',	                                '2020-03-01 02:17:59', '2020-03-02 06:59:42', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2232985, 'Atribuição interna',                  'N', 'N2-SD2_SAP_PRAPO',	                            '2020-03-02 07:18:56', '2020-03-02 07:22:55', 4     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2232509, 'Atribuição interna',                  'N', 'N2-SD2_SAP_PRAPO',	                            '2020-03-02 06:59:42', '2020-03-02 07:18:56', 18    ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2233103, 'Atribuição interna',                  'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-03-02 07:22:55', '2020-03-02 07:22:55', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2233105, 'Atribuir ao Fornecedor',              'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-03-02 07:22:55', '2020-03-02 08:15:52', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2237852, 'Atribuição interna',                  'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-03-02 08:15:52', '2020-03-02 08:18:29', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2238140, 'Atribuição interna',                  'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-03-02 08:18:29', '2020-03-04 10:56:38', 1196  ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2536139, 'Aguardando Cliente',                  'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-03-04 10:56:38', '2020-03-04 10:56:39', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2536145, 'Aguardando Cliente - Fornecedor',     'S', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-03-04 10:56:39', '2020-03-04 11:29:13', 33    ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2544197, 'Retorno do usuário',                  'S', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-03-04 11:29:13', '2020-03-04 11:29:18', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2544226, 'Pendência Sanada',                    'S', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-03-04 11:29:18', '2020-03-04 11:29:22', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2544258, 'Pendência Sanada - Fornecedor/TIC',   'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-03-04 11:29:22', '2020-03-06 10:54:10', 1045  ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2819882, 'Atribuição interna',                  'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-03-06 10:54:10', '2020-04-22 08:32:24', 16626 ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 7614533, 'Atribuição interna',                  'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-04-22 08:32:24', '2020-04-22 08:32:24', 0     ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 7614535, 'Atribuir ao Fornecedor',              'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-04-22 08:32:24', '2020-04-30 19:37:33', 3780  ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 8315407, 'Atribuição interna',                  'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-04-30 19:37:33', '2020-05-05 14:00:31', 840   ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 8535968, 'Atribuição interna',                  'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-05-05 14:00:31', '2020-05-08 18:30:17', 1860  ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 8875072, 'Atribuição interna',                  'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-05-08 18:30:17', '2020-05-11 17:43:36', 523   ),
-            Event('119773', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 9009952, 'Atribuição interna',                  'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO', 	            '2020-05-11 17:43:36', None,	              5417  ),
-            
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2032069, 'Atribuição interna',	                'N', 'N1-SD2_WEB',	                                    '2020-02-27 15:14:52', '2020-02-27 15:14:52', 0	    ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2032070, 'Atribuir ao Fornecedor',	            'N', 'N1-SD2_WEB',	                                    '2020-02-27 15:14:52', '2020-02-27 15:14:57', 0	    ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2032071, 'Campo do formulário alterado',        'N', 'N1-SD2_WEB',	                                    '2020-02-27 15:14:57', '2020-02-27 15:23:33', 9	    ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2034015, 'Atribuição interna', 	                'N', 'N1-SD2_WEB',	                                    '2020-02-27 15:23:33', '2020-02-27 15:44:14', 21	),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2038309, 'Atribuição interna', 	                'N', 'N2-SD2_SAP_PRAPO',	                            '2020-02-27 15:44:14', '2020-02-27 15:44:14', 0	    ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2038315, 'Atribuir ao Fornecedor',	            'N', 'N2-SD2_SAP_PRAPO',	                            '2020-02-27 15:44:14', '2020-02-27 15:56:56', 12	),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2041363, 'Atribuição interna', 	                'N', 'N2-SD2_SAP_PRAPO',	                            '2020-02-27 15:56:56', '2020-02-27 15:59:16', 3	    ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2041836, 'Atribuição interna', 	                'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-02-27 15:59:16', '2020-02-27 15:59:16', 0	    ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2041841, 'Atribuir ao Fornecedor',	            'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-02-27 15:59:16', '2020-02-27 16:00:59', 1	    ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2042290, 'Atribuição interna',	                'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-02-27 16:00:59', '2020-02-28 17:33:57', 633	),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2158921, 'Campos alterados',	                'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-02-28 17:33:57', '2020-02-28 17:34:16', 1	    ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2158951, 'Atribuição interna',	                'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-02-28 17:34:16', '2020-03-02 14:58:48', 384	),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2317548, 'Atribuição interna',	                'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-03-02 14:58:48', '2020-03-03 17:55:48', 717	),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2479011, 'Campos alterados',                    'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-03-03 17:55:48', '2020-03-05 17:37:11', 1062	),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2764051, 'Campos alterados',                    'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-03-05 17:37:11', '2020-03-05 17:39:11', 2	    ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 2764262, 'Campos alterados',                    'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-03-05 17:39:11', '2020-04-06 10:15:47', 11436	),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 6349995, 'Pendência de TIC',                    'S', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-04-06 10:15:47', '2020-04-20 10:34:54', 4879	),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 7519497, 'Aguardando Cliente',	                'S', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-04-20 10:34:54', '2020-04-27 15:25:06', 2451	),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 7988865, 'Retorno do usuário',	                'S', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-04-27 15:25:06', '2020-04-27 15:25:07', 0     ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 7988868, 'Pendência Sanada - Fornecedor/TIC',   'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-04-27 15:25:09', '2020-04-27 15:26:34', 1     ),            
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540, 7988866, 'Pendência Sanada',	                'S', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-04-27 15:25:07', '2020-04-27 15:25:09', 0     ),
-            Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540,	7989088, 'Resolver',                            'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-04-27 15:26:34', None,		          0     )
-        ]
+        self.eventos = Event.parse_events(r"""
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2210767	Atribuição interna	N	N1-SD2_EMAIL	2020-03-01 02:06:57	2020-03-01 02:06:57	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2210768	Atribuir ao Fornecedor	N	N1-SD2_EMAIL	2020-03-01 02:06:57	2020-03-01 02:08:32	2
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2210771	Atribuição interna	N	N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC	2020-03-01 02:08:32	2020-03-01 02:08:32	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2210773	Atribuir ao Fornecedor	N	N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC	2020-03-01 02:08:32	2020-03-01 02:15:40	7
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2210795	Atribuição interna	N	N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC	2020-03-01 02:15:40	2020-03-01 02:17:59	2
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2210798	Atribuição interna	N	N2-SD2_SAP_SERV	2020-03-01 02:17:59	2020-03-01 02:17:59	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2210800	Atribuir ao Fornecedor	N	N2-SD2_SAP_SERV	2020-03-01 02:17:59	2020-03-02 06:59:42	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2232509	Atribuição interna	N	N2-SD2_SAP_PRAPO	2020-03-02 06:59:42	2020-03-02 07:18:56	18
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2232985	Atribuição interna	N	N2-SD2_SAP_PRAPO	2020-03-02 07:18:56	2020-03-02 07:22:55	4
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2233103	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-02 07:22:55	2020-03-02 07:22:55	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2233105	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-02 07:22:55	2020-03-02 08:15:52	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2237852	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-02 08:15:52	2020-03-02 08:18:29	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2238140	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-02 08:18:29	2020-03-04 10:56:38	1196
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2536139	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-04 10:56:38	2020-03-04 10:56:39	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2536145	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-04 10:56:39	2020-03-04 11:29:13	33
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2544197	Retorno do usuário	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-04 11:29:13	2020-03-04 11:29:18	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2544226	Pendência Sanada	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-04 11:29:18	2020-03-04 11:29:22	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2544258	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-04 11:29:22	2020-03-06 10:54:10	1045
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2819882	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-06 10:54:10	2020-04-22 08:32:24	16626
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	7614533	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-04-22 08:32:24	2020-04-22 08:32:24	0
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	7614535	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-04-22 08:32:24	2020-04-30 19:37:33	3780
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	8315407	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-04-30 19:37:33	2020-05-05 14:00:31	840
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	8535968	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-05-05 14:00:31	2020-05-08 18:30:17	1860
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	8875072	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-05-08 18:30:17	2020-05-11 17:43:36	523
+            119773		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	9009952	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-05-11 17:43:36		5417        
+        """) + Event.parse_events("""
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2032069	Atribuição interna	N	N1-SD2_WEB	2020-02-27 15:14:52	2020-02-27 15:14:52	0
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2032070	Atribuir ao Fornecedor	N	N1-SD2_WEB	2020-02-27 15:14:52	2020-02-27 15:14:57	0
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2032071	Campo do formulário alterado	N	N1-SD2_WEB	2020-02-27 15:14:57	2020-02-27 15:23:33	9
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2034015	Atribuição interna	N	N1-SD2_WEB	2020-02-27 15:23:33	2020-02-27 15:44:14	21
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2038309	Atribuição interna	N	N2-SD2_SAP_PRAPO	2020-02-27 15:44:14	2020-02-27 15:44:14	0
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2038315	Atribuir ao Fornecedor	N	N2-SD2_SAP_PRAPO	2020-02-27 15:44:14	2020-02-27 15:56:56	12
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2041363	Atribuição interna	N	N2-SD2_SAP_PRAPO	2020-02-27 15:56:56	2020-02-27 15:59:16	3
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2041836	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-02-27 15:59:16	2020-02-27 15:59:16	0
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2041841	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-02-27 15:59:16	2020-02-27 16:00:59	1
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2042290	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-02-27 16:00:59	2020-02-28 17:33:57	633
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2158921	Campos alterados	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-02-28 17:33:57	2020-02-28 17:34:16	1
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2158951	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-02-28 17:34:16	2020-03-02 14:58:48	384
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2317548	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-02 14:58:48	2020-03-03 17:55:48	717
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2479011	Campos alterados	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-03 17:55:48	2020-03-05 17:37:11	1062
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2764051	Campos alterados	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-05 17:37:11	2020-03-05 17:39:11	2
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	2764262	Campos alterados	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-05 17:39:11	2020-04-06 10:15:47	11436
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	6349995	Pendência de TIC	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-04-06 10:15:47	2020-04-20 10:34:54	4879
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	7519497	Aguardando Cliente	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-04-20 10:34:54	2020-04-27 15:25:06	2451
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	7988865	Retorno do usuário	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-04-27 15:25:06	2020-04-27 15:25:07	0
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	7988866	Pendência Sanada	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-04-27 15:25:07	2020-04-27 15:25:09	0
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	7988868	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-04-27 15:25:09	2020-04-27 15:26:34	1
+            110322		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	7989088	Resolver	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-04-27 15:26:34		0        
+        """) + Event.parse_events("""
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411672	Atribuição interna	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:17:56	2020-05-04 11:17:56	0
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411674	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:17:56	2020-05-04 11:18:14	1
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411714	Aguardando Cliente - Aprovação	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:18:14	2020-05-04 11:18:14	0
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411718	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:18:14	2020-05-04 11:18:29	0
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411772	Pendência Sanada - Aprovação	S	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:18:29	2020-05-04 11:18:30	0
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411774	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:18:30	2020-05-04 11:20:38	2
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8412271	Atribuição interna	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:20:38	2020-05-05 16:12:48	832
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8557671	Atendimento Agendado	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-05 16:12:48	2020-05-05 16:12:49	0
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8557672	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-05 16:12:49	2020-05-06 09:47:26	155
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8597552	Iniciar Atendimento	S	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-06 09:47:26	2020-05-06 09:47:27	0
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8597555	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-06 09:47:27	2020-05-06 09:55:14	8
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8598963	Resolver	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-06 09:55:14	2020-05-08 09:58:04	0
+            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8804245	Encerrar	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-08 09:58:04		0        
+        """) + Event.parse_events("""
+            T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411754	Atribuição interna	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:18:24	2020-05-04 11:18:24	0
+            T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411756	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:18:24	2020-05-04 11:21:30	3
+            T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8412440	Atribuição interna	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:21:30	2020-05-06 09:55:13	994
+            T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8598958	Resolver	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-06 09:55:13		0        
+        """)
         self.eventos.sort(key=lambda x: x.data_acao)
     
     def tearDown(self):
@@ -721,7 +763,7 @@ class TestClick(unittest.TestCase):
     def test_it_process_events(self):
         for evt in self.eventos:
             self.click.update(evt)
-        self.assertEqual(2, self.click.incident_count())
+        self.assertEqual(4, self.click.incident_count())
         
         incidente = self.click.get_incidente('119773')
         mesa = self.click.get_mesa('N4-SAP-SUSTENTACAO-APOIO_OPERACAO')
@@ -733,6 +775,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.action_count(), 25)
         self.assertEqual(incidente.calc_duration(), 31320)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 31287)
+        self.assertEqual(self.click.calc_children_duration_mesas('119773', [ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 0)
         self.assertEqual(incidente.mesa_atual, mesa.name)
         self.assertTrue(mesa.has_incidente(incidente.id_chamado))
         self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
@@ -756,6 +799,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.action_count(), 22)
         self.assertEqual(incidente.calc_duration(), 14282)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 14237)
+        self.assertEqual(self.click.calc_children_duration_mesas('110322', [ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 0)
         self.assertFalse(mesa.has_incidente(incidente.id_chamado)) # incident was closed
         self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
         self.assertFalse(self.click.get_mesa('N1-SD2_WEB').has_incidente(incidente.id_chamado))	
@@ -764,6 +808,40 @@ class TestClick(unittest.TestCase):
         self.assertIn('N1-SD2_WEB', self.click.mesas)
         self.assertIn('N2-SD2_SAP_PRAPO', self.click.mesas)
         self.assertIn('N4-SAP-SUSTENTACAO-APOIO_OPERACAO', self.click.mesas)
+
+        incidente = self.click.get_incidente('S251253')
+        mesa = self.click.get_mesa('N4-SAP-SUSTENTACAO-FINANCAS')
+        self.assertEqual(incidente.id_chamado, 'S251253')
+        self.assertEqual(incidente.chamado_pai, None)
+        self.assertEqual(incidente.categoria, 'ATENDER')
+        self.assertEqual(incidente.oferta, 'FI-AA - Alteração de atribuicao contas do razão imobilizado')
+        self.assertEqual(incidente.prazo, 5400)
+        self.assertEqual(incidente.action_count(), 13)
+        self.assertEqual(incidente.calc_duration(), 843)
+        self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 843)
+        self.assertEqual(self.click.calc_children_duration_mesas('S251253', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 997)
+        self.assertFalse(mesa.has_incidente(incidente.id_chamado)) # incident was closed
+        self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
+        
+        self.assertIn('N1-SD2_WEB', self.click.mesas)
+        self.assertIn('N2-SD2_SAP_PRAPO', self.click.mesas)
+        self.assertIn('N4-SAP-SUSTENTACAO-APOIO_OPERACAO', self.click.mesas)
+        
+        
+        incidente = self.click.get_incidente('T465903')
+        mesa = self.click.get_mesa('N4-SAP-SUSTENTACAO-FINANCAS')
+        self.assertEqual(incidente.id_chamado, 'T465903')
+        self.assertEqual(incidente.chamado_pai, 'S251253')
+        self.assertEqual(incidente.categoria, 'Execução')
+        self.assertEqual(incidente.oferta, 'FI-AA - Alteração de atribuicao contas do razão imobilizado')
+        self.assertEqual(incidente.prazo, 5400)
+        self.assertEqual(incidente.action_count(), 4)
+        self.assertEqual(incidente.calc_duration(), 997)
+        self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 997)
+        self.assertEqual(self.click.calc_children_duration_mesas('T465903', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 0)
+        self.assertEqual(incidente.mesa_atual, mesa.name)
+        self.assertFalse(mesa.has_incidente(incidente.id_chamado)) # task was closed
+        self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
 
 class TestKpi(unittest.TestCase):
     
