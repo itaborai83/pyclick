@@ -189,29 +189,35 @@ class Mesa(object):
 
     def __init__(self, name):
         self.name = name
-        self.incidentes = {}
-    
+        self.incidentes = {} # currently open incidentes
+        self.seen_incs = {} # all incs once assigned to the mesa
+     
     def add_incidente(self, inc):
         assert inc.id_chamado not in self.incidentes
         self.incidentes[ inc.id_chamado ] = inc
+        self.seen_incs[ inc.id_chamado ] = inc
     
     def remove_incidente(self, inc):
         assert inc.id_chamado in self.incidentes
         del self.incidentes[ inc.id_chamado ]
     
-    def get_incidente(self, id_chamado):
-        return self.incidentes.get(id_chamado, None)
+    def get_incidente(self, id_chamado, seen=False):
+        if seen:
+            return self.seen_incs.get(id_chamado, None)
+        else:
+            return self.incidentes.get(id_chamado, None)
     
     def has_incident(self, id_chamado):
         return id_chamado in self.incidentes
-        
     
+    def seen_incident(self, id_chamado):
+        return id_chamado in self.seen_incs
+        
 class Click(object):
     
     def __init__(self):
         self.incidentes = {}
         self.mesas = {}
-        self.seen_actions = set()
     
     def update(self, event):
         if event.mesa_atual not in self.mesas:
@@ -245,7 +251,7 @@ class Click(object):
 
     def get_mesa(self, mesa):
         return self.mesas.get(mesa, None)
-        
+
 class TestEvento(unittest.TestCase):
 
     def setUp(self):
@@ -282,7 +288,6 @@ class TestEvento(unittest.TestCase):
         self.assertNotEqual(self.evt1, self.evt2)
         self.assertEqual(self.evt1, self.evt3)
     
-
 class TestAcao(unittest.TestCase):
 
     def setUp(self):
@@ -366,7 +371,6 @@ class TestAcao(unittest.TestCase):
             self.act1.acao_nome = nome
             self.assertEqual(self.act1.status, status)
         
-
 class TestIncident(unittest.TestCase):
 
     def setUp(self):
@@ -548,6 +552,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 31287)
         self.assertEqual(incidente.mesa_atual, mesa.name)
         self.assertTrue(mesa.has_incident(incidente.id_chamado))
+        self.assertTrue(mesa.seen_incident(incidente.id_chamado))
         self.assertFalse(self.click.get_mesa('N1-SD2_EMAIL').has_incident(incidente.id_chamado))
         self.assertFalse(self.click.get_mesa('N3-CORS_SISTEMAS_SERVICOS_E_APLICACOES_DE_TIC').has_incident(incidente.id_chamado))
         self.assertFalse(self.click.get_mesa('N2-SD2_SAP_SERV').has_incident(incidente.id_chamado))
@@ -569,6 +574,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.calc_duration(), 14282)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 14237)
         self.assertFalse(mesa.has_incident(incidente.id_chamado)) # incident was closed
+        self.assertTrue(mesa.seen_incident(incidente.id_chamado))
         self.assertFalse(self.click.get_mesa('N1-SD2_WEB').has_incident(incidente.id_chamado))	
         self.assertFalse(self.click.get_mesa('N2-SD2_SAP_PRAPO').has_incident(incidente.id_chamado))
         
