@@ -314,6 +314,15 @@ class Click(object):
     def get_mesa(self, mesa):
         return self.mesas.get(mesa, None)
     
+    def calc_duration_mesas(self, id_chamado, mesas):
+        if id_chamado.startswith("S"):
+            return self.calc_children_duration_mesas(id_chamado, mesas)
+        else:
+            incidente = self.get_incidente(id_chamado)
+            if incidente is None:
+                return 0
+            return incidente.calc_duration_mesas(mesas)
+            
     def calc_children_duration_mesas(self, id_chamado, mesas):
         if id_chamado not in self.children_of:
             return 0
@@ -776,6 +785,10 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.calc_duration(), 31320)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 31287)
         self.assertEqual(self.click.calc_children_duration_mesas('119773', [ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 0)
+        self.assertEqual(
+            incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]),
+            self.click.calc_duration_mesas('119773', [ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ])
+        )
         self.assertEqual(incidente.mesa_atual, mesa.name)
         self.assertTrue(mesa.has_incidente(incidente.id_chamado))
         self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
@@ -800,6 +813,10 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.calc_duration(), 14282)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 14237)
         self.assertEqual(self.click.calc_children_duration_mesas('110322', [ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 0)
+        self.assertEqual(
+            incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]),
+            self.click.calc_duration_mesas('110322', [ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ])
+        )
         self.assertFalse(mesa.has_incidente(incidente.id_chamado)) # incident was closed
         self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
         self.assertFalse(self.click.get_mesa('N1-SD2_WEB').has_incidente(incidente.id_chamado))	
@@ -820,6 +837,11 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.calc_duration(), 843)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 843)
         self.assertEqual(self.click.calc_children_duration_mesas('S251253', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 997)
+        self.assertIn('S251253', self.click.children_of)
+        self.assertEqual(
+            self.click.calc_children_duration_mesas('S251253', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ]),
+            self.click.calc_duration_mesas('S251253', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ])
+        )
         self.assertFalse(mesa.has_incidente(incidente.id_chamado)) # incident was closed
         self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
         
@@ -839,6 +861,10 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.calc_duration(), 997)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 997)
         self.assertEqual(self.click.calc_children_duration_mesas('T465903', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 0)
+        self.assertEqual(
+            incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]),
+            self.click.calc_duration_mesas('T465903', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ])
+        )        
         self.assertEqual(incidente.mesa_atual, mesa.name)
         self.assertFalse(mesa.has_incidente(incidente.id_chamado)) # task was closed
         self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
