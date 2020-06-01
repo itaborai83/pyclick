@@ -257,7 +257,7 @@ class Kpi(object):
     def __init__(self):
         self.expurgos = set()
     
-    def add_expurgo(self, id_chamado):
+    def purge(self, id_chamado):
         self.expurgos.add(id_chamado)
     
     def is_purged(self, id_chamado):
@@ -622,7 +622,21 @@ class TestClick(unittest.TestCase):
         self.assertIn('N1-SD2_WEB', self.click.mesas)
         self.assertIn('N2-SD2_SAP_PRAPO', self.click.mesas)
         self.assertIn('N4-SAP-SUSTENTACAO-APOIO_OPERACAO', self.click.mesas)
-        
+
+class TestKpi(unittest.TestCase):
+    
+    def setUp(self):
+        pass
+    
+    def tearDown(self):
+        pass
+    
+    def test_it_purges_incidents(self):
+        kpi = Kpi()
+        kpi.purge("123")
+        self.assertTrue(kpi.is_purged("123"))
+        self.assertFalse(kpi.is_purged("234"))
+
 class TestN4SapKpi(unittest.TestCase):
     
     def setUp(self):
