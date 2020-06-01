@@ -252,6 +252,47 @@ class Click(object):
     def get_mesa(self, mesa):
         return self.mesas.get(mesa, None)
 
+class Kpi(object):
+    
+    def __init__(self):
+        self.expurgos = set()
+    
+    def add_expurgo(self, id_chamado):
+        self.expurgos.add(id_chamado)
+    
+    def is_purged(self, id_chamado):
+        return id_chamado in self.expurgos
+        
+    def evaluate(self, click):
+        raise NotImplementedError
+        
+class N4SapKpi(object):
+    
+    MESA_PRIORIDADE = 'N4-SAP-SUSTENTACAO-PRIORIDADE'
+    
+    def __init__(self):
+        super().__init__()
+        self.override_categorias = {}
+        
+    def set_override_categoria(self, id_chamado, categoria):
+        self.override_categorias[ id_chamado ] = categoria
+    
+    def unset_override_categoria(self, id_chamado):
+        del self.override_categorias[ id_chamado ]
+    
+    def categorizar(self, inc):
+        if inc.id_chamado in self.override_categorias:
+            return self.override_categorias[ inc.id_chamado ]
+        elif inc.id_chamado.startswith('T'):
+            return 'ATENDER - TAREFA'
+        elif inc.id_chamado.startswith('S'):
+            return 'ATENDER'
+        elif 'CORRIGIR' in inc.categoria.upper():
+            return 'CORRIGIR'
+        else:
+            return 'ORIENTAR'
+            
+        
 class TestEvento(unittest.TestCase):
 
     def setUp(self):
@@ -582,3 +623,32 @@ class TestClick(unittest.TestCase):
         self.assertIn('N2-SD2_SAP_PRAPO', self.click.mesas)
         self.assertIn('N4-SAP-SUSTENTACAO-APOIO_OPERACAO', self.click.mesas)
         
+class TestN4SapKpi(unittest.TestCase):
+    
+    def setUp(self):
+        self.n4 = N4SapKpi()
+    
+    def tearDown(self):
+        pass
+    
+    def test_it_categorizes_an_incident(self):
+        inc = Incidente(id_chamado="T123", chamado_pai=None, categoria=None, oferta=None, prazo=None)
+        categoria = self.n4.categorizar(inc)
+        self.assertEqual("ATENDER - TAREFA", categoria)
+
+        inc = Incidente(id_chamado="S123", chamado_pai=None, categoria=None, oferta=None, prazo=None)
+        categoria = self.n4.categorizar(inc)
+        self.assertEqual("ATENDER", categoria)
+
+        inc = Incidente(id_chamado="123", chamado_pai=None, categoria="fooCORRIGIRbar", oferta=None, prazo=None)
+        categoria = self.n4.categorizar(inc)
+        self.assertEqual("CORRIGIR", categoria)
+        
+        inc = Incidente(id_chamado="123", chamado_pai=None, categoria="foobar", oferta=None, prazo=None)
+        categoria = self.n4.categorizar(inc)
+        self.assertEqual("ORIENTAR", categoria)
+        
+        inc = Incidente(id_chamado="123", chamado_pai=None, categoria="foobar", oferta=None, prazo=None)
+        self.n4.set_override_categoria("123", "ATENDER")
+        categoria = self.n4.categorizar(inc)
+        self.assertEqual("ATENDER", categoria)
