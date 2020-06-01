@@ -6,7 +6,7 @@ STATUS_MAPPING = {
     'Atribuir ao Fornecedor'                                : 'ABERTO',
     'Resolver'                                              : 'RESOLVIDO',
     'Encerrar'                                              : 'ENCERRADO',
-    'Aguardando Cliente - Fornecedor '                      : 'ABERTO',
+    'Aguardando Cliente - Fornecedor'                       : 'ABERTO',
     'Pendência Sanada - Fornecedor/TIC'                     : 'ABERTO',
     'Aguardando Cliente'                                    : 'ABERTO',
     'Campo do formulário alterado'                          : 'ABERTO',
@@ -233,7 +233,10 @@ class Click(object):
             if mesa_anterior != mesa_atual:
                 mesa_anterior.remove_incidente(incidente)
                 mesa_atual.add_incidente(incidente)
-    
+        
+        if incidente.status != 'ABERTO':
+            mesa_atual.remove_incidente(incidente)
+            
     def incident_count(self):
         return len(self.incidentes)
         
@@ -524,6 +527,7 @@ class TestClick(unittest.TestCase):
             Event('110322', None, 'CORRIGIR-NÃO EMERGENCIAL', 'Suporte ao serviço de SAP', 540,	7989088, 'Resolver',                            'N', 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',	            '2020-04-27 15:26:34', None,		          0     )
         ]
         self.eventos.sort(key=lambda x: x.data_acao)
+    
     def tearDown(self):
         pass
     
@@ -564,7 +568,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.action_count(), 22)
         self.assertEqual(incidente.calc_duration(), 14282)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 14237)
-        self.assertTrue(mesa.has_incident(incidente.id_chamado))
+        self.assertFalse(mesa.has_incident(incidente.id_chamado)) # incident was closed
         self.assertFalse(self.click.get_mesa('N1-SD2_WEB').has_incident(incidente.id_chamado))	
         self.assertFalse(self.click.get_mesa('N2-SD2_SAP_PRAPO').has_incident(incidente.id_chamado))
         
