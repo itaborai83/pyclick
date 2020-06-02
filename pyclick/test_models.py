@@ -456,6 +456,9 @@ class Prp(N4SapKpi):
         self.denominator = 0
         self.details = {
             'id_chamado'        : [],
+            'chamado_pai'       : [],
+            'categoria'         : [],
+            'prazo'             : [],
             'seq'               : [],
             'mesa'              : [],
             'entrada'           : [],
@@ -466,11 +469,31 @@ class Prp(N4SapKpi):
             'pendencia_m'       : [],
         }
             
-    def update_details(self, inc, duration_m):
-        pass
-    
+    def update_details(self, inc):
+        categoria = self.categorizar(inc)
+        for atrib in inc.atribuicoes:
+            if atrib.mesa != self.MESA_PRIORIDADE:
+                continue
+            self.details[ 'id_chamado'     ].append(inc.id_chamado)
+            self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
+            self.details[ 'categoria'      ].append(categoria)
+            self.details[ 'prazo'          ].append(self.PRAZO_M)
+            self.details[ 'seq'            ].append(atrib.seq)
+            self.details[ 'mesa'           ].append(atrib.mesa)
+            self.details[ 'entrada'        ].append(atrib.entrada)
+            self.details[ 'status_entrada' ].append(atrib.status_entrada)
+            self.details[ 'saida'          ].append(atrib.saida)
+            self.details[ 'status_saida'   ].append(atrib.status_saida)
+            if inc.id_chamado.startswith('S'):
+                self.details[ 'duracao_m'      ].append(None)
+                self.details[ 'pendencia_m'    ].append(None)
+            else:
+                self.details[ 'duracao_m'      ].append(atrib.duracao_m)
+                self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
+            
+            
     def get_details(self):
-        pass
+        return pd.DataFrame(self.details)
     
     def get_description(self):
         if self.denominator == 0:
@@ -490,7 +513,11 @@ class Prp(N4SapKpi):
             duration_m = click.calc_duration_mesas(inc.id_chamado, [ self.MESA_PRIORIDADE ])
             self.numerator   += (1 if duration_m > self.PRAZO_M else 0)
             self.denominator += 1
-            self.update_details(inc, duration_m)
+            self.update_details(inc)
+            if inc.id_chamado in click.children_of:
+                for child_id in click.children_of[ inc.id_chamado ]:
+                    child = click.get_incidente(child_id)
+                    self.update_details(child)
 
     def get_result(self):
         msg = self.get_description()
@@ -1219,24 +1246,35 @@ class TestPrp(unittest.TestCase):
         """)
 
         self.violated_service_request_and_task_inc_events = Event.parse_events(r"""
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411672	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:17:56	2020-05-04 11:17:56	0
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411674	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:17:56	2020-05-04 11:18:14	1
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411714	Aguardando Cliente - Aprovação	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:14	2020-05-04 11:18:14	0
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411718	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:14	2020-05-04 11:18:29	0
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411772	Pendência Sanada - Aprovação	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:29	2020-05-04 11:18:30	0
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411774	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:30	2020-05-04 11:20:38	2
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8412271	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:20:38	2020-05-05 16:12:48	832
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8557671	Atendimento Agendado	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-05 16:12:48	2020-05-05 16:12:49	0
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8557672	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-05 16:12:49	2020-05-06 09:47:26	155
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8597552	Iniciar Atendimento	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 09:47:26	2020-05-06 09:47:27	0
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8597555	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 09:47:27	2020-05-06 09:55:14	8
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8598963	Resolver	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 09:55:14	2020-05-08 09:58:04	0
-            S251253		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8804245	Encerrar	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-08 09:58:04		0
-            T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411754	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:24	2020-05-04 11:18:24	0
-            T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411756	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:24	2020-05-04 11:21:30	3
-            T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8412440	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:21:30	2020-05-06 09:55:13	994
-            T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8598958	Resolver	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 09:55:13		0        
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411672	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:17:56	2020-05-04 11:17:56	0
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411674	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:17:56	2020-05-04 11:18:14	1
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411714	Aguardando Cliente - Aprovação	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:14	2020-05-04 11:18:14	0
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411718	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:14	2020-05-04 11:18:29	0
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411772	Pendência Sanada - Aprovação	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:29	2020-05-04 11:18:30	0
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411774	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:30	2020-05-04 11:20:38	2
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8412271	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:20:38	2020-05-05 16:12:48	832
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8557671	Atendimento Agendado	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-05 16:12:48	2020-05-05 16:12:49	0
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8557672	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-05 16:12:49	2020-05-06 09:47:26	155
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8597552	Iniciar Atendimento	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 09:47:26	2020-05-06 09:47:27	0
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8597555	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 09:47:27	2020-05-06 09:55:14	8
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8598963	Resolver	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 09:55:14	2020-05-08 09:58:04	0
+            S251254		ATENDER	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8804245	Encerrar	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-08 09:58:04		0
+            T465904	S251254	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411754	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:24	2020-05-04 11:18:24	0
+            T465904	S251254	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411756	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:18:24	2020-05-04 11:21:30	3
+            T465904	S251254	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8412440	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 11:21:30	2020-05-06 09:55:13	994
+            T465904	S251254	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8598958	Resolver	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 09:55:13		0        
         """)
+        
+        self.events = self.closed_inc_evts                                \
+        +             self.violated_closed_inc_evts                       \
+        +             self.solved_inc_events                              \
+        +             self.violated_solved_inc_events                     \
+        +             self.cancelled_inc_events                           \
+        +             self.violated_cancelled_inc_events                  \
+        +             self.deprioritized_inc_events                       \
+        +             self.violated_deprioritized_inc_events              \
+        +             self.service_request_and_task_inc_events            \
+        +             self.violated_service_request_and_task_inc_events        
         
     def tearDown(self):
         pass
@@ -1326,3 +1364,11 @@ class TestPrp(unittest.TestCase):
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
     
+    def test_it_computes_the_kpi(self):
+        for evt in self.events:
+            self.click.update(evt)
+        self.prp.evaluate(self.click)
+        kpi, observation = self.prp.get_result()
+        self.assertEqual(50.0, kpi)
+        self.assertEqual("5 violações / 10 incidentes", observation)
+        #self.prp.get_details().to_excel("teste.xlsx")
