@@ -1,3 +1,4 @@
+import pandas as pd
 import pyclick.util as util
 import unittest
 
@@ -132,8 +133,8 @@ class Acao(object):
     ]
     
     def __init__(self, id_acao, acao_nome, pendencia, mesa_atual, data_acao, data_fim_acao, duracao_m):
-        assert data_fim_acao is None or data_acao <= data_fim_acao
-        assert pendencia in [ 'S', 'N' ]
+        assert data_fim_acao is None or data_acao <= data_fim_acao # should I keep this check given that there are known cases of temporal inconsistencies?
+        assert pendencia in ( 'S', 'N' )
         assert duracao_m >= 0
         self.id_acao        = id_acao
         self.acao_nome      = acao_nome
@@ -168,16 +169,64 @@ class Acao(object):
         ,   data_fim_acao  = evt.data_fim_acao
         ,   duracao_m      = evt.duracao_m
         )
+
+class Atribuicao(object):
+     
+    __slots__ = [ 'seq', 'mesa', 'entrada', 'status_entrada', 'saida', 'status_saida', 'duracao_m', 'pendencia_m' ]
+     
+    def __init__(self, seq, mesa, entrada, status_entrada, saida, status_saida, duracao_m, pendencia_m):
+        self.seq            = seq
+        self.mesa           = mesa
+        self.entrada        = entrada
+        self.status_entrada = status_entrada
+        self.saida          = saida
+        self.status_saida   = status_saida
+        self.duracao_m      = duracao_m
+        self.pendencia_m    = pendencia_m
+        
+    def __str__(self):
+        return util.build_str(self, self.__slots__, False)
+    
+    def __repr__(self):
+        return util.build_str(self, self.__slots__, False)
+        
+    def __eq__(self, other):
+        return util.shallow_equality_test(self, other, self.__slots__)
+    
+    def update(self, incidente, acao):
+        assert self.mesa == acao.mesa_atual
+        self.saida = acao.data_fim_acao
+        self.status_saida = acao.status
+        if acao.pendencia == 'N':
+            self.duracao_m += acao.duracao_m
+        elif acao.pendencia == 'S':
+            self.pendencia_m += acao.duracao_m
+        else:
+            assert 1 == 2 # should not happen
+    
+    @classmethod
+    def build_from(klass, seq, acao):
+        return klass(
+            seq             = seq
+        ,   mesa            = acao.mesa_atual
+        ,   entrada         = acao.data_acao
+        ,   status_entrada  = acao.status
+        ,   saida           = acao.data_fim_acao
+        ,   status_saida    = acao.status
+        ,   duracao_m       = (0 if acao.pendencia == 'S' else acao.duracao_m)
+        ,   pendencia_m     = (0 if acao.pendencia == 'N' else acao.duracao_m)
+        )
     
 class Incidente(object):
     
     __slots__ = [
-        'id_chamado' 
+        'id_chamado'
     ,   'chamado_pai' 
     ,   'categoria' 
     ,   'oferta' 
     ,   'prazo'
     ,   'acoes'
+    ,   'atribuicoes'
     ]
     
     def __init__(self, id_chamado, chamado_pai, categoria, oferta, prazo):
@@ -187,6 +236,7 @@ class Incidente(object):
         self.oferta         = oferta
         self.prazo          = prazo
         self.acoes          = []
+        self.atribuicoes    = []
     
     def __str__(self):
         return util.build_str(self, self.__slots__)
@@ -198,6 +248,13 @@ class Incidente(object):
         return util.shallow_equality_test(self, other, self.__slots__)
     
     def add_acao(self, acao):
+        duracao_m = (0 if acao.pendencia == 'S' else acao.duracao_m)
+        if len(self.acoes) == 0 or self.mesa_atual != acao.mesa_atual:
+            seq = len(self.atribuicoes) + 1
+            a = Atribuicao.build_from(seq, acao)
+            self.atribuicoes.append(a)
+        else:
+            self.atribuicoes[ -1 ].update(self, acao)
         self.acoes.append(acao)
     
     def action_count(self):
@@ -389,7 +446,8 @@ class Prp(N4SapKpi):
         super().__init__()
         self.numerator = 0
         self.denominator = 0
-    
+        self.details_df = None
+            
     def update_details(self, inc, duration_m):
         pass
     
@@ -398,7 +456,7 @@ class Prp(N4SapKpi):
     
     def get_description(self):
         if self.denominator == 0:
-            msg = "Nenhum incidente processado"
+            msg = "Nenhum incidente peso 35 processado"
         else:
             msg = f"{self.numerator} violações / {self.denominator} incidentes"
         return msg
@@ -417,36 +475,36 @@ class Prp(N4SapKpi):
             self.update_details(inc, duration_m)
 
     def get_result(self):
+        msg = self.get_description()
         if self.denominator == 0:
-            return None, "Nenhum incidente peso 35 processado"
+            return None, msg
         else:
             result = 100.0 * (self.numerator / self.denominator)
-            msg = self.get_description()
             return result, msg
         
 class TestEvento(unittest.TestCase):
 
     def setUp(self):
         self.evt1 = Event(
-            id_chamado      = "123" ,       chamado_pai     = None,     categoria       = "CAT1"
-        ,   oferta_catalogo = "OF1",        prazo_oferta_m  = 8 * 60,   id_acao         = 111
-        ,   acao_nome       = "Ação 1",     pendencia       = "N",      mesa_atual      = "N4-FOO-BAR"
+            id_chamado      = "123" ,               chamado_pai     = None,     categoria       = "CAT1"
+        ,   oferta_catalogo = "OF1",                prazo_oferta_m  = 8 * 60,   id_acao         = 111
+        ,   acao_nome       = "Campos alterados",   pendencia       = "N",      mesa_atual      = "N4-FOO-BAR"
         ,   data_acao       = "2020-01-01 09:15:00"
         ,   data_fim_acao   = "2020-01-01 09:30:00"
         ,   duracao_m       = 15*60
         )
         self.evt2 = Event(
-            id_chamado      = "124",        chamado_pai     = None,     categoria       = "CAT1"
-        ,   oferta_catalogo = "OF1",        prazo_oferta_m  = 8 * 60,   id_acao         = 112
-        ,   acao_nome       = "Ação 2",     pendencia       = "S",      mesa_atual      = "N4-FOO-BAR"
+            id_chamado      = "124",                chamado_pai     = None,     categoria       = "CAT1"
+        ,   oferta_catalogo = "OF1",                prazo_oferta_m  = 8 * 60,   id_acao         = 112
+        ,   acao_nome       = "Campos alterados",   pendencia       = "S",      mesa_atual      = "N4-FOO-BAR"
         ,   data_acao       = "2020-01-01 09:30:00"
         ,   data_fim_acao   = "2020-01-01 09:45:00"
         ,   duracao_m       = 0
         )        
         self.evt3 = Event(
-            id_chamado      = "123" ,       chamado_pai     = None,     categoria       = "CAT1"
-        ,   oferta_catalogo = "OF1",        prazo_oferta_m  = 8 * 60,   id_acao         = 111
-        ,   acao_nome       = "Ação 1",     pendencia       = "N",      mesa_atual      = "N4-FOO-BAR"
+            id_chamado      = "123" ,               chamado_pai     = None,     categoria       = "CAT1"
+        ,   oferta_catalogo = "OF1",                prazo_oferta_m  = 8 * 60,   id_acao         = 111
+        ,   acao_nome       = "Campos alterados",   pendencia       = "N",      mesa_atual      = "N4-FOO-BAR"
         ,   data_acao       = "2020-01-01 09:15:00"
         ,   data_fim_acao   = "2020-01-01 09:30:00"
         ,   duracao_m       = 15*60
@@ -509,9 +567,9 @@ class TestAcao(unittest.TestCase):
 
     def setUp(self):
         self.evt1 = Event(
-            id_chamado      = "123" ,       chamado_pai     = None,     categoria       = "CAT1"
-        ,   oferta_catalogo = "OF1",        prazo_oferta_m  = 8 * 60,   id_acao         = 111
-        ,   acao_nome       = "Ação 1",     pendencia       = "N",      mesa_atual      = "N4-FOO-BAR"
+            id_chamado      = "123" ,               chamado_pai     = None,     categoria       = "CAT1"
+        ,   oferta_catalogo = "OF1",                prazo_oferta_m  = 8 * 60,   id_acao         = 111
+        ,   acao_nome       = "Campos alterados",   pendencia       = "N",      mesa_atual      = "N4-FOO-BAR"
         ,   data_acao       = "2020-01-01 09:15:00"
         ,   data_fim_acao   = "2020-01-01 09:30:00"
         ,   duracao_m       = 15*60
@@ -527,9 +585,9 @@ class TestAcao(unittest.TestCase):
         )
         
         self.evt2 = Event(
-            id_chamado      = "124",        chamado_pai     = None,     categoria       = "CAT1"
-        ,   oferta_catalogo = "OF1",        prazo_oferta_m  = 8 * 60,   id_acao         = 112
-        ,   acao_nome       = "Ação 2",     pendencia       = "S",      mesa_atual      = "N4-FOO-BAR"
+            id_chamado      = "124",                chamado_pai     = None,     categoria       = "CAT1"
+        ,   oferta_catalogo = "OF1",                prazo_oferta_m  = 8 * 60,   id_acao         = 112
+        ,   acao_nome       = "Campos alterados",   pendencia       = "S",      mesa_atual      = "N4-FOO-BAR"
         ,   data_acao       = "2020-01-01 09:30:00"
         ,   data_fim_acao   = "2020-01-01 09:45:00"
         ,   duracao_m       = 0
@@ -592,9 +650,9 @@ class TestIncident(unittest.TestCase):
 
     def setUp(self):
         self.evt1 = Event(
-            id_chamado      = "123" ,       chamado_pai     = None,     categoria       = "CAT1"
-        ,   oferta_catalogo = "OF1",        prazo_oferta_m  = 8 * 60,   id_acao         = 111
-        ,   acao_nome       = "Ação 1",     pendencia       = "N",      mesa_atual      = "N4-FOO-BAR"
+            id_chamado      = "123" ,               chamado_pai     = None,     categoria       = "CAT1"
+        ,   oferta_catalogo = "OF1",                prazo_oferta_m  = 8 * 60,   id_acao         = 111
+        ,   acao_nome       = "Campos alterados",   pendencia       = "N",      mesa_atual      = "N4-FOO-BAR"
         ,   data_acao       = "2020-01-01 09:15:00"
         ,   data_fim_acao   = "2020-01-01 09:30:00"
         ,   duracao_m       = 15*60
@@ -607,9 +665,9 @@ class TestIncident(unittest.TestCase):
         ,   prazo           = self.evt1.prazo_oferta_m
         )        
         self.evt2 = Event(
-            id_chamado      = "124",        chamado_pai     = None,     categoria       = "CAT1"
-        ,   oferta_catalogo = "OF1",        prazo_oferta_m  = 8 * 60,   id_acao         = 112
-        ,   acao_nome       = "Ação 2",     pendencia       = "S",      mesa_atual      = "N4-FOO-BAR"
+            id_chamado      = "124",                chamado_pai     = None,     categoria       = "CAT1"
+        ,   oferta_catalogo = "OF1",                prazo_oferta_m  = 8 * 60,   id_acao         = 112
+        ,   acao_nome       = "Campos alterados",   pendencia       = "S",      mesa_atual      = "N4-FOO-BAR"
         ,   data_acao       = "2020-01-01 09:30:00"
         ,   data_fim_acao   = "2020-01-01 09:45:00"
         ,   duracao_m       = 0
@@ -630,21 +688,21 @@ class TestIncident(unittest.TestCase):
         )
         self.inc = Incidente(id_chamado="123", chamado_pai=None, categoria="CORRIGIR-NÃO EMERGENCIAL", oferta="Suporte ao Serviço de SAP", prazo=540)
         self.actions = [
-            Acao(id_acao=1,  acao_nome="ação 1",  pendencia="N", mesa_atual="MESA 1", data_acao="2020-01-01 09:10:00", data_fim_acao="2020-01-01 09:20:00", duracao_m=10*60),
-            Acao(id_acao=2,  acao_nome="ação 2",  pendencia="S", mesa_atual="MESA 1", data_acao="2020-01-01 09:20:00", data_fim_acao="2020-01-01 09:30:00", duracao_m=10*60),
-            Acao(id_acao=3,  acao_nome="ação 3",  pendencia="N", mesa_atual="MESA 1", data_acao="2020-01-01 09:30:00", data_fim_acao="2020-01-01 09:40:00", duracao_m=10*60),
+            Acao(id_acao=1,  acao_nome="Campos alterados",  pendencia="N", mesa_atual="MESA 1", data_acao="2020-01-01 09:10:00", data_fim_acao="2020-01-01 09:20:00", duracao_m=10),
+            Acao(id_acao=2,  acao_nome="Campos alterados",  pendencia="S", mesa_atual="MESA 1", data_acao="2020-01-01 09:20:00", data_fim_acao="2020-01-01 09:30:00", duracao_m=10),
+            Acao(id_acao=3,  acao_nome="Campos alterados",  pendencia="N", mesa_atual="MESA 1", data_acao="2020-01-01 09:30:00", data_fim_acao="2020-01-01 09:40:00", duracao_m=10),
             
-            Acao(id_acao=4,  acao_nome="ação 4",  pendencia="N", mesa_atual="MESA 2", data_acao="2020-01-01 09:40:00", data_fim_acao="2020-01-01 09:50:00", duracao_m=10*60),
-            Acao(id_acao=5,  acao_nome="ação 5",  pendencia="S", mesa_atual="MESA 2", data_acao="2020-01-01 09:50:00", data_fim_acao="2020-01-01 10:00:00", duracao_m=10*60),
-            Acao(id_acao=6,  acao_nome="ação 6",  pendencia="N", mesa_atual="MESA 2", data_acao="2020-01-01 10:00:00", data_fim_acao="2020-01-01 10:10:00", duracao_m=10*60),
+            Acao(id_acao=4,  acao_nome="Campos alterados",  pendencia="N", mesa_atual="MESA 2", data_acao="2020-01-01 09:40:00", data_fim_acao="2020-01-01 09:50:00", duracao_m=10),
+            Acao(id_acao=5,  acao_nome="Campos alterados",  pendencia="S", mesa_atual="MESA 2", data_acao="2020-01-01 09:50:00", data_fim_acao="2020-01-01 10:00:00", duracao_m=10),
+            Acao(id_acao=6,  acao_nome="Campos alterados",  pendencia="N", mesa_atual="MESA 2", data_acao="2020-01-01 10:00:00", data_fim_acao="2020-01-01 10:10:00", duracao_m=10),
             
-            Acao(id_acao=7,  acao_nome="ação 7",  pendencia="S", mesa_atual="MESA 3", data_acao="2020-01-01 10:10:00", data_fim_acao="2020-01-01 10:20:00", duracao_m=10*60),
-            Acao(id_acao=8,  acao_nome="ação 8",  pendencia="N", mesa_atual="MESA 3", data_acao="2020-01-01 10:20:00", data_fim_acao="2020-01-01 10:30:00", duracao_m=10*60),
-            Acao(id_acao=9,  acao_nome="ação 9",  pendencia="S", mesa_atual="MESA 3", data_acao="2020-01-01 10:30:00", data_fim_acao="2020-01-01 10:40:00", duracao_m=10*60),
+            Acao(id_acao=7,  acao_nome="Campos alterados",  pendencia="S", mesa_atual="MESA 3", data_acao="2020-01-01 10:10:00", data_fim_acao="2020-01-01 10:20:00", duracao_m=10),
+            Acao(id_acao=8,  acao_nome="Campos alterados",  pendencia="N", mesa_atual="MESA 3", data_acao="2020-01-01 10:20:00", data_fim_acao="2020-01-01 10:30:00", duracao_m=10),
+            Acao(id_acao=9,  acao_nome="Campos alterados",  pendencia="S", mesa_atual="MESA 3", data_acao="2020-01-01 10:30:00", data_fim_acao="2020-01-01 10:40:00", duracao_m=10),
             
-            Acao(id_acao=10, acao_nome="ação 10", pendencia="N", mesa_atual="MESA 4", data_acao="2020-01-01 10:40:00", data_fim_acao="2020-01-01 10:50:00", duracao_m=10*60),
-            Acao(id_acao=11, acao_nome="ação 11", pendencia="S", mesa_atual="MESA 4", data_acao="2020-01-01 10:50:00", data_fim_acao="2020-01-01 11:00:00", duracao_m=10*60),
-            Acao(id_acao=12, acao_nome="ação 12", pendencia="N", mesa_atual="MESA 4", data_acao="2020-01-01 11:00:00", data_fim_acao=None,                  duracao_m=10*60)
+            Acao(id_acao=10, acao_nome="Campos alterados", pendencia="N", mesa_atual="MESA 4", data_acao="2020-01-01 10:40:00", data_fim_acao="2020-01-01 10:50:00", duracao_m=10),
+            Acao(id_acao=11, acao_nome="Campos alterados", pendencia="S", mesa_atual="MESA 4", data_acao="2020-01-01 10:50:00", data_fim_acao="2020-01-01 11:00:00", duracao_m=10),
+            Acao(id_acao=12, acao_nome="Resolver", pendencia="N", mesa_atual="MESA 4", data_acao="2020-01-01 11:00:00", data_fim_acao=None,                  duracao_m=10)
         ]
         
     def tearDown(self):
@@ -666,25 +724,25 @@ class TestIncident(unittest.TestCase):
             self.inc.add_acao(action)
         
         duration = self.inc.calc_duration()
-        self.assertEqual(duration, 70 * 60)
+        self.assertEqual(duration, 70)
         
         duration = self.inc.calc_duration_mesas([ "MESA 1" ])
-        self.assertEqual(duration, 20 * 60)
+        self.assertEqual(duration, 20)
         
         duration = self.inc.calc_duration_mesas([ "MESA 2" ])
-        self.assertEqual(duration, 20 * 60)
+        self.assertEqual(duration, 20)
         
         duration = self.inc.calc_duration_mesas([ "MESA 3" ])
-        self.assertEqual(duration, 10 * 60)
+        self.assertEqual(duration, 10)
         
         duration = self.inc.calc_duration_mesas([ "MESA 4" ])
-        self.assertEqual(duration, 20 * 60)
+        self.assertEqual(duration, 20)
         
         duration = self.inc.calc_duration_mesas([ "MESA 1", "MESA 3" ])
-        self.assertEqual(duration, 30 * 60)
+        self.assertEqual(duration, 30)
         
         duration = self.inc.calc_duration_mesas([ "MESA 2", "MESA 4" ])
-        self.assertEqual(duration, 40 * 60)
+        self.assertEqual(duration, 40)
     
     def test_it_has_an_status(self):
         for action in self.actions:
@@ -693,6 +751,51 @@ class TestIncident(unittest.TestCase):
             self.inc.acoes[ -1 ].acao_nome = nome
             self.assertEqual(self.inc.status, status)
     
+    def test_it_tracks_assignments(self):
+        for action in self.actions:
+            self.inc.add_acao(action)
+        self.assertEqual(len(self.inc.atribuicoes), 4)
+        
+        atrib = self.inc.atribuicoes[ 0 ]
+        self.assertEqual(atrib.seq, 1)
+        self.assertEqual(atrib.mesa, "MESA 1")
+        self.assertEqual(atrib.entrada, "2020-01-01 09:10:00")
+        self.assertEqual(atrib.status_entrada, "ABERTO")
+        self.assertEqual(atrib.saida, "2020-01-01 09:40:00")
+        self.assertEqual(atrib.status_saida, "ABERTO")
+        self.assertEqual(atrib.duracao_m, 20)
+        self.assertEqual(atrib.pendencia_m, 10)
+        
+        atrib = self.inc.atribuicoes[ 1 ]
+        self.assertEqual(atrib.seq, 2)
+        self.assertEqual(atrib.mesa, "MESA 2")
+        self.assertEqual(atrib.entrada, "2020-01-01 09:40:00")
+        self.assertEqual(atrib.status_entrada, "ABERTO")
+        self.assertEqual(atrib.saida, "2020-01-01 10:10:00")
+        self.assertEqual(atrib.status_saida, "ABERTO")
+        self.assertEqual(atrib.duracao_m, 20)
+        self.assertEqual(atrib.pendencia_m, 10)
+        
+        atrib = self.inc.atribuicoes[ 2 ]
+        self.assertEqual(atrib.seq, 3)
+        self.assertEqual(atrib.mesa, "MESA 3")
+        self.assertEqual(atrib.entrada, "2020-01-01 10:10:00")
+        self.assertEqual(atrib.status_entrada, "ABERTO")
+        self.assertEqual(atrib.saida, "2020-01-01 10:40:00")
+        self.assertEqual(atrib.status_saida, "ABERTO")
+        self.assertEqual(atrib.duracao_m, 10)
+        self.assertEqual(atrib.pendencia_m, 20)
+        
+        atrib = self.inc.atribuicoes[ 3 ]
+        self.assertEqual(atrib.seq, 4)
+        self.assertEqual(atrib.mesa, "MESA 4")
+        self.assertEqual(atrib.entrada, "2020-01-01 10:40:00")
+        self.assertEqual(atrib.status_entrada, "ABERTO")
+        self.assertEqual(atrib.saida, None)
+        self.assertEqual(atrib.status_saida, "RESOLVIDO")
+        self.assertEqual(atrib.duracao_m, 20)
+        self.assertEqual(atrib.pendencia_m, 10)
+        
 class TestClick(unittest.TestCase):
     
     def setUp(self):
@@ -864,6 +967,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 997)
         self.assertEqual(self.click.calc_children_duration_mesas('T465903', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 0)
         self.assertEqual(
+            incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]),
             incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]),
             self.click.calc_duration_mesas('T465903', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ])
         )        
