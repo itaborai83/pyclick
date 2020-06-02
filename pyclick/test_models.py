@@ -256,24 +256,25 @@ class Incidente(object):
         else:
             self.atribuicoes[ -1 ].update(self, acao)
         self.acoes.append(acao)
-    
-    def action_count(self):
-        return len(self.acoes)
-    
+        
     def calc_duration(self):
         return sum([ a.duracao_m for a in self.acoes if a.pendencia =='N'])
     
     def calc_duration_mesas(self, mesas):
         return sum([ a.duracao_m for a in self.acoes if a.pendencia == 'N' and a.mesa_atual in mesas ])
-    
+
+    @property
+    def action_count(self):
+        return len(self.acoes)
+        
     @property
     def mesa_atual(self):
-        assert self.action_count() > 0
+        assert self.action_count > 0
         return self.acoes[ -1 ].mesa_atual
     
     @property
     def status(self):
-        assert self.action_count() > 0
+        assert self.action_count > 0
         return self.acoes[ -1 ].status
         
     @classmethod
@@ -349,7 +350,7 @@ class Click(object):
         
         acao = Acao.build_from(event)
         
-        if incidente.action_count() == 0:
+        if incidente.action_count == 0:
             incidente.add_acao(acao)
             mesa_atual.add_incidente(incidente)
         else:
@@ -446,7 +447,17 @@ class Prp(N4SapKpi):
         super().__init__()
         self.numerator = 0
         self.denominator = 0
-        self.details_df = None
+        self.details = {
+            'id_chamado'        : [],
+            'seq'               : [],
+            'mesa'              : [],
+            'entrada'           : [],
+            'status_entrada'    : [],
+            'saida'             : [],
+            'status_saida'      : [],
+            'duracao_m'         : [],
+            'pendencia_m'       : [],
+        }
             
     def update_details(self, inc, duration_m):
         pass
@@ -886,7 +897,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.categoria, 'CORRIGIR-NÃO EMERGENCIAL')
         self.assertEqual(incidente.oferta, 'Suporte ao serviço de SAP')
         self.assertEqual(incidente.prazo, 540)
-        self.assertEqual(incidente.action_count(), 25)
+        self.assertEqual(incidente.action_count, 25)
         self.assertEqual(incidente.calc_duration(), 31320)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 31287)
         self.assertEqual(self.click.calc_children_duration_mesas('119773', [ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 0)
@@ -914,7 +925,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.categoria, 'CORRIGIR-NÃO EMERGENCIAL')
         self.assertEqual(incidente.oferta, 'Suporte ao serviço de SAP')
         self.assertEqual(incidente.prazo, 540)
-        self.assertEqual(incidente.action_count(), 22)
+        self.assertEqual(incidente.action_count, 22)
         self.assertEqual(incidente.calc_duration(), 14282)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 14237)
         self.assertEqual(self.click.calc_children_duration_mesas('110322', [ 'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' ]), 0)
@@ -938,7 +949,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.categoria, 'ATENDER')
         self.assertEqual(incidente.oferta, 'FI-AA - Alteração de atribuicao contas do razão imobilizado')
         self.assertEqual(incidente.prazo, 5400)
-        self.assertEqual(incidente.action_count(), 13)
+        self.assertEqual(incidente.action_count, 13)
         self.assertEqual(incidente.calc_duration(), 843)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 843)
         self.assertEqual(self.click.calc_children_duration_mesas('S251253', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 997)
@@ -962,7 +973,7 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.categoria, 'Execução')
         self.assertEqual(incidente.oferta, 'FI-AA - Alteração de atribuicao contas do razão imobilizado')
         self.assertEqual(incidente.prazo, 5400)
-        self.assertEqual(incidente.action_count(), 4)
+        self.assertEqual(incidente.action_count, 4)
         self.assertEqual(incidente.calc_duration(), 997)
         self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 997)
         self.assertEqual(self.click.calc_children_duration_mesas('T465903', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 0)
