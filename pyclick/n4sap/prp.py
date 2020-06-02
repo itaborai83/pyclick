@@ -1,112 +1,89 @@
-import os
 import pandas as pd
+import pyclick.n4sap.models as models        
 
-import pyclick.util as util
-import pyclick.config as config
-import pyclick.n4sap.config as n4_config
-import pyclick.kpis as kpis
-
-assert os.environ[ 'PYTHONUTF8' ] == "1"
-
-logger = util.get_logger('kpis2')
-
-class N4Handler(kpis.Handler):
-    MESAS = n4_config.MESAS[:]
-
-class PrpEntry(object):
+class Prp(models.N4SapKpi):
     
-    PRAZO_PRP = 9 * 60
+    PRAZO_M = 9 * 60
+    SLA     = 10.0
     
-    def __init__(self, row):
-        self.id_chamado     = row.ID_CHAMADO
-        self.chamado_pai    = row.CHAMADO_PAI
-        self.start_dt       = row.DATA_INICIO_ACAO
-        self.end_dt         = row.DATA_INICIO_ACAO
-        self.status         = None
-        self.ultima_acao    = None
-        self.duracao        = 0
-        self.priorizacoes   = 0
-        self.despriorizacoes = 0
-        self.rows           = []
-    
-    def update(self, row):
-        self.end_dt         = row.DATA_INICIO_ACAO
-        self.duracao        += (0 if row.PENDENCIA == 'S' else row.DURACAO_M)
-        self.status         = row.STATUS_DE_EVENTO
-        self.ultima_acao    = row.ULTIMA_ACAO_NOME
-        self.rows.append(row)
-
-class PrpHandler(N4Handler):
-
     def __init__(self):
-        self.watch_list = {}
-        self.entries = {}
-    
-    def start_watching(self, row):
-        if row.ID_CHAMADO not in self.entries:
-            self.entries[ row.ID_CHAMADO ] = PrpEntry(row)
-        entry = self.entries[ row.ID_CHAMADO ]
-        entry.priorizacoes += 1
-        self.watch_list[ row.ID_CHAMADO ] = entry
-        return entry
-        
-    def stop_watching(self, row, desprioriza=False):
-        entry = self.watch_list[ row.ID_CHAMADO ]
-        del self.watch_list[ row.ID_CHAMADO ]
-        if desprioriza:
-            entry.despriorizacoes += 1
-        
-    def process_action(self, row):
-        if row.MESA_ATUAL == 'N4-SAP-SUSTENTACAO-PRIORIDADE' and row.ID_CHAMADO not in self.watch_list:
-            entry = self.start_watching(row)
-        
-        if row.ID_CHAMADO not in self.watch_list:
-            return
-        
-        entry = self.watch_list[ row.ID_CHAMADO ]
-        if row.MESA_ATUAL == 'N4-SAP-SUSTENTACAO-PRIORIDADE':
-            entry.update(row)
-        
-        elif row.MESA_ATUAL != 'N4-SAP-SUSTENTACAO-PRIORIDADE':
-            self.stop_watching(row, desprioriza=True)
+        super().__init__()
+        self.numerator = 0
+        self.denominator = 0
+        self.details = {
+            'id_chamado'        : [],
+            'chamado_pai'       : [],
+            'categoria'         : [],
+            'prazo'             : [],
+            'ultima_mesa'       : [],
+            'ultimo_status'     : [],
+            'atribuicao'        : [],
+            'mesa'              : [],
+            'entrada'           : [],
+            'status_entrada'    : [],
+            'saida'             : [],
+            'status_saida'      : [],
+            'duracao_m'         : [],
+            'pendencia_m'       : [],
+        }
             
-    def end_event(self, row):
-        if row.ID_CHAMADO in self.watch_list:
-            self.stop_watching(row, desprioriza=False)
-        
-    def end(self):
-        mapping = {}
-        for entry in self.entries.values():
-            mapping[ entry.id_chamado ] = entry
-            if entry.id_chamado.startswith('S'):
-                entry.duracao = 0 # clear service request duration
-        for entry in self.entries.values():
-            if not entry.id_chamado.startswith('T'):
+    def update_details(self, inc):
+        categoria = self.categorizar(inc)
+        for atrib in inc.atribuicoes:
+            if atrib.mesa != self.MESA_PRIORIDADE:
                 continue
-            parent = mapping.get(entry.chamado_pai, None)
-            if parent:
-                parent.duracao += entry.duracao
-        
-    def compute_kpi(self):
-        df = self.get_kpi_entries()
-        if len(df) == 0:
-            return 0.0
-        kpi = sum([ 1.0 if e.duracao > self.PRAZO_PRP else 0.0 ]) / len(df)
-        return kpi * 100.0
+            self.details[ 'id_chamado'     ].append(inc.id_chamado)
+            self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
+            self.details[ 'categoria'      ].append(categoria)
+            self.details[ 'prazo'          ].append(self.PRAZO_M)
+            self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
+            self.details[ 'ultimo_status'  ].append(inc.status)
+            self.details[ 'atribuicao'     ].append(atrib.seq)
+            self.details[ 'mesa'           ].append(atrib.mesa)
+            self.details[ 'entrada'        ].append(atrib.entrada)
+            self.details[ 'status_entrada' ].append(atrib.status_entrada)
+            self.details[ 'saida'          ].append(atrib.saida)
+            self.details[ 'status_saida'   ].append(atrib.status_saida)
+            if inc.id_chamado.startswith('S'):
+                self.details[ 'duracao_m'      ].append(None)
+                self.details[ 'pendencia_m'    ].append(None)
+            else:
+                self.details[ 'duracao_m'      ].append(atrib.duracao_m)
+                self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
+            
+            
+    def get_details(self):
+        return pd.DataFrame(self.details)
     
-    def get_kpi_details(self):
-        entries = [ e for e in self.entries.values() if not e.id_chamado.startswith('T') and e.status != 'Aberto']
-        df = pd.DataFrame({
-            'id_chamado'        : [ e.id_chamado                    for e in entries ],
-            'chamado_pai'       : [ e.chamado_pai                   for e in entries ],
-            'status'            : [ e.status                        for e in entries ],
-            'abertura_chamado'  : [ util.parse_datetime(e.rows[ -1 ].DATA_ABERTURA_CHAMADO) for e in entries ],
-            'fechamento_chamado': [ util.parse_datetime(e.rows[ -1 ].DATA_RESOLUCAO_CHAMADO) for e in entries ],
-            'priorizacoes'      : [ e.priorizacoes                  for e in entries ],
-            'despriorizacoes'   : [ e.despriorizacoes               for e in entries ],
-            'data_inicio'       : [ util.parse_datetime(e.start_dt) for e in entries ],
-            'data_fim'          : [ util.parse_datetime(e.end_dt)   for e in entries ],
-            'ultima_acao'       : [ e.status                        for e in entries ],
-            'duracao'           : [ e.duracao                       for e in entries ]
-        })
-        return df
+    def get_description(self):
+        if self.denominator == 0:
+            msg = "Nenhum incidente peso 35 processado"
+        else:
+            msg = f"{self.numerator} violações / {self.denominator} incidentes"
+        return msg
+        
+    def evaluate(self, click):
+        super().evaluate(click)
+        mesa = click.get_mesa(self.MESA_PRIORIDADE)
+        if mesa is None:
+            return
+        for inc in mesa.get_seen_incidentes():
+            if inc.id_chamado.startswith("T"):
+                continue
+            duration_m = click.calc_duration_mesas(inc.id_chamado, [ self.MESA_PRIORIDADE ])
+            self.numerator   += (1 if duration_m > self.PRAZO_M else 0)
+            self.denominator += 1
+            self.update_details(inc)
+            if inc.id_chamado in click.children_of:
+                for child_id in click.children_of[ inc.id_chamado ]:
+                    child = click.get_incidente(child_id)
+                    self.update_details(child)
+
+    def get_result(self):
+        msg = self.get_description()
+        if self.denominator == 0:
+            return None, msg
+        else:
+            result = 100.0 * (self.numerator / self.denominator)
+            return result, msg
+            
