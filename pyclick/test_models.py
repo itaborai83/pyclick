@@ -261,8 +261,15 @@ class Incidente(object):
         return sum([ a.duracao_m for a in self.acoes if a.pendencia =='N'])
     
     def calc_duration_mesas(self, mesas):
-        return sum([ a.duracao_m for a in self.acoes if a.pendencia == 'N' and a.mesa_atual in mesas ])
-
+        return sum([
+            atrib.duracao_m for atrib in self.get_atribuicoes_mesas(mesas)
+        ])
+    
+    def get_atribuicoes_mesas(self, mesas):
+        return list([
+            atrib for atrib in self.atribuicoes if atrib.mesa in mesas
+        ])
+        
     @property
     def action_count(self):
         return len(self.acoes)
