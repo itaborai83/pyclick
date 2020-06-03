@@ -3,6 +3,16 @@ import pyclick.models as models
 class N4SapKpi(models.Kpi):
     
     MESA_PRIORIDADE = 'N4-SAP-SUSTENTACAO-PRIORIDADE'
+    MESAS_NAO_PRIORITARIAS = [
+        'N4-SAP-SUSTENTACAO-ABAST_GE'
+    ,   'N4-SAP-SUSTENTACAO-APOIO_OPERACAO'
+    ,   'N4-SAP-SUSTENTACAO-CORPORATIVO'
+    ,   'N4-SAP-SUSTENTACAO-ESCALADOS'
+    ,   'N4-SAP-SUSTENTACAO-FINANCAS' 
+    ,   'N4-SAP-SUSTENTACAO-GRC'
+    ,   'N4-SAP-SUSTENTACAO-PORTAL'
+    ,   'N4-SAP-SUSTENTACAO-SERVICOS'
+    ]
     
     def __init__(self):
         super().__init__()
