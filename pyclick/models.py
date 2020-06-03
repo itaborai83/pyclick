@@ -407,6 +407,9 @@ class Click(object):
             result_m += child.calc_duration_mesas(mesas)
         return result_m
     
+    def get_incidentes(self):
+        return self.incidentes.values()
+        
 class Kpi(object):
     
     def __init__(self):
