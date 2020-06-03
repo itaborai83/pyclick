@@ -35,7 +35,7 @@ class Prp(models.N4SapKpi):
             self.details[ 'id_chamado'     ].append(inc.id_chamado)
             self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
             self.details[ 'categoria'      ].append(categoria)
-            self.details[ 'prazo'          ].append(self.PRAZO_M)
+            self.details[ 'prazo'          ].append(inc.prazo)
             self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
             self.details[ 'ultimo_status'  ].append(inc.status)
             self.details[ 'atribuicao'     ].append(atrib.seq)
