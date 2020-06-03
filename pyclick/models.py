@@ -226,6 +226,7 @@ class Incidente(object):
     ,   'prazo'
     ,   'acoes'
     ,   'atribuicoes'
+    ,   'mesas'
     ]
     
     def __init__(self, id_chamado, chamado_pai, categoria, oferta, prazo):
@@ -236,7 +237,8 @@ class Incidente(object):
         self.prazo          = prazo
         self.acoes          = []
         self.atribuicoes    = []
-    
+        self.mesas          = set()
+        
     def __str__(self):
         return util.build_str(self, self.__slots__)
     
@@ -255,6 +257,7 @@ class Incidente(object):
         else:
             self.atribuicoes[ -1 ].update(self, acao)
         self.acoes.append(acao)
+        self.mesas.add(acao.mesa_atual)
         
     def calc_duration(self):
         return sum([ a.duracao_m for a in self.acoes if a.pendencia =='N'])
@@ -268,7 +271,13 @@ class Incidente(object):
         return list([
             atrib for atrib in self.atribuicoes if atrib.mesa in mesas
         ])
-        
+    
+    def possui_atribuicoes(self, mesas):
+        for mesa in mesas:
+            if mesa in self.mesas:
+                return True
+        return False
+    
     @property
     def action_count(self):
         return len(self.acoes)

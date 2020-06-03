@@ -314,6 +314,16 @@ class TestIncident(unittest.TestCase):
         self.assertEqual(atrib.status_saida, "RESOLVIDO")
         self.assertEqual(atrib.duracao_m, 20)
         self.assertEqual(atrib.pendencia_m, 10)
+    
+    def test_it_tracks_mesas(self):
+        for action in self.actions:
+            self.inc.add_acao(action)
+        self.assertFalse(self.inc.possui_atribuicoes( [ 'MESA 0' ] ))
+        self.assertTrue(self.inc.possui_atribuicoes( [ 'MESA 1' ] ))
+        self.assertTrue(self.inc.possui_atribuicoes( [ 'MESA 2' ] ))
+        self.assertTrue(self.inc.possui_atribuicoes( [ 'MESA 3' ] ))
+        self.assertTrue(self.inc.possui_atribuicoes( [ 'MESA 4' ] ))
+        self.assertFalse(self.inc.possui_atribuicoes( [ 'MESA 5' ] ))
         
 class TestClick(unittest.TestCase):
     
