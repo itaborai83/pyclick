@@ -13,6 +13,7 @@ class N4SapKpi(models.Kpi):
     ,   'N4-SAP-SUSTENTACAO-PORTAL'
     ,   'N4-SAP-SUSTENTACAO-SERVICOS'
     ]
+    MESAS_CONTRATO = [ MESA_PRIORIDADE ] + MESAS_NAO_PRIORITARIAS
     
     def __init__(self):
         super().__init__()
@@ -36,5 +37,20 @@ class N4SapKpi(models.Kpi):
         else:
             return 'ORIENTAR'
     
+    def calcular_prazo(self, inc, mesa_atual=None):
+        if mesa_atual is None:
+            mesa = inc.mesa_atual
+        categoria = self.categorizar(inc)
+        if mesa == self.MESA_PRIORIDADE:
+            return 9 * 60
+        elif categoria in ('ATENDER', 'ATENDER - TAREFA'):
+            return inc.prazo
+        elif categoria == 'CORRIGIR':
+            return 135 * 60
+        elif categoria == 'ORIENTAR':
+            return 27 * 60
+        else:
+            assert 1 == 2 # should not happen
+            
     def evaluate(self, click):
         pass
