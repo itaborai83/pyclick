@@ -19,6 +19,11 @@ import pyclick.config as config
 
 def get_logger(name):
     return logging.getLogger(name)
+
+def get_null_logger():
+    logger = logging.getLogger('<null>')
+    logger.addHandler(logging.NullHandler())
+    return logger
     
 def get_processed_file(dir_apuracao):
     return os.path.join(dir_apuracao, config.PROCESSED_FILE)

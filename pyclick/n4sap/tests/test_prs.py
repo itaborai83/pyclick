@@ -259,6 +259,7 @@ class TestPro(unittest.TestCase):
             T379624	S213003	Execução	GRC / PC - Outros	5400	9572920	Atribuição interna	N	N4-APOIO_PRODUTO-GRC	2020-05-19 09:19:22	2020-05-19 09:19:22	0
             T379624	S213003	Execução	GRC / PC - Outros	5400	9572928	Atribuir ao Fornecedor	N	N4-APOIO_PRODUTO-GRC	2020-05-19 09:19:22		9520        
         """)
+        
         self.events = self.closed_inc_evts                 \
         +             self.violated_closed_inc_evts        \
         +             self.solved_inc_events               \

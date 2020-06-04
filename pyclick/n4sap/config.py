@@ -13,3 +13,13 @@ MESAS = [
     'N4-SAP-SUSTENTACAO-ESCALADOS', 
     'N4-SAP-SUSTENTACAO-PRIORIDADE'
 ]
+
+SLA_KPIS = {
+    'PRP': 10.0,
+    'PRS': 10.0,
+    'PRC': 25.0,
+    'PRO': 15.0,
+    'PRE': 10.0,
+    'IDS': 170.0
+}
+

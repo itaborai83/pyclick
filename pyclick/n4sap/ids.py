@@ -4,13 +4,15 @@ import pyclick.n4sap.models as models
 
 class Ids(models.N4SapKpi):
     
-    SLA     = 170.0
+    KPI_NAME    = "IDS"
+    SLA         = 170.0
     
     def __init__(self):
         super().__init__()
         self.numerator = 0
         self.denominator = 0
         self.details = {
+            'fator_ids'         : [],
             'id_chamado'        : [],
             'chamado_pai'       : [],
             'categoria'         : [],
@@ -27,12 +29,13 @@ class Ids(models.N4SapKpi):
             'pendencia_m'       : [],
         }
             
-    def update_details(self, inc):
+    def update_details(self, inc, ids_factor):
         categoria = self.categorizar(inc)
         prazo = self.calcular_prazo(inc)
         for atrib in inc.atribuicoes:
             if atrib.mesa not in self.MESAS_CONTRATO:
                 continue
+            self.details[ 'fator_ids'      ].append(ids_factor)
             self.details[ 'id_chamado'     ].append(inc.id_chamado)
             self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
             self.details[ 'categoria'      ].append(categoria)
@@ -75,16 +78,25 @@ class Ids(models.N4SapKpi):
                 categoria = self.categorizar(inc)
                 prazo_m = self.calcular_prazo(inc)
                 duration_m = click.calc_duration_mesas(inc.id_chamado, self.MESAS_CONTRATO)
-                if duration_m < prazo_m:
+                try:
+                    if duration_m < prazo_m:
+                        continue
+                except TypeError:
+                    # TODO: add test case
+                    self.logger.error(
+                        "invalid duration -> %s or SLA -> %s for inc %s", 
+                        str(duration_m), str(inc.prazo), inc.id_chamado
+                    )
+                    self.logger.warn("skipping incident %s", inc.id_chamado)
                     continue
                 ids = math.ceil(duration_m / (180.0 * 60))
                 self.numerator   += ids
                 self.denominator += 1
-                self.update_details(inc)
+                self.update_details(inc, ids)
                 if inc.id_chamado in click.children_of:
                     for child_id in click.children_of[ inc.id_chamado ]:
                         child = click.get_incidente(child_id)
-                        self.update_details(child)
+                        self.update_details(child, None)
 
     def get_result(self):
         msg = self.get_description()

@@ -3,14 +3,16 @@ import pyclick.n4sap.models as models
 
 class Prc(models.N4SapKpi):
     
-    PRAZO_M = 135 * 60
-    SLA     = 25.0
+    KPI_NAME    = "PRC"
+    PRAZO_M     = 135 * 60
+    SLA         = 25.0
     
     def __init__(self):
         super().__init__()
         self.numerator = 0
         self.denominator = 0
         self.details = {
+            'violacao'          : [],
             'id_chamado'        : [],
             'chamado_pai'       : [],
             'categoria'         : [],
@@ -27,11 +29,12 @@ class Prc(models.N4SapKpi):
             'pendencia_m'       : [],
         }
             
-    def update_details(self, inc):
+    def update_details(self, inc, breached):
         categoria = self.categorizar(inc)
         for atrib in inc.atribuicoes:
             if atrib.mesa not in self.MESAS_NAO_PRIORITARIAS:
                 continue
+            self.details[ 'violacao'       ].append(self.BREACHED_MAPPING[ breached ])
             self.details[ 'id_chamado'     ].append(inc.id_chamado)
             self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
             self.details[ 'categoria'      ].append(categoria)
@@ -72,13 +75,14 @@ class Prc(models.N4SapKpi):
             if categoria != "CORRIGIR":
                 continue
             duration_m = click.calc_duration_mesas(inc.id_chamado, self.MESAS_NAO_PRIORITARIAS)
-            self.numerator   += (1 if duration_m > self.PRAZO_M else 0)
+            breached = duration_m > self.PRAZO_M
+            self.numerator   += (1 if breached else 0)
             self.denominator += 1
-            self.update_details(inc)
+            self.update_details(inc, breached)
             if inc.id_chamado in click.children_of:
                 for child_id in click.children_of[ inc.id_chamado ]:
                     child = click.get_incidente(child_id)
-                    self.update_details(child)
+                    self.update_details(child, breached=None)
 
     def get_result(self):
         msg = self.get_description()

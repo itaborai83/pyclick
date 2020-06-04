@@ -40,7 +40,7 @@ class Event(object):
         'id_chamado' 
     ,   'chamado_pai'
     ,   'categoria'
-    ,   'oferta_catalogo' 
+    ,   'oferta_catalogo'
     ,   'prazo_oferta_m'
     ,   'id_acao'
     ,   'acao_nome'
@@ -118,6 +118,37 @@ class Event(object):
         ,   data_fim_acao   = data_fim_acao
         ,   duracao_m       = duracao_m
         )
+    @classmethod
+    def to_df(klass, evts):
+        # TODO: add test case
+        data = {
+            'id_chamado'        : []
+        ,   'chamado_pai'       : []
+        ,   'categoria'         : []
+        ,   'oferta_catalogo'   : []
+        ,   'prazo_oferta_m'    : []
+        ,   'id_acao'           : []
+        ,   'acao_nome'         : []
+        ,   'pendencia'         : []
+        ,   'mesa_atual'        : []
+        ,   'data_acao'         : []
+        ,   'data_fim_acao'     : []
+        ,   'duracao_m'         : []
+        }
+        for evt in evts:
+            data[ 'id_chamado'      ].append(evt.id_chamado)
+            data[ 'chamado_pai'     ].append(evt.chamado_pai)
+            data[ 'categoria'       ].append(evt.categoria)
+            data[ 'oferta_catalogo' ].append(evt.oferta_catalogo)
+            data[ 'prazo_oferta_m'  ].append(evt.prazo_oferta_m)
+            data[ 'id_acao'         ].append(evt.id_acao)
+            data[ 'acao_nome'       ].append(evt.acao_nome)
+            data[ 'pendencia'       ].append(evt.pendencia)
+            data[ 'mesa_atual'      ].append(evt.mesa_atual)
+            data[ 'data_acao'       ].append(evt.data_acao)
+            data[ 'data_fim_acao'   ].append(evt.data_fim_acao)
+            data[ 'duracao_m'       ].append(evt.duracao_m)
+        return pd.DataFrame(data)
         
 class Acao(object):
     

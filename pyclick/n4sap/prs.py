@@ -2,14 +2,16 @@ import pandas as pd
 import pyclick.n4sap.models as models        
 
 class Prs(models.N4SapKpi):
-       
-    SLA     = 10.0
+    
+    KPI_NAME    = "PRS"
+    SLA         = 10.0
     
     def __init__(self):
         super().__init__()
         self.numerator = 0
         self.denominator = 0
         self.details = {
+            'violacao'          : [],
             'id_chamado'        : [],
             'chamado_pai'       : [],
             'categoria'         : [],
@@ -26,11 +28,12 @@ class Prs(models.N4SapKpi):
             'pendencia_m'       : [],
         }
             
-    def update_details(self, inc):
+    def update_details(self, inc, breached):
         categoria = self.categorizar(inc)
         for atrib in inc.atribuicoes:
             if atrib.mesa not in self.MESAS_NAO_PRIORITARIAS:
                 continue
+            self.details[ 'violacao'       ].append(self.BREACHED_MAPPING[ breached ])
             self.details[ 'id_chamado'     ].append(inc.id_chamado)
             self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
             self.details[ 'categoria'      ].append(categoria)
@@ -69,13 +72,23 @@ class Prs(models.N4SapKpi):
                 continue
             assert self.categorizar(inc) == "ATENDER"
             duration_m = click.calc_duration_mesas(inc.id_chamado, self.MESAS_NAO_PRIORITARIAS)
-            self.numerator   += (1 if duration_m > inc.prazo else 0)
+            try:
+                breached = duration_m > inc.prazo
+                self.numerator   += (1 if breached else 0)
+            except TypeError:
+                # TODO: add test case
+                self.logger.error(
+                    "invalid duration -> %s or SLA -> %s for inc %s",
+                    str(duration_m), str(inc.prazo), inc.id_chamado
+                )
+                self.logger.warn("skipping incident %s", inc.id_chamado)
+                breached = False
             self.denominator += 1
-            self.update_details(inc)
+            self.update_details(inc, breached)
             if inc.id_chamado in click.children_of:
                 for child_id in click.children_of[ inc.id_chamado ]:
                     child = click.get_incidente(child_id)
-                    self.update_details(child)
+                    self.update_details(child, breached=None)
             
     def get_result(self):
         msg = self.get_description()

@@ -6,11 +6,17 @@ import pandas as pd
 import sqlite3
 import logging
 
+import pyclick.models as models
+import pyclick.repo as repo
 import pyclick.util as util
 import pyclick.config as config
+
 import pyclick.n4sap.config as n4_config
-import pyclick.kpis as kpis
-from pyclick.n4sap.kpis import PrpHandler
+from pyclick.n4sap.prp import Prp
+from pyclick.n4sap.pro import Pro
+from pyclick.n4sap.prc import Prc
+from pyclick.n4sap.prs import Prs
+from pyclick.n4sap.ids import Ids
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -29,36 +35,88 @@ class App(object):
         conn = sqlite3.connect(result_db)
         return conn
     
-    def get_actions(self, conn):
-        logger.info('retrieving actions')
-        sql = "SELECT * FROM VW_REL_MEDICAO ORDER BY DATA_INICIO_ACAO, ID_CHAMADO, ID_ACAO"
-        df = pd.read_sql(sql, conn)
-        return df
-       
-    def compute_kpis(self, conn, df, xw):
-        logger.info('calculating KPI\'s')
-        f = None #lambda row: row.ID_CHAMADO == '400982'
-        kpi_runner = kpis.Runner(f)
-        prp_handler = PrpHandler()
-        kpi_runner.add_handler(prp_handler)
-        kpi_runner.run(df)
-        prp_handler.write_details('PRP_DETALHES', xw)
-        
+    def load_click(self, r):
+        logger.info('loading click data model')
+        click = models.Click()
+        evts = r.load_events()
+        for i, evt in enumerate(evts):
+            if (i + 1) % 10000 == 0:
+                logger.info("%d events loaded so far", i+1)
+            click.update(evt)
+        logger.info("%d events loaded in total", len(evts))
+        return click, models.Event.to_df(evts)
+    
+    def load_relatorio_medicao(self, r):
+        logger.info('loading relatório medição')
+        return r.load_relatorio_medicao()
+   
     def open_spreadsheet(self):
         logger.info("opening KPI spreadsheet")
         ks = os.path.join(self.dir_apuracao, "__" + n4_config.KPI_SPREADSHEET)
         if os.path.exists(ks):
             logger.warning("KPI spreadsheet already exists. Deleting it")
             os.unlink(ks)
-        return pd.ExcelWriter(ks, datetime_format=None)
-            
+        return pd.ExcelWriter(ks, datetime_format=None)   
+    
+    def compute_kpis(self, click, xw):
+        logger.info('calculating KPI\'s')
+        summary = {
+            'INDICADOR' : []
+        ,   'VALOR'     : []    
+        ,   'SLA'       : []
+        ,   'OBS'       : []
+        }
+        prp = Prp()
+        pro = Pro()
+        prc = Prc()
+        prs = Prs()
+        ids = Ids()
+        
+        logger.info('computing PRP')
+        prp.evaluate(click)
+        prp.update_summary(summary)
+        prp_details_df = prp.get_details()
+        
+        logger.info('computing PRO')
+        pro.evaluate(click)
+        pro.update_summary(summary)
+        pro_details_df = pro.get_details()
+        
+        logger.info('computing PRC')
+        prc.evaluate(click)
+        prc.update_summary(summary)
+        prc_details_df = prc.get_details()
+        
+        logger.info('computing PRS')
+        prs.evaluate(click)
+        prs.update_summary(summary)
+        prs_details_df = prs.get_details()
+        
+        logger.info('computing IDS')
+        ids.evaluate(click)
+        ids.update_summary(summary)
+        ids_details_df = ids.get_details()
+        
+        logger.info('writing summary table')
+        df_summary = pd.DataFrame(summary)
+        df_summary.to_excel(xw, sheet_name="INDICADORES", index=False)
+        logger.info('writing KPI details')
+        prp_details_df.to_excel(xw, sheet_name="PRP_DETALHES", index=False)
+        pro_details_df.to_excel(xw, sheet_name="PRO_DETALHES", index=False)
+        prc_details_df.to_excel(xw, sheet_name="PRC_DETALHES", index=False)
+        prs_details_df.to_excel(xw, sheet_name="PRS_DETALHES", index=False)
+        ids_details_df.to_excel(xw, sheet_name="IDS_DETALHES", index=False)
+
     def run(self):
         try:
             logger.info('starting geração indicadores - version %d.%d.%d', *self.VERSION)
             conn = self.connect_db()
-            df = self.get_actions(conn)
+            r = repo.Repo(conn)
+            click, events_df = self.load_click(r)
+            df_rel_medicao = self.load_relatorio_medicao(r)
             with self.open_spreadsheet() as xw:
-                self.compute_kpis(conn, df, xw)
+                events_df.to_excel(xw, sheet_name="EVENTOS_MEDICAO", index=False)
+                self.compute_kpis(click, xw)
             logger.info('finished')
         except:
             logger.exception('an error has occurred')
