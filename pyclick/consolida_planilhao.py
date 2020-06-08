@@ -286,6 +286,7 @@ class App(object):
         conn.execute(sql, args)
         sql = "INSERT INTO PARAMS(PARAM, VALOR, OBS) VALUES ('HORA_FIM_APURACAO',    ?, 'Data Fim da Apuração')"
         args = self.end_date + ' 23:59:59',
+        conn.execute(sql, args)
         conn.commit()
 
     def sanity_check(self, conn):
