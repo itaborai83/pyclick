@@ -17,6 +17,7 @@ class Prp(models.N4SapKpi):
             'chamado_pai'       : [],
             'categoria'         : [],
             'prazo'             : [],
+            'duracao'           : [],
             'ultima_mesa'       : [],
             'ultimo_status'     : [],
             'atribuicao'        : [],
@@ -29,7 +30,7 @@ class Prp(models.N4SapKpi):
             'pendencia_m'       : [],
         }
             
-    def update_details(self, inc, breached):
+    def update_details(self, inc, duration_m, breached):
         categoria = self.categorizar(inc)
         for atrib in inc.atribuicoes:
             if atrib.mesa != self.MESA_PRIORIDADE:
@@ -39,6 +40,7 @@ class Prp(models.N4SapKpi):
             self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
             self.details[ 'categoria'      ].append(categoria)
             self.details[ 'prazo'          ].append(inc.prazo)
+            self.details[ 'duracao'        ].append(duration_m)
             self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
             self.details[ 'ultimo_status'  ].append(inc.status)
             self.details[ 'atribuicao'     ].append(atrib.seq)
@@ -77,11 +79,11 @@ class Prp(models.N4SapKpi):
             breached = duration_m > self.PRAZO_M
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
-            self.update_details(inc, breached)
+            self.update_details(inc, duration_m, breached)
             if inc.id_chamado in click.children_of:
                 for child_id in click.children_of[ inc.id_chamado ]:
                     child = click.get_incidente(child_id)
-                    self.update_details(child, breached=None)
+                    self.update_details(child, duration_m, breached=None)
 
     def get_result(self):
         msg = self.get_description()
@@ -90,4 +92,27 @@ class Prp(models.N4SapKpi):
         else:
             result = 100.0 * (self.numerator / self.denominator)
             return result, msg
+            
+
+class PrpV2(Prp):
+        
+    def __init__(self):
+        super().__init__()
+            
+    def update_details(self, inc, duration_m, breached):
+        assert not inc.id_chamado.startswith('S')
+        super().update_details(inc, duration_m, breached)
+                        
+    def evaluate(self, click):
+        mesa = click.get_mesa(self.MESA_PRIORIDADE)
+        if mesa is None:
+            return
+        for inc in mesa.get_seen_incidentes():
+            if inc.id_chamado.startswith("S"):
+                continue
+            duration_m = click.calc_duration_mesas(inc.id_chamado, [ self.MESA_PRIORIDADE ])
+            breached = duration_m > self.PRAZO_M
+            self.numerator   += (1 if breached else 0)
+            self.denominator += 1
+            self.update_details(inc, duration_m, breached)
             

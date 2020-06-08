@@ -17,6 +17,7 @@ class Pro(models.N4SapKpi):
             'chamado_pai'       : [],
             'categoria'         : [],
             'prazo'             : [],
+            'duracao'           : [],
             'ultima_mesa'       : [],
             'ultimo_status'     : [],
             'atribuicao'        : [],
@@ -29,7 +30,7 @@ class Pro(models.N4SapKpi):
             'pendencia_m'       : [],
         }
             
-    def update_details(self, inc, breached):
+    def update_details(self, inc, duration_m, breached):
         categoria = self.categorizar(inc)
         for atrib in inc.atribuicoes:
             if atrib.mesa not in self.MESAS_NAO_PRIORITARIAS:
@@ -39,6 +40,7 @@ class Pro(models.N4SapKpi):
             self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
             self.details[ 'categoria'      ].append(categoria)
             self.details[ 'prazo'          ].append(self.PRAZO_M)
+            self.details[ 'duracao'        ].append(duration_m)
             self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
             self.details[ 'ultimo_status'  ].append(inc.status)
             self.details[ 'atribuicao'     ].append(atrib.seq)
@@ -78,11 +80,11 @@ class Pro(models.N4SapKpi):
             breached = duration_m > self.PRAZO_M
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
-            self.update_details(inc, breached)
+            self.update_details(inc, duration_m, breached)
             if inc.id_chamado in click.children_of:
                 for child_id in click.children_of[ inc.id_chamado ]:
                     child = click.get_incidente(child_id)
-                    self.update_details(child, breached=None)
+                    self.update_details(child, duration_m, breached=None)
 
     def get_result(self):
         msg = self.get_description()

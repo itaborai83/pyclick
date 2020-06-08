@@ -12,11 +12,11 @@ import pyclick.util as util
 import pyclick.config as config
 
 import pyclick.n4sap.config as n4_config
-from pyclick.n4sap.prp import Prp
+from pyclick.n4sap.prp import PrpV2 as Prp
 from pyclick.n4sap.pro import Pro
 from pyclick.n4sap.prc import Prc
-from pyclick.n4sap.prs import Prs
-from pyclick.n4sap.ids import Ids
+from pyclick.n4sap.prs import PrsV2 as Prs
+from pyclick.n4sap.ids import IdsV2 as Ids
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 

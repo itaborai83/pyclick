@@ -16,6 +16,7 @@ class Prs(models.N4SapKpi):
             'chamado_pai'       : [],
             'categoria'         : [],
             'prazo'             : [],
+            'duracao'           : [],
             'ultima_mesa'       : [],
             'ultimo_status'     : [],
             'atribuicao'        : [],
@@ -28,7 +29,7 @@ class Prs(models.N4SapKpi):
             'pendencia_m'       : [],
         }
             
-    def update_details(self, inc, breached):
+    def update_details(self, inc, duration_m, breached):
         categoria = self.categorizar(inc)
         for atrib in inc.atribuicoes:
             if atrib.mesa not in self.MESAS_NAO_PRIORITARIAS:
@@ -38,6 +39,7 @@ class Prs(models.N4SapKpi):
             self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
             self.details[ 'categoria'      ].append(categoria)
             self.details[ 'prazo'          ].append(inc.prazo)
+            self.details[ 'duracao'        ].append(duration_m)
             self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
             self.details[ 'ultimo_status'  ].append(inc.status)
             self.details[ 'atribuicao'     ].append(atrib.seq)
@@ -84,11 +86,11 @@ class Prs(models.N4SapKpi):
                 self.logger.warn("skipping incident %s", inc.id_chamado)
                 breached = False
             self.denominator += 1
-            self.update_details(inc, breached)
+            self.update_details(inc, duration_m, breached)
             if inc.id_chamado in click.children_of:
                 for child_id in click.children_of[ inc.id_chamado ]:
                     child = click.get_incidente(child_id)
-                    self.update_details(child, breached=None)
+                    self.update_details(child, duration_m, breached=None)
             
     def get_result(self):
         msg = self.get_description()
@@ -98,3 +100,34 @@ class Prs(models.N4SapKpi):
             result = 100.0 * (self.numerator / self.denominator)
             return result, msg
             
+
+class PrsV2(Prs):
+        
+    def __init__(self):
+        super().__init__()
+            
+    def update_details(self, inc, duration_m, breached):
+        assert not inc.id_chamado.startswith('S')
+        super().update_details(inc, duration_m, breached)            
+            
+    def evaluate(self, click):
+        for inc in click.get_incidentes():
+            if not inc.id_chamado.startswith("T"):
+                continue
+            if not inc.possui_atribuicoes(self.MESAS_NAO_PRIORITARIAS):
+                continue
+                assert self.categorizar(inc) == "ATENDER - TAREFA"
+            duration_m = click.calc_duration_mesas(inc.id_chamado, self.MESAS_NAO_PRIORITARIAS)
+            try:
+                breached = duration_m > inc.prazo
+                self.numerator   += (1 if breached else 0)
+            except TypeError:
+                # TODO: add test case
+                self.logger.error(
+                    "invalid duration -> %s or SLA -> %s for inc %s",
+                    str(duration_m), str(inc.prazo), inc.id_chamado
+                )
+                self.logger.warn("skipping incident %s", inc.id_chamado)
+                breached = False
+            self.denominator += 1
+            self.update_details(inc, duration_m, breached)
