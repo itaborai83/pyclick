@@ -19,4 +19,9 @@ class RepoN4(repo.Repo):
         sql = "SELECT * FROM VW_TEMPO_PENDENCIAS_MESAS"
         return  pd.read_sql(sql, self.conn)
         
-    
+    def get_period(self):
+        sql = "SELECT VALOR FROM PARAMS WHERE PARAM = 'HORA_INICIO_APURACAO'"
+        start_dt = self.conn.execute(sql).fetchone()[ 0 ]
+        sql = "SELECT VALOR FROM PARAMS WHERE PARAM = 'HORA_FIM_APURACAO'"
+        end_dt = self.conn.execute(sql).fetchone()[ 0 ]
+        return start_dt, end_dt

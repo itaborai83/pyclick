@@ -7,6 +7,8 @@ class TestPrp(unittest.TestCase):
     def setUp(self):
         self.click = Click()
         self.prp = PrpV2()
+        self.start_dt = '2020-04-26 00:00:00'
+        self.end_dt = '2020-05-26 00:00:00'
         self.closed_inc_evts = Event.parse_events(r"""
             400982		ORIENTAR	Dúvida sobre o serviço	99960	7322803	Atribuição interna	N	N1-SD2_SAP	2020-04-16 16:09:32	2020-04-16 16:09:32	0
             400982		ORIENTAR	Dúvida sobre o serviço	99960	7322804	Atribuir ao Fornecedor	N	N1-SD2_SAP	2020-04-16 16:09:32	2020-04-16 16:20:18	11
@@ -203,21 +205,42 @@ class TestPrp(unittest.TestCase):
             T465904	S251254	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8598958	Resolver	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 09:55:13		0        
         """)
         
-        self.incident_529914_evts = Event.parse_events(r"""
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9435687	Atribuição interna	N	N1-SD2_SAP	2020-05-17 02:06:53	2020-05-17 02:06:53	0
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9435688	Atribuir ao Fornecedor	N	N1-SD2_SAP	2020-05-17 02:06:53	2020-05-17 02:11:45	5
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9435719	Pendência de TIC	S	N1-SD2_SAP	2020-05-17 02:11:45	2020-05-17 02:12:03	1
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9435722	Atribuição interna	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-17 02:12:03	2020-05-17 02:12:03	0
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9435724	Atribuir ao Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-17 02:12:03	2020-05-18 09:06:20	1854
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9464121	Atribuição interna	S	N4-SAP-SUSTENTACAO-CORPORATIVO	2020-05-18 09:06:20	2020-05-18 09:06:20	0
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9464125	Atribuir ao Fornecedor	S	N4-SAP-SUSTENTACAO-CORPORATIVO	2020-05-18 09:06:20	2020-05-18 11:39:07	153
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9494047	Atribuição interna	S	N4-SAP-SUSTENTACAO-CORPORATIVO	2020-05-18 11:39:07	2020-05-18 11:39:31	0
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9494164	Pendência de TIC	S	N4-SAP-SUSTENTACAO-CORPORATIVO	2020-05-18 11:39:31	2020-05-18 11:40:07	1
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9494300	Campos alterados	S	N4-SAP-SUSTENTACAO-CORPORATIVO	2020-05-18 11:40:07	2020-05-22 17:53:59	2533
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9950053	Resolver	S	N4-SAP-SUSTENTACAO-CORPORATIVO	2020-05-22 17:53:59	2020-05-24 17:58:00	0
-            529914		ORIENTAR	Suporte ao serviço de SAP	540	9989341	Encerrar	S	N4-SAP-SUSTENTACAO-CORPORATIVO	2020-05-24 17:58:00		0
+        self.incident_S207728_evts = Event.parse_events(r"""
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6716525	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-09 12:04:38	2020-04-09 12:04:38	0
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6716527	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-09 12:04:38	2020-04-09 12:04:42	0
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6716529	Campo do formulário alterado	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-09 12:04:42	2020-04-09 12:08:37	4
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6717085	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-09 12:08:37	2020-04-09 14:17:51	129
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6732195	Campos alterados	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-09 14:17:51	2020-04-09 14:19:05	2
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6732379	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-09 14:19:05	2020-04-09 14:19:05	0
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6732381	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-09 14:19:05	2020-04-09 19:15:47	296
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6772568	Atribuição interna	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-04-09 19:15:47	2020-04-09 19:15:47	0
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6772571	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-04-09 19:15:47	2020-04-13 08:54:14	0
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6904291	Campos alterados	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-04-13 08:54:14	2020-04-13 17:40:54	520
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	6997073	Atribuição interna	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-04-13 17:40:54	2020-04-17 15:31:18	2031
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	7418033	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-04-17 15:31:18	2020-04-17 15:31:18	0
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	7418035	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-ESCALADOS	2020-04-17 15:31:18	2020-05-05 13:37:01	5286
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	8533124	Pendência Sanada	S	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-05 13:37:01	2020-05-05 13:37:01	0
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	8533125	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-05 13:37:01	2020-05-22 15:40:53	7143
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	9932947	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-22 15:40:53	2020-05-22 15:40:54	0
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	9932950	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-22 15:40:54	2020-05-25 18:39:57	680
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	10083353	Pendência Sanada	S	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-25 18:39:57	2020-05-25 18:39:58	0
+            S207728		ATENDER-PESO30-120H	MM - Outros	2700	10083354	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-25 18:39:58		540
+            T369882	S207728	Execução	MM - Outros	2700	6716567	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-09 12:04:48	2020-04-09 12:04:48	0
+            T369882	S207728	Execução	MM - Outros	2700	6716569	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-09 12:04:48	2020-04-09 12:08:37	4
+            T369882	S207728	Execução	MM - Outros	2700	6717096	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-09 12:08:37	2020-04-09 14:19:05	131
+            T369882	S207728	Execução	MM - Outros	2700	6732385	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-09 14:19:05	2020-04-09 14:19:05	0
+            T369882	S207728	Execução	MM - Outros	2700	6732389	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-09 14:19:05	2020-04-14 10:32:51	6973
+            T369882	S207728	Execução	MM - Outros	2700	7050175	Atribuição interna	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-04-14 10:32:51	2020-04-14 10:32:51	0
+            T369882	S207728	Execução	MM - Outros	2700	7050178	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-04-14 10:32:51	2020-05-22 15:40:46	14348
+            T369882	S207728	Execução	MM - Outros	2700	9932925	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-22 15:40:46	2020-05-22 15:40:47	0
+            T369882	S207728	Execução	MM - Outros	2700	9932930	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-22 15:40:47	2020-05-25 18:39:50	680
+            T369882	S207728	Execução	MM - Outros	2700	10083344	Pendência Sanada	S	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-25 18:39:50	2020-05-25 18:39:52	0
+            T369882	S207728	Execução	MM - Outros	2700	10083347	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-25 18:39:52	2020-05-25 18:42:10	0
+            T369882	S207728	Execução	MM - Outros	2700	10083463	Resolver	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-25 18:42:10	2020-05-25 18:42:10	0
+            T369882	S207728	Execução	MM - Outros	2700	10083467	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-25 18:42:10		540
         """)
         
+
         self.events = self.closed_inc_evts                                \
         +             self.violated_closed_inc_evts                       \
         +             self.solved_inc_events                              \
@@ -240,7 +263,7 @@ class TestPrp(unittest.TestCase):
     def test_it_computes_the_kpi_for_a_closed_incident(self):
         for evt in self.closed_inc_evts:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -248,7 +271,7 @@ class TestPrp(unittest.TestCase):
     def test_it_computes_the_kpi_for_a_closed_incident_that_violated_the_sla(self):
         for evt in self.violated_closed_inc_evts:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -256,7 +279,7 @@ class TestPrp(unittest.TestCase):
     def test_it_computes_the_kpi_for_solved_inc_events(self):
         for evt in self.solved_inc_events:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -264,7 +287,7 @@ class TestPrp(unittest.TestCase):
     def test_it_computes_the_kpi_for_solved_inc_events_that_violated_the_sla(self):
         for evt in self.violated_solved_inc_events:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -272,7 +295,7 @@ class TestPrp(unittest.TestCase):
     def test_it_computes_the_kpi_for_cancelles_inc_events(self):
         for evt in self.cancelled_inc_events:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -280,7 +303,7 @@ class TestPrp(unittest.TestCase):
     def test_it_computes_the_kpi_for_cancelles_inc_events_that_violated_the_sla(self):
         for evt in self.violated_cancelled_inc_events:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -288,7 +311,7 @@ class TestPrp(unittest.TestCase):
     def test_it_compute_the_kpi_for_deprioritized_inc_events(self):
         for evt in self.deprioritized_inc_events:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)    
@@ -296,7 +319,7 @@ class TestPrp(unittest.TestCase):
     def test_it_compute_the_kpi_for_deprioritized_inc_events_that_violated_the_sla(self):
         for evt in self.violated_deprioritized_inc_events:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -304,7 +327,7 @@ class TestPrp(unittest.TestCase):
     def test_it_computes_the_kpi_for_service_requests_and_their_tasks(self):
         for evt in self.service_request_and_task_inc_events:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -312,23 +335,23 @@ class TestPrp(unittest.TestCase):
     def test_it_computes_the_kpi_for_service_requests_and_their_tasks_that_violated_the_sla(self):
         for evt in self.violated_service_request_and_task_inc_events:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
 
-    def test_it_computes_the_kpi_for_incident_364680(self):
-        for evt in self.incident_529914_evts:
+    def test_it_does_not_consider_assignments_prior_the_period(self):
+        for evt in self.incident_S207728_evts:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
-        self.assertEqual(0.0, kpi)
-        self.assertEqual("0 violações / 1 incidentes", observation)
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente peso 35 processado", observation)
 
     def test_it_computes_the_kpi(self):
         for evt in self.events:
             self.click.update(evt)
-        self.prp.evaluate(self.click)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
         self.assertEqual(50.0, kpi)
         self.assertEqual("5 violações / 10 incidentes", observation)

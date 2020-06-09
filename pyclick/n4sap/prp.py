@@ -66,14 +66,22 @@ class Prp(models.N4SapKpi):
         else:
             msg = f"{self.numerator} violações / {self.denominator} incidentes"
         return msg
+
+    def has_assignment_within_period(self, inc, start_dt, end_dt):
+        for atrib in inc.get_atribuicoes_mesas([ self.MESA_PRIORIDADE ]):
+            if atrib.intersects_with(start_dt, end_dt):
+                return True
+        return False
         
-    def evaluate(self, click):
+    def evaluate(self, click, start_dt, end_dt):
         super().evaluate(click)
         mesa = click.get_mesa(self.MESA_PRIORIDADE)
         if mesa is None:
             return
         for inc in mesa.get_seen_incidentes():
             if inc.id_chamado.startswith("T"):
+                continue
+            if not self.has_assignment_within_period(inc, start_dt, end_dt):
                 continue
             duration_m = click.calc_duration_mesas(inc.id_chamado, [ self.MESA_PRIORIDADE ])
             breached = duration_m > self.PRAZO_M
@@ -102,13 +110,21 @@ class PrpV2(Prp):
     def update_details(self, inc, duration_m, breached):
         assert not inc.id_chamado.startswith('S')
         super().update_details(inc, duration_m, breached)
-                        
-    def evaluate(self, click):
+    
+    def has_assignment_within_period(self, inc, start_dt, end_dt):
+        for atrib in inc.get_atribuicoes_mesas([ self.MESA_PRIORIDADE ]):
+            if atrib.intersects_with(start_dt, end_dt):
+                return True
+        return False
+        
+    def evaluate(self, click, start_dt, end_dt):
         mesa = click.get_mesa(self.MESA_PRIORIDADE)
         if mesa is None:
             return
         for inc in mesa.get_seen_incidentes():
             if inc.id_chamado.startswith("S"):
+                continue
+            if not self.has_assignment_within_period(inc, start_dt, end_dt):
                 continue
             duration_m = click.calc_duration_mesas(inc.id_chamado, [ self.MESA_PRIORIDADE ])
             breached = duration_m > self.PRAZO_M

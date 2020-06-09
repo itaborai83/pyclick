@@ -39,12 +39,13 @@ class App(object):
         logger.info('loading click data model')
         click = models.Click()
         evts = r.load_events()
+        start_dt, end_dt = r.get_period()
         for i, evt in enumerate(evts):
             if (i + 1) % 10000 == 0:
                 logger.info("%d events loaded so far", i+1)
             click.update(evt)
         logger.info("%d events loaded in total", len(evts))
-        return click, models.Event.to_df(evts)
+        return click, models.Event.to_df(evts), start_dt, end_dt
     
     def load_relatorio_medicao(self, r):
         logger.info('loading relatório medição')
@@ -58,7 +59,7 @@ class App(object):
             os.unlink(ks)
         return pd.ExcelWriter(ks, datetime_format=None)   
     
-    def compute_kpis(self, click, xw):
+    def compute_kpis(self, click, xw, start_dt, end_dt):
         logger.info('calculating KPI\'s')
         summary = { 'INDICADOR': [], 'VALOR': [], 'SLA': [], 'OBS': [] }
         prp = Prp()
@@ -68,7 +69,7 @@ class App(object):
         ids = Ids()
         
         logger.info('computing PRP')
-        prp.evaluate(click)
+        prp.evaluate(click, start_dt, end_dt)
         prp.update_summary(summary)
         prp_details_df = prp.get_details()
         
@@ -117,11 +118,11 @@ class App(object):
             logger.info('starting geração indicadores - version %d.%d.%d', *self.VERSION)
             conn = self.connect_db()
             r = repo.RepoN4(conn)
-            click, events_df = self.load_click(r)
+            click, events_df, start_dt, end_dt = self.load_click(r)
             df_rel_medicao = self.load_relatorio_medicao(r)
             with self.open_spreadsheet() as xw:
                 events_df.to_excel(xw, sheet_name="EVENTOS_MEDICAO", index=False)
-                self.compute_kpis(click, xw)
+                self.compute_kpis(click, xw, start_dt, end_dt)
                 self.write_business_times(r, xw)
                 self.write_pending_times(r, xw)
             logger.info('finished')

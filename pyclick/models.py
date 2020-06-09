@@ -1,5 +1,6 @@
 import pandas as pd
 import pyclick.util as util
+import pyclick.ranges as ranges
 
 STATUS_MAPPING = {
     'Atribuição interna'                                    : 'ABERTO',
@@ -234,6 +235,14 @@ class Atribuicao(object):
         else:
             assert 1 == 2 # should not happen
     
+    def intersects_with(self, start_dt, end_dt):
+        r1 = ranges.Range(start_dt, end_dt)
+        if self.saida is None:
+            r2 = ranges.Range(self.entrada, '9999-12-31 23:59:59')
+        else:
+            r2 = ranges.Range(self.entrada, self.saida)
+        return r1.overlaps_with(r2)
+        
     @classmethod
     def build_from(klass, seq, acao):
         return klass(
