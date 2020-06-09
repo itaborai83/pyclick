@@ -7,9 +7,9 @@ import sqlite3
 import logging
 
 import pyclick.models as models
-import pyclick.repo as repo
 import pyclick.util as util
 import pyclick.config as config
+import pyclick.n4sap.repo as repo
 
 import pyclick.n4sap.config as n4_config
 from pyclick.n4sap.prp import PrpV2 as Prp
@@ -60,12 +60,7 @@ class App(object):
     
     def compute_kpis(self, click, xw):
         logger.info('calculating KPI\'s')
-        summary = {
-            'INDICADOR' : []
-        ,   'VALOR'     : []    
-        ,   'SLA'       : []
-        ,   'OBS'       : []
-        }
+        summary = { 'INDICADOR': [], 'VALOR': [], 'SLA': [], 'OBS': [] }
         prp = Prp()
         pro = Pro()
         prc = Prc()
@@ -107,16 +102,28 @@ class App(object):
         prs_details_df.to_excel(xw, sheet_name="PRS_DETALHES", index=False)
         ids_details_df.to_excel(xw, sheet_name="IDS_DETALHES", index=False)
 
+    def write_business_times(self, repo, xw):
+        logger.info("exporting tempo útil mesas")
+        df = repo.get_business_times()
+        df.to_excel(xw, sheet_name="TEMPO_UTIL", index=False)
+
+    def write_pending_times(self, repo, xw):
+        logger.info("exporting tempo pendências mesas")
+        df = repo.get_pending_times()
+        df.to_excel(xw, sheet_name="TEMPO_PENDENTE", index=False)
+
     def run(self):
         try:
             logger.info('starting geração indicadores - version %d.%d.%d', *self.VERSION)
             conn = self.connect_db()
-            r = repo.Repo(conn)
+            r = repo.RepoN4(conn)
             click, events_df = self.load_click(r)
             df_rel_medicao = self.load_relatorio_medicao(r)
             with self.open_spreadsheet() as xw:
                 events_df.to_excel(xw, sheet_name="EVENTOS_MEDICAO", index=False)
                 self.compute_kpis(click, xw)
+                self.write_business_times(r, xw)
+                self.write_pending_times(r, xw)
             logger.info('finished')
         except:
             logger.exception('an error has occurred')
