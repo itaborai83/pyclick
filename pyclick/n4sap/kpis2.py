@@ -112,7 +112,12 @@ class App(object):
         logger.info("exporting tempo pendências mesas")
         df = repo.get_pending_times()
         df.to_excel(xw, sheet_name="TEMPO_PENDENTE", index=False)
-
+    
+    def write_surveys(self, repo, xw):
+        logger.info("exporting tempo pendências mesas")
+        df = repo.get_surveys()
+        df.to_excel(xw, sheet_name="PESQUISA_SATISFACAO", index=False)
+        
     def run(self):
         try:
             logger.info('starting geração indicadores - version %d.%d.%d', *self.VERSION)
@@ -125,6 +130,7 @@ class App(object):
                 self.compute_kpis(click, xw, start_dt, end_dt)
                 self.write_business_times(r, xw)
                 self.write_pending_times(r, xw)
+                self.write_surveys(r, xw)
             logger.info('finished')
         except:
             logger.exception('an error has occurred')

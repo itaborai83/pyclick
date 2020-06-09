@@ -1,5 +1,6 @@
 CSV_SEPARATOR               = ";"
 INCIDENT_TABLE              = "rel_medicao"
+SURVEY_TABLE                = "pesquisas"
 MESAS_FILE                  = "mesas.txt"
 IMPORT_CLOSED_GLOB          = "202*-CLOSED.db.gz"
 IMPORT_OPEN_GLOB            = "202*-OPEN.db.gz"

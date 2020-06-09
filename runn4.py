@@ -11,10 +11,11 @@ import pyclick.config as config
 
 import pyclick.assyst.dump_schedules as dump_schedules
 import pyclick.assyst.dump_slas as dump_slas
+import pyclick.assyst.dump_surveys as dump_surveys
 import pyclick.consolida_planilhao as consolida_planilhao 
 import pyclick.n4sap.ddl as ddl
 import pyclick.n4sap.override as override
-import pyclick.n4sap.kpis as kpis
+import pyclick.n4sap.kpis2 as kpis
 import pyclick.tools.db2excel as db2excel
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
@@ -42,6 +43,7 @@ class App(object):
             logger.info('excel2db - versão %d.%d.%d', *self.VERSION)
             dump_schedules.App(self.dir_apuracao).run()
             dump_slas.App(self.dir_apuracao).run()
+            dump_surveys.App(self.dir_apuracao, self.start, self.end).run()
             consolida_planilhao.App(self.dir_apuracao, self.dir_import, self.start, self.end, False).run()
             ddl.App(self.dir_apuracao).run()
             override.App(self.dir_apuracao, truncate=False, export=False, export_missing=True, import_=False)

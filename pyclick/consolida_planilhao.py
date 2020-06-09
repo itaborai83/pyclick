@@ -41,8 +41,8 @@ class App(object):
         self.dir_apuracao       = dir_apuracao
         self.dir_import         = dir_import
         self.start_date         = start_date
-        self.end_date           = end_date
-        self.cutoff_date        = util.next_date(end_date)
+        self.end_date           = util.prior_date(end_date)
+        self.cutoff_date        = end_date
         self.datafix            = datafix
 
     def load_planilha_horarios(self):
@@ -141,6 +141,12 @@ class App(object):
         for mesa in mesas:
             conn.execute(sql, [ mesa ])
         conn.commit()
+    
+    def write_pesquisas(self, conn, df_pesquisas):
+        logger.info('salvando pesquisas de satisfação')
+        df_pesquisas.to_sql(config.SURVEY_TABLE, conn, index=False, if_exists="replace")
+        conn.commit()
+        
     def read_ofertas(self):
         logger.info('recuperando a listagem de ofertas de serviços') # Assistente de Relatórios > Catálogo de Serviços > Criar Relatório (Catálogo Completo e Prazos)
         currdir = os.getcwd()
@@ -154,7 +160,17 @@ class App(object):
             return pd.DataFrame(data)
         finally:
             os.chdir(currdir)
-    
+
+    def read_pesquisas(self):
+        logger.info('recuperando dados da planilha de pesquisas de satisfação')
+        currdir = os.getcwd()
+        try:
+            os.chdir(self.dir_apuracao)
+            df = pd.read_excel(config.SURVEYS_SPREADSHEET)
+            return df
+        finally:
+            os.chdir(currdir)
+            
     def add_dados_oferta(self, df, df_ofertas):
         logger.info('adicionando dados da oferta')
         ofertas_mapping = df_ofertas.groupby('oferta').prazo.last().to_dict()
@@ -373,6 +389,7 @@ class App(object):
             logger.info('começando a consolidação do planilhão - versão %d.%d.%d', *self.VERSION)
             mesas           = self.read_mesas()
             df_ofertas      = self.read_ofertas()
+            df_pesquisas    = self.read_pesquisas()
             horarios_mesas  = self.load_planilha_horarios()
             
             closed_dumps, open_dump = self.get_dump_files()
@@ -416,6 +433,7 @@ class App(object):
             #self.save_consolidado(df, horarios_mesas)
             conn = self.get_connection()
             self.write_mesas(conn, mesas)
+            self.write_pesquisas(conn, df_pesquisas)
             self.process_begin_sql(conn)
             self.fill_table(conn, df)
             if self.datafix:
