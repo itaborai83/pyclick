@@ -17,6 +17,7 @@ from pyclick.n4sap.pro import Pro
 from pyclick.n4sap.prc import Prc
 from pyclick.n4sap.prs import PrsV2 as Prs
 from pyclick.n4sap.ids import IdsV2 as Ids
+from pyclick.n4sap.csat import Csat
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -45,6 +46,10 @@ class App(object):
                 logger.info("%d events loaded so far", i+1)
             click.update(evt)
         logger.info("%d events loaded in total", len(evts))
+        pesquisas_df = r.get_surveys()
+        pesquisas = models.Pesquisa.from_df(pesquisas_df)
+        for pesq in pesquisas:
+            click.add_pesquisa(pesq)
         return click, models.Event.to_df(evts), start_dt, end_dt
     
     def load_relatorio_medicao(self, r):
@@ -67,6 +72,7 @@ class App(object):
         prc = Prc()
         prs = Prs()
         ids = Ids()
+        csat = Csat()
         
         logger.info('computing PRP')
         prp.evaluate(click, start_dt, end_dt)
@@ -93,6 +99,11 @@ class App(object):
         ids.update_summary(summary)
         ids_details_df = ids.get_details()
         
+        logger.info('computing CSAT')
+        csat.evaluate(click, start_dt, end_dt)
+        csat.update_summary(summary)
+        csat_details_df = csat.get_details()
+        
         logger.info('writing summary table')
         df_summary = pd.DataFrame(summary)
         df_summary.to_excel(xw, sheet_name="INDICADORES", index=False)
@@ -102,7 +113,8 @@ class App(object):
         prc_details_df.to_excel(xw, sheet_name="PRC_DETALHES", index=False)
         prs_details_df.to_excel(xw, sheet_name="PRS_DETALHES", index=False)
         ids_details_df.to_excel(xw, sheet_name="IDS_DETALHES", index=False)
-
+        csat_details_df.to_excel(xw, sheet_name="CSAT_DETALHES", index=False)
+        
     def write_business_times(self, repo, xw):
         logger.info("exporting tempo útil mesas")
         df = repo.get_business_times()
@@ -112,12 +124,7 @@ class App(object):
         logger.info("exporting tempo pendências mesas")
         df = repo.get_pending_times()
         df.to_excel(xw, sheet_name="TEMPO_PENDENTE", index=False)
-    
-    def write_surveys(self, repo, xw):
-        logger.info("exporting tempo pendências mesas")
-        df = repo.get_surveys()
-        df.to_excel(xw, sheet_name="PESQUISA_SATISFACAO", index=False)
-        
+            
     def run(self):
         try:
             logger.info('starting geração indicadores - version %d.%d.%d', *self.VERSION)
@@ -130,7 +137,6 @@ class App(object):
                 self.compute_kpis(click, xw, start_dt, end_dt)
                 self.write_business_times(r, xw)
                 self.write_pending_times(r, xw)
-                self.write_surveys(r, xw)
             logger.info('finished')
         except:
             logger.exception('an error has occurred')

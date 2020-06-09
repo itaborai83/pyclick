@@ -19,7 +19,19 @@ class RepoN4(repo.Repo):
         return pd.read_sql(sql, self.conn)
 
     def get_surveys(self):
-        sql = "SELECT * FROM PESQUISAS ORDER BY ID_PESQUISA"
+        sql = """
+            SELECT 	ID_PESQUISA
+            ,		ID_CHAMADO
+            ,		MESA_ACAO 		AS 'mesa'
+            ,		NOME_TECNICO 	AS 'tecnico'
+            ,		NOME_USUARIO 	AS 'usuario'
+            ,		DATA_RESPOSTA
+            ,		AVALIACAO
+            ,		MOTIVO
+            ,		COMENTARIO
+            FROM 	PESQUISAS
+            ORDER	BY ID_PESQUISA
+        """
         return pd.read_sql(sql, self.conn)
         
     def get_period(self):

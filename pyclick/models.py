@@ -255,7 +255,58 @@ class Atribuicao(object):
         ,   duracao_m       = (0 if acao.pendencia == 'S' else acao.duracao_m)
         ,   pendencia_m     = (0 if acao.pendencia == 'N' else acao.duracao_m)
         )
+
+class Pesquisa(object):
+
+    __slots__ = [
+        'id_pesquisa'
+    ,   'id_chamado'
+    ,   'mesa'
+    ,   'tecnico'
+    ,   'usuario'
+    ,   'data_resposta'
+    ,   'avaliacao'
+    ,   'motivo'
+    ,   'comentario'
+    ]
     
+    def __init__(self, id_pesquisa, id_chamado, mesa, tecnico, usuario, data_resposta, avaliacao, motivo, comentario):
+        self.id_pesquisa    = id_pesquisa
+        self.id_chamado     = id_chamado
+        self.mesa           = mesa
+        self.tecnico        = tecnico
+        self.usuario        = usuario
+        self.data_resposta  = data_resposta
+        self.avaliacao      = avaliacao
+        self.motivo         = motivo
+        self.comentario     = comentario
+
+    def __str__(self):
+        return util.build_str(self, self.__slots__, False)
+    
+    def __repr__(self):
+        return util.build_str(self, self.__slots__, False)
+        
+    def __eq__(self, other):
+        return util.shallow_equality_test(self, other, self.__slots__)
+    
+    @classmethod
+    def from_df(klass, df):
+        result = []
+        for row in df.itertuples():
+            result.append(klass(
+                id_pesquisa     = row.id_pesquisa
+            ,   id_chamado      = row.id_chamado
+            ,   mesa            = row.mesa
+            ,   tecnico         = row.tecnico
+            ,   usuario         = row.usuario
+            ,   data_resposta   = row.data_resposta
+            ,   avaliacao       = row.avaliacao
+            ,   motivo          = row.motivo
+            ,   comentario      = row.comentario
+            ))
+        return result
+        
 class Incidente(object):
     
     __slots__ = [
@@ -298,7 +349,7 @@ class Incidente(object):
             self.atribuicoes[ -1 ].update(self, acao)
         self.acoes.append(acao)
         self.mesas.add(acao.mesa_atual)
-        
+            
     def calc_duration(self):
         return sum([ a.duracao_m for a in self.acoes if a.pendencia =='N'])
     
@@ -311,7 +362,7 @@ class Incidente(object):
         return list([
             atrib for atrib in self.atribuicoes if atrib.mesa in mesas
         ])
-    
+        
     def possui_atribuicoes(self, mesas):
         for mesa in mesas:
             if mesa in self.mesas:
@@ -382,7 +433,8 @@ class Click(object):
         self.incidentes = {}
         self.mesas = {}
         self.children_of = {}
-    
+        self.pesquisas = []
+        
     def update_children_mapping(self, evt):
         if evt.chamado_pai is None:
             return
@@ -449,6 +501,14 @@ class Click(object):
     
     def get_incidentes(self):
         return self.incidentes.values()
+    
+    def add_pesquisa(self, pesquisa):
+        self.pesquisas.append(pesquisa)
+
+    def get_pesquisas_mesas(self, mesas):
+        return list([
+            pesq for pesq in self.pesquisas if pesq.mesa in mesas
+        ])
         
 class Kpi(object):
     
