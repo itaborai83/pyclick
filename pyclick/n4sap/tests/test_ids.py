@@ -2,12 +2,13 @@ import unittest
 from pyclick.models import *
 from pyclick.n4sap.ids import Ids
 
-class TestPro(unittest.TestCase):
+class TestIds(unittest.TestCase):
     
     def setUp(self):
         self.click = Click()
         self.ids = Ids()
-        
+        self.start_dt = '2020-04-26 00:00:00'
+        self.end_dt = '2020-05-26 00:00:00'        
         self.closed_inc_evts = Event.parse_events(r"""
             S188668		ATENDER	PS - Cadastro na YSPS_DESCONTAHRS	2700	5893881	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-31 16:23:15	2020-03-31 16:23:15	0
             S188668		ATENDER	PS - Cadastro na YSPS_DESCONTAHRS	2700	5893883	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-31 16:23:15	2020-03-31 16:23:36	0
@@ -82,7 +83,7 @@ class TestPro(unittest.TestCase):
     def test_it_does_not_compute_the_kpi_for_a_closed_incident(self):
         for evt in self.closed_inc_evts:
             self.click.update(evt)
-        self.ids.evaluate(self.click)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(None, kpi)
         self.assertEqual("Nenhum incidente aberto violando SLA", observation)
@@ -90,7 +91,7 @@ class TestPro(unittest.TestCase):
     def test_id_does_not_compute_the_kpi_for_incs_that_arent_breaching_the_sla(self):
         for evt in self.unviolated_inc_evts:
             self.click.update(evt)
-        self.ids.evaluate(self.click)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(None, kpi)
         self.assertEqual("Nenhum incidente aberto violando SLA", observation)
@@ -98,7 +99,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_open_incs_with_less_than_180h(self):    
         for evt in self.less_than_180h_inc_evts:
             self.click.update(evt)
-        self.ids.evaluate(self.click)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 ids / 1 incidentes", observation)
@@ -106,7 +107,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_open_incs_with_more_than_180h_and_less_than_360h(self):    
         for evt in self.more_than_180h_and_less_than_360h_inc_evts:
             self.click.update(evt)
-        self.ids.evaluate(self.click)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(200.0, kpi)
         self.assertEqual("2 ids / 1 incidentes", observation)
@@ -114,7 +115,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_a_service_request_with_more_than_360_and_less_than_360h(self):    
         for evt in self.service_request_with_more_than_360h_and_less_than_540h:
             self.click.update(evt)
-        self.ids.evaluate(self.click)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(300.0, kpi)
         self.assertEqual("3 ids / 1 incidentes", observation)
@@ -122,8 +123,33 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi(self):
         for evt in self.events:
             self.click.update(evt)
-        self.ids.evaluate(self.click)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(200, kpi)
         self.assertEqual("6 ids / 3 incidentes", observation)
         #self.ids.get_details().to_excel("teste.xlsx")
+    
+    def test_it_skips_incs_with_prior_assignments_and_no_current_assigment(self):
+        evts = Event.parse_events(r"""
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 00:00:00	2020-04-24 23:59:59	999961
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8541250	Atribuição interna	S	N4-SAP-XXXXXXXXXXXXXXXXXXXX	2020-04-24 23:59:59	2020-05-05 14:37:34	0
+        """)
+        for evt in evts:
+            self.click.update(evt)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
+        kpi, observation = self.ids.get_result()
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente aberto violando SLA", observation)
+
+    def test_it_skips_incs_with_prior_assignments_closed_within_period_that_are_not_the_last_group(self):
+        evts = Event.parse_events(r"""
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 00:00:00	2020-04-26 23:59:59	9999699
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8541250	Atribuição interna	N	N6-SAP-XXXXXXXXXXXXXXXXXXXX	2020-04-26 23:59:59	2020-05-05 14:37:34	0
+        """)
+        for evt in evts:
+            self.click.update(evt)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
+        kpi, observation = self.ids.get_result()
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente aberto violando SLA", observation)
+            

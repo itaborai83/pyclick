@@ -66,8 +66,14 @@ class Ids(models.N4SapKpi):
         else:
             msg = f"{self.numerator} ids / {self.denominator} incidentes"
         return msg
+
+    def has_assignment_within_period(self, inc, start_dt, end_dt):
+        for atrib in inc.get_atribuicoes_mesas(self.MESAS_NAO_PRIORITARIAS):
+            if atrib.intersects_with(start_dt, end_dt):
+                return True
+        return False
         
-    def evaluate(self, click):
+    def evaluate(self, click, start_dt, end_dt):
         super().evaluate(click)
         for mesa_name in self.MESAS_CONTRATO:
             mesa = click.get_mesa(mesa_name)
@@ -75,6 +81,8 @@ class Ids(models.N4SapKpi):
                 continue
             for inc in mesa.get_incidentes():
                 if inc.id_chamado.startswith("T"):
+                    continue
+                if not self.has_assignment_within_period(inc, start_dt, end_dt):
                     continue
                 assert inc.status == 'ABERTO'
                 categoria = self.categorizar(inc)
@@ -116,14 +124,16 @@ class IdsV2(Ids):
     def update_details(self, inc, duration_m, ids_factor):
         assert not inc.id_chamado.startswith('S')
         super().update_details(inc, duration_m, ids_factor)      
-        
-    def evaluate(self, click):
+                
+    def evaluate(self, click, start_dt, end_dt):
         for mesa_name in self.MESAS_CONTRATO:
             mesa = click.get_mesa(mesa_name)
             if mesa is None:
                 continue
             for inc in mesa.get_incidentes():
                 if inc.id_chamado.startswith("S"):
+                    continue
+                if not self.has_assignment_within_period(inc, start_dt, end_dt):
                     continue
                 assert inc.status == 'ABERTO'
                 categoria = self.categorizar(inc)

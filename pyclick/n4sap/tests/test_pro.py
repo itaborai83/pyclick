@@ -6,6 +6,8 @@ class TestPro(unittest.TestCase):
     
     def setUp(self):
         self.click = Click()
+        self.start_dt = '2020-04-26 00:00:00'
+        self.end_dt = '2020-05-26 00:00:00'
         self.pro = Pro()
         self.closed_inc_evts = Event.parse_events(r"""
             447752		ORIENTAR	Dúvida sobre o serviço	99960	8117232	Atribuição interna	N	N1-SD2_EMAIL	2020-04-28 23:32:02	2020-04-28 23:32:02	0
@@ -112,38 +114,38 @@ class TestPro(unittest.TestCase):
         """)
 
         self.prioritized_inc_events = Event.parse_events(r"""
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7646918	Atribuição interna	N	N1-SD2_SAP	2020-04-22 11:22:38	2020-04-22 11:22:38	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7646920	Atribuir ao Fornecedor	N	N1-SD2_SAP	2020-04-22 11:22:38	2020-04-22 11:49:58	27
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7652041	Campos alterados	N	N1-SD2_SAP	2020-04-22 11:49:58	2020-04-22 11:50:21	1
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7652111	Atribuição interna	N	N2-SD2_SAP_SERV	2020-04-22 11:50:21	2020-04-22 11:50:21	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7652114	Atribuir ao Fornecedor	N	N2-SD2_SAP_SERV	2020-04-22 11:50:21	2020-04-22 11:58:20	8
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7653318	Atribuição interna	N	N2-SD2_SAP_SERV	2020-04-22 11:58:20	2020-04-22 12:00:17	2
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7653676	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-22 12:00:17	2020-04-22 12:00:17	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7653678	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-22 12:00:17	2020-04-22 12:05:20	5
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7654458	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-22 12:05:20	2020-04-24 10:07:55	962
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7796121	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 10:07:55	2020-04-24 10:07:55	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7796123	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 10:07:55	2020-04-24 10:08:17	1
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7796186	Campos alterados	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 10:08:17	2020-04-24 15:01:29	293
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7838004	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 15:01:29	2020-04-24 15:01:30	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7838006	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 15:01:30	2020-04-24 17:15:41	134
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7859928	Iniciar Atendimento	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 17:15:41	2020-04-24 17:15:42	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7859930	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 17:15:42	2020-04-24 17:19:11	4
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7860239	Atribuição interna	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-04-24 17:19:11	2020-04-24 17:19:11	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7860242	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-04-24 17:19:11	2020-04-24 17:25:14	6
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7860887	Item alterado	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-04-24 17:25:14	2020-04-24 17:25:59	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7860959	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 17:25:59	2020-04-24 17:25:59	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7860961	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 17:25:59	2020-04-24 17:46:09	21
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7862912	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 17:46:09	2020-04-24 19:41:02	115
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7868113	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 19:41:02	2020-04-24 19:41:02	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7868114	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 19:41:02	2020-04-27 07:52:26	3611
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7918162	Retorno do usuário	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-27 07:52:26	2020-04-27 07:52:27	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7918165	Pendência Sanada	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-27 07:52:27	2020-04-27 07:52:28	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7918166	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-27 07:52:28	2020-04-27 10:11:33	139
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7939112	Resolver	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-27 10:11:33	2020-04-27 14:25:54	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7978189	Reabrir	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-27 14:25:54	2020-04-27 14:25:54	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7978190	Reaberto pelo Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-27 14:25:54	2020-04-27 15:27:04	62
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7989155	Resolver	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-27 15:27:04	2020-04-29 16:33:16	0
-            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	8197552	Encerrar	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-29 16:33:16		0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7646918	Atribuição interna	N	N1-SD2_SAP	2020-04-24 11:22:38	2020-04-24 11:22:38	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7646920	Atribuir ao Fornecedor	N	N1-SD2_SAP	2020-04-24 11:22:38	2020-04-24 11:49:58	27
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7652041	Campos alterados	N	N1-SD2_SAP	2020-04-24 11:49:58	2020-04-24 11:50:21	1
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7652111	Atribuição interna	N	N2-SD2_SAP_SERV	2020-04-24 11:50:21	2020-04-24 11:50:21	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7652114	Atribuir ao Fornecedor	N	N2-SD2_SAP_SERV	2020-04-24 11:50:21	2020-04-24 11:58:20	8
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7653318	Atribuição interna	N	N2-SD2_SAP_SERV	2020-04-24 11:58:20	2020-04-24 12:00:17	2
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7653676	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 12:00:17	2020-04-24 12:00:17	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7653678	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 12:00:17	2020-04-24 12:05:20	5
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7654458	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 12:05:20	2020-04-26 10:07:55	962
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7796121	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 10:07:55	2020-04-26 10:07:55	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7796123	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 10:07:55	2020-04-26 10:08:17	1
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7796186	Campos alterados	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 10:08:17	2020-04-26 15:01:29	293
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7838004	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 15:01:29	2020-04-26 15:01:30	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7838006	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 15:01:30	2020-04-26 17:15:41	134
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7859928	Iniciar Atendimento	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 17:15:41	2020-04-26 17:15:42	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7859930	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 17:15:42	2020-04-26 17:19:11	4
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7860239	Atribuição interna	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-04-26 17:19:11	2020-04-26 17:19:11	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7860242	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-04-26 17:19:11	2020-04-26 17:25:14	6
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7860887	Item alterado	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-04-26 17:25:14	2020-04-26 17:25:59	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7860959	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 17:25:59	2020-04-26 17:25:59	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7860961	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 17:25:59	2020-04-26 17:46:09	21
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7862912	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 17:46:09	2020-04-26 19:41:02	115
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7868113	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 19:41:02	2020-04-26 19:41:02	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7868114	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-26 19:41:02	2020-04-29 07:52:26	3611
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7918162	Retorno do usuário	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-29 07:52:26	2020-04-29 07:52:27	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7918165	Pendência Sanada	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-29 07:52:27	2020-04-29 07:52:28	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7918166	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-29 07:52:28	2020-04-29 10:11:33	139
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7939112	Resolver	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-29 10:11:33	2020-04-29 14:25:54	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7978189	Reabrir	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-29 14:25:54	2020-04-29 14:25:54	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7978190	Reaberto pelo Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-29 14:25:54	2020-04-29 15:27:04	62
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	7989155	Resolver	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-29 15:27:04	2020-05-01 16:33:16	0
+            418572		ORIENTAR-PESO35	Suporte ao serviço de SAP	540	8197552	Encerrar	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-01 16:33:16		0
         """)
 
         self.violated_prioritized_inc_events = Event.parse_events(r"""
@@ -238,7 +240,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_a_closed_incident(self):
         for evt in self.closed_inc_evts:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -246,7 +248,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_a_closed_incident_that_violated_the_sla(self):
         for evt in self.violated_closed_inc_evts:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -254,7 +256,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_solved_inc_events(self):
         for evt in self.solved_inc_events:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -262,7 +264,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_solved_inc_events_that_violated_the_sla(self):
         for evt in self.violated_solved_inc_events:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -270,7 +272,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_cancelles_inc_events(self):
         for evt in self.cancelled_inc_events:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -278,7 +280,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_cancelles_inc_events_that_violated_the_sla(self):
         for evt in self.violated_cancelled_inc_events:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -286,7 +288,7 @@ class TestPro(unittest.TestCase):
     def test_it_compute_the_kpi_for_prioritized_inc_events(self):
         for evt in self.prioritized_inc_events:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -294,7 +296,7 @@ class TestPro(unittest.TestCase):
     def test_it_compute_the_kpi_for_prioritized_inc_events_that_violated_the_sla(self):
         for evt in self.violated_prioritized_inc_events:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -302,7 +304,7 @@ class TestPro(unittest.TestCase):
     def test_it_compute_the_kpi_for_forwarded_inc_events(self):
         for evt in self.forwarded_inc_events:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -310,7 +312,7 @@ class TestPro(unittest.TestCase):
     def test_it_compute_the_kpi_for_forwarded_inc_events_that_violated_the_sla(self):
         for evt in self.violated_forwarded_inc_events:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -319,8 +321,33 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi(self):
         for evt in self.events:
             self.click.update(evt)
-        self.pro.evaluate(self.click)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
         self.assertEqual(50.0, kpi)
         self.assertEqual("5 violações / 10 incidentes", observation)
         #self.pro.get_details().to_excel("teste.xlsx")
+
+    def test_it_skips_incs_with_prior_assignments_and_no_current_assigment(self):
+        evts = Event.parse_events(r"""
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 00:00:00	2020-04-24 23:59:59	0        
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8541250	Atribuição interna	S	N6-SAP-XXXXXXXXXXXXXXXXXXXXXX	2020-04-24 23:59:59	2020-05-05 14:37:34	0
+        """)
+        for evt in evts:
+            self.click.update(evt)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
+        kpi, observation = self.pro.get_result()
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente orientar processado", observation)
+
+    def test_it_considers_incs_with_prior_assignments_closed_within_period(self):
+        evts = Event.parse_events(r"""
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 00:00:00	2020-04-26 23:59:59	0
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8541250	Atribuição interna	S	N6-SAP-XXXXXXXXXXXXXXXXXXXXXX	2020-04-26 23:59:59	2020-05-05 14:37:34	0
+        """)
+        for evt in evts:
+            self.click.update(evt)
+        self.pro.evaluate(self.click, self.start_dt, self.end_dt)
+        kpi, observation = self.pro.get_result()
+        self.assertEqual(0.0, kpi)
+        self.assertEqual("0 violações / 1 incidentes", observation)
+        

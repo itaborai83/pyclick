@@ -239,7 +239,7 @@ class TestPrp(unittest.TestCase):
             T369882	S207728	Execução	MM - Outros	2700	10083463	Resolver	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-05-25 18:42:10	2020-05-25 18:42:10	0
             T369882	S207728	Execução	MM - Outros	2700	10083467	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-25 18:42:10		540
         """)
-        
+                
         self.events = self.closed_inc_evts                                \
         +             self.violated_closed_inc_evts                       \
         +             self.solved_inc_events                              \
@@ -355,3 +355,27 @@ class TestPrp(unittest.TestCase):
         self.assertEqual(50.0, kpi)
         self.assertEqual("5 violações / 10 incidentes", observation)
         #self.prp.get_details().to_excel("teste.xlsx")
+    
+    def test_it_skips_incs_with_prior_assignments_and_no_current_assigment(self):
+        evts = Event.parse_events(r"""
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 00:00:00	2020-04-24 23:59:59	0        
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8541250	Atribuição interna	S	N6-SAP-XXXXXXXXXXXXXXXXXXXXXX	2020-04-24 23:59:59	2020-05-05 14:37:34	0
+        """)
+        for evt in evts:
+            self.click.update(evt)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
+        kpi, observation = self.prp.get_result()
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente peso 35 processado", observation)
+        
+    def test_it_considers_incs_with_prior_assignments_closed_within_period(self):
+        evts = Event.parse_events(r"""
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-24 00:00:00	2020-04-26 23:59:59	0
+            XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8541250	Atribuição interna	S	N6-SAP-XXXXXXXXXXXXXXXXXXXXXX	2020-04-26 23:59:59	2020-05-05 14:37:34	0
+        """)
+        for evt in evts:
+            self.click.update(evt)
+        self.prp.evaluate(self.click, self.start_dt, self.end_dt)
+        kpi, observation = self.prp.get_result()
+        self.assertEqual(0.0, kpi)
+        self.assertEqual("0 violações / 1 incidentes", observation)

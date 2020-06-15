@@ -65,14 +65,22 @@ class Prs(models.N4SapKpi):
         else:
             msg = f"{self.numerator} violações / {self.denominator} incidentes"
         return msg
+    
+    def has_assignment_within_period(self, inc, start_dt, end_dt):
+        for atrib in inc.get_atribuicoes_mesas(self.MESAS_NAO_PRIORITARIAS):
+            if atrib.intersects_with(start_dt, end_dt):
+                return True
+        return False
         
-    def evaluate(self, click):
+    def evaluate(self, click, start_dt, end_dt):
         for inc in click.get_incidentes():
             if not inc.id_chamado.startswith("S"):
                 continue
             if not inc.possui_atribuicoes(self.MESAS_NAO_PRIORITARIAS):
                 continue
             assert self.categorizar(inc) == "ATENDER"
+            if not self.has_assignment_within_period(inc, start_dt, end_dt):
+                continue            
             duration_m = click.calc_duration_mesas(inc.id_chamado, self.MESAS_NAO_PRIORITARIAS)
             try:
                 breached = duration_m > inc.prazo
@@ -110,13 +118,15 @@ class PrsV2(Prs):
         assert not inc.id_chamado.startswith('S')
         super().update_details(inc, duration_m, breached)            
             
-    def evaluate(self, click):
+    def evaluate(self, click, start_dt, end_dt):
         for inc in click.get_incidentes():
             if not inc.id_chamado.startswith("T"):
                 continue
             if not inc.possui_atribuicoes(self.MESAS_NAO_PRIORITARIAS):
                 continue
-                assert self.categorizar(inc) == "ATENDER - TAREFA"
+            assert self.categorizar(inc) == "ATENDER - TAREFA"
+            if not self.has_assignment_within_period(inc, start_dt, end_dt):
+                continue
             duration_m = click.calc_duration_mesas(inc.id_chamado, self.MESAS_NAO_PRIORITARIAS)
             try:
                 breached = duration_m > inc.prazo

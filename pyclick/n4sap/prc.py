@@ -63,8 +63,14 @@ class Prc(models.N4SapKpi):
         else:
             msg = f"{self.numerator} violações / {self.denominator} incidentes"
         return msg
+
+    def has_assignment_within_period(self, inc, start_dt, end_dt):
+        for atrib in inc.get_atribuicoes_mesas(self.MESAS_NAO_PRIORITARIAS):
+            if atrib.intersects_with(start_dt, end_dt):
+                return True
+        return False
         
-    def evaluate(self, click):
+    def evaluate(self, click, start_dt, end_dt):
         super().evaluate(click)
         for inc in click.get_incidentes():
             if inc.id_chamado.startswith("T") or inc.id_chamado.startswith("S"):
@@ -73,6 +79,8 @@ class Prc(models.N4SapKpi):
                 continue
             categoria = self.categorizar(inc)
             if categoria != "CORRIGIR":
+                continue
+            if not self.has_assignment_within_period(inc, start_dt, end_dt):
                 continue
             duration_m = click.calc_duration_mesas(inc.id_chamado, self.MESAS_NAO_PRIORITARIAS)
             breached = duration_m > self.PRAZO_M

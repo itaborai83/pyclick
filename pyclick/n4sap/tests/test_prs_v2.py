@@ -7,7 +7,8 @@ class TestPro(unittest.TestCase):
     def setUp(self):
         self.click = Click()
         self.prs = PrsV2()
-
+        self.start_dt = '2020-04-26 00:00:00'
+        self.end_dt = '2020-05-26 00:00:00'
         self.closed_inc_evts = Event.parse_events(r"""
             S188668		ATENDER	PS - Cadastro na YSPS_DESCONTAHRS	2700	5893881	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-31 16:23:15	2020-03-31 16:23:15	0
             S188668		ATENDER	PS - Cadastro na YSPS_DESCONTAHRS	2700	5893883	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-03-31 16:23:15	2020-03-31 16:23:36	0
@@ -288,7 +289,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_a_closed_incident(self):
         for evt in self.closed_inc_evts:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -296,7 +297,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_a_closed_incident_that_violated_the_sla(self):
         for evt in self.violated_closed_inc_evts:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -305,7 +306,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_solved_inc_events(self):
         for evt in self.solved_inc_events:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -313,7 +314,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_solved_inc_events_that_violated_the_sla(self):
         for evt in self.violated_solved_inc_events:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -321,7 +322,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_cancelles_inc_events(self):
         for evt in self.cancelled_inc_events:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -329,7 +330,7 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi_for_cancelles_inc_events_that_violated_the_sla(self):
         for evt in self.violated_cancelled_inc_events:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -337,7 +338,7 @@ class TestPro(unittest.TestCase):
     def test_it_compute_the_kpi_for_prioritized_inc_events(self):
         for evt in self.prioritized_inc_events:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -345,7 +346,7 @@ class TestPro(unittest.TestCase):
     def test_it_compute_the_kpi_for_prioritized_inc_events_that_violated_the_sla_(self):
         for evt in self.violated_prioritized_inc_events:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -353,7 +354,7 @@ class TestPro(unittest.TestCase):
     def test_it_compute_the_kpi_for_forwarded_inc_events(self):
         for evt in self.forwarded_inc_events:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
@@ -361,7 +362,7 @@ class TestPro(unittest.TestCase):
     def test_it_compute_the_kpi_for_forwarded_inc_events_that_violated_the_sla(self):
         for evt in self.violated_forwarded_inc_events:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 violações / 1 incidentes", observation)
@@ -369,8 +370,37 @@ class TestPro(unittest.TestCase):
     def test_it_computes_the_kpi(self):
         for evt in self.events:
             self.click.update(evt)
-        self.prs.evaluate(self.click)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prs.get_result()
         self.assertEqual(50.0, kpi)
         self.assertEqual("5 violações / 10 incidentes", observation)
         #self.prs.get_details().to_excel("teste.xlsx")
+    
+    def test_it_skips_incs_with_prior_assignments_and_no_current_assigment(self):
+        evts = Event.parse_events(r"""
+            TXXXXXX	SYYYYYY	ATENDER	Outras Solicitações de TIC	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 00:00:00	2020-04-24 23:59:59	0
+            TXXXXXX	SYYYYYY	ATENDER	Outras Solicitações de TIC	99960	8541250	Atribuição interna	S	N6-SAP-XXXXXXXXXXXXXXXXXXXXXX	2020-04-24 23:59:59	2020-05-05 14:37:34	0
+            SYYYYYY		ATENDER	Outras Solicitações de TIC	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 00:00:00	2020-04-24 23:59:59	0
+            SYYYYYY		ATENDER	Outras Solicitações de TIC	99960	8541250	Atribuição interna	S	N6-SAP-XXXXXXXXXXXXXXXXXXXXXX	2020-04-24 23:59:59	2020-05-05 14:37:34	0
+        """)
+        for evt in evts:
+            self.click.update(evt)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
+        kpi, observation = self.prs.get_result()
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente atender processado", observation)
+    
+    def test_it_considers_incs_with_prior_assignments_closed_within_period(self):
+        evts = Event.parse_events(r"""
+            TXXXXXX	SYYYYYY	ATENDER	Outras Solicitações de TIC	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 00:00:00	2020-04-26 23:59:59	0
+            TXXXXXX	SYYYYYY	ATENDER	Outras Solicitações de TIC	99960	8541250	Atribuição interna	S	N6-SAP-XXXXXXXXXXXXXXXXXXXXXX	2020-04-26 23:59:59	2020-05-05 14:37:34	0
+            SYYYYYY		ATENDER	Outras Solicitações de TIC	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 00:00:00	2020-04-26 23:59:59	0
+            SYYYYYY		ATENDER	Outras Solicitações de TIC	99960	8541250	Atribuição interna	S	N6-SAP-XXXXXXXXXXXXXXXXXXXXXX	2020-04-26 23:59:59	2020-05-05 14:37:34	0
+        """)
+        for evt in evts:
+            self.click.update(evt)
+        self.prs.evaluate(self.click, self.start_dt, self.end_dt)
+        kpi, observation = self.prs.get_result()
+        self.assertEqual(0.0, kpi)
+        self.assertEqual("0 violações / 1 incidentes", observation)
+                
