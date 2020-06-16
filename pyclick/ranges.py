@@ -545,11 +545,9 @@ class MRange(object):
         if len(self) == 0:
             return self.copy()         
         return self._do_set_operation(other, self.MRangeInstant.INTERSECTION_CASES)
-    
-def convert_to_minutes(datetime_txt):
-    tstmp = datetime2tstmp(datetime_txt)
-    tstmp_minutes = tstmp // 60
-    return tstmp_minutes
+
+def convert_to_seconds(datetime_txt):
+    return datetime2tstmp(datetime_txt)
 
 def load_spreadsheet(xlsx_file):
     return Schedule.load_spreadsheet(xlsx_file)
@@ -562,22 +560,23 @@ def calc_duration(sched, on_hold, start, end):
     if on_hold:
         return 0
     
-    start_m, end_m = convert_to_minutes(start), convert_to_minutes(end)
-    if start_m == end_m:
+    start_s, end_s = convert_to_seconds(start), convert_to_seconds(end)
+    if start_s == end_s:
         return 0
     
     business_hours = sched.get_business_hours(parse_datetime(start), parse_datetime(end))
     if len(business_hours) == 0:
         return 0
     
-    action_range = MRange().add(start_m, end_m)
+    action_range = MRange().add(start_s, end_s)
     
     business_hours_range = MRange()
     for bh_begin, bh_end in business_hours:
         bh_begin_txt, bh_end_txt = unparse_datetime(bh_begin), unparse_datetime(bh_end)
-        bh_begin_m, bh_end_m = convert_to_minutes(bh_begin_txt), convert_to_minutes(bh_end_txt)
-        business_hours_range.add(bh_begin_m, bh_end_m)
+        bh_begin_s, bh_end_s = convert_to_seconds(bh_begin_txt), convert_to_seconds(bh_end_txt)
+        business_hours_range.add(bh_begin_s, bh_end_s)
     result_range = business_hours_range.intersection(action_range)
-    result_m = sum([ r.length() for r in result_range ])
+    result_s = sum([ r.length() for r in result_range ])
+    result_m = result_s // 60
     return result_m
     
