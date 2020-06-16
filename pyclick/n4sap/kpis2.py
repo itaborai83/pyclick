@@ -80,22 +80,22 @@ class App(object):
         prp_details_df = prp.get_details()
         
         logger.info('computing PRO')
-        pro.evaluate(click)
+        pro.evaluate(click, start_dt, end_dt)
         pro.update_summary(summary)
         pro_details_df = pro.get_details()
         
         logger.info('computing PRC')
-        prc.evaluate(click)
+        prc.evaluate(click, start_dt, end_dt)
         prc.update_summary(summary)
         prc_details_df = prc.get_details()
         
         logger.info('computing PRS')
-        prs.evaluate(click)
+        prs.evaluate(click, start_dt, end_dt)
         prs.update_summary(summary)
         prs_details_df = prs.get_details()
         
         logger.info('computing IDS')
-        ids.evaluate(click)
+        ids.evaluate(click, start_dt, end_dt)
         ids.update_summary(summary)
         ids_details_df = ids.get_details()
         
