@@ -8,6 +8,7 @@ import datetime as dt
 
 import pyclick.util as util
 import pyclick.config as config
+import pyclick.n4sap.config as n4_config
 
 import pyclick.assyst.dump_schedules as dump_schedules
 import pyclick.assyst.dump_slas as dump_slas
@@ -43,7 +44,7 @@ class App(object):
             logger.info('excel2db - versão %d.%d.%d', *self.VERSION)
             dump_schedules.App(self.dir_apuracao).run()
             dump_slas.App(self.dir_apuracao).run()
-            dump_surveys.App(self.dir_apuracao, self.start, self.end).run()
+            dump_surveys.App(self.dir_apuracao, n4_config.START_CSAT_DT, self.end).run()
             consolida_planilhao.App(self.dir_apuracao, self.dir_import, self.start, self.end, False).run()
             ddl.App(self.dir_apuracao).run()
             override.App(self.dir_apuracao, truncate=False, export=False, export_missing=True, import_=False)

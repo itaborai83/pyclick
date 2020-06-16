@@ -102,7 +102,7 @@ class App(object):
         logger.info('computing CSAT')
         csat.evaluate(click, start_dt, end_dt)
         csat.update_summary(summary)
-        csat_details_df = csat.get_details()
+        csat_details_df, csat_tecnicos_det_df = csat.get_details()
         
         logger.info('writing summary table')
         df_summary = pd.DataFrame(summary)
@@ -114,6 +114,7 @@ class App(object):
         prs_details_df.to_excel(xw, sheet_name="PRS_DETALHES", index=False)
         ids_details_df.to_excel(xw, sheet_name="IDS_DETALHES", index=False)
         csat_details_df.to_excel(xw, sheet_name="CSAT_DETALHES", index=False)
+        csat_tecnicos_det_df.to_excel(xw, sheet_name="CSAT_TECNICOS", index=False)
         
     def write_business_times(self, repo, xw):
         logger.info("exporting tempo útil mesas")

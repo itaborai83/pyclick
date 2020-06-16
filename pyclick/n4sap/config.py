@@ -23,3 +23,4 @@ SLA_KPIS = {
     'IDS': 170.0
 }
 
+START_CSAT_DT = '2020-01-31'
