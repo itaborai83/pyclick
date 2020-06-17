@@ -439,10 +439,10 @@ class Click(object):
         if evt.chamado_pai is None:
             return
         if evt.chamado_pai not in self.children_of:
-            assert evt.chamado_pai.startswith('S')
+            #assert evt.chamado_pai.startswith('S')
             self.children_of[ evt.chamado_pai ] = set()
         if evt.id_chamado not in self.children_of[ evt.chamado_pai ]:
-            assert evt.id_chamado.startswith('T')
+            #assert evt.id_chamado.startswith('T')
             self.children_of[ evt.chamado_pai ].add(evt.id_chamado)
     
     def update(self, event):
