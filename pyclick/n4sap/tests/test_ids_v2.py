@@ -2,7 +2,7 @@ import unittest
 from pyclick.models import *
 from pyclick.n4sap.ids import IdsV2
 
-@unittest.skip
+
 class TestIds(unittest.TestCase):
     
     def setUp(self):
@@ -84,7 +84,7 @@ class TestIds(unittest.TestCase):
     def test_it_does_not_compute_the_kpi_for_a_closed_incident(self):
         for evt in self.closed_inc_evts:
             self.click.update(evt)
-        self.evaluate(self.click, self.start_dt, self.end_dt)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(None, kpi)
         self.assertEqual("Nenhum incidente aberto violando SLA", observation)
@@ -92,7 +92,7 @@ class TestIds(unittest.TestCase):
     def test_id_does_not_compute_the_kpi_for_incs_that_arent_breaching_the_sla(self):
         for evt in self.unviolated_inc_evts:
             self.click.update(evt)
-        self.evaluate(self.click, self.start_dt, self.end_dt)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(None, kpi)
         self.assertEqual("Nenhum incidente aberto violando SLA", observation)
@@ -100,7 +100,7 @@ class TestIds(unittest.TestCase):
     def test_it_computes_the_kpi_for_open_incs_with_less_than_180h(self):    
         for evt in self.less_than_180h_inc_evts:
             self.click.update(evt)
-        self.evaluate(self.click, self.start_dt, self.end_dt)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(100.0, kpi)
         self.assertEqual("1 ids / 1 incidentes", observation)
@@ -108,7 +108,7 @@ class TestIds(unittest.TestCase):
     def test_it_computes_the_kpi_for_open_incs_with_more_than_180h_and_less_than_360h(self):    
         for evt in self.more_than_180h_and_less_than_360h_inc_evts:
             self.click.update(evt)
-        self.evaluate(self.click, self.start_dt, self.end_dt)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(200.0, kpi)
         self.assertEqual("2 ids / 1 incidentes", observation)
@@ -116,7 +116,7 @@ class TestIds(unittest.TestCase):
     def test_it_computes_the_kpi_for_a_service_request_with_more_than_360_and_less_than_360h(self):    
         for evt in self.service_request_with_more_than_360h_and_less_than_540h:
             self.click.update(evt)
-        self.evaluate(self.click, self.start_dt, self.end_dt)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(300.0, kpi)
         self.assertEqual("3 ids / 1 incidentes", observation)
@@ -124,7 +124,7 @@ class TestIds(unittest.TestCase):
     def test_it_computes_the_kpi(self):
         for evt in self.events:
             self.click.update(evt)
-        self.evaluate(self.click, self.start_dt, self.end_dt)
+        self.ids.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.ids.get_result()
         self.assertEqual(200, kpi)
         self.assertEqual("6 ids / 3 incidentes", observation)

@@ -152,4 +152,4 @@ class TestIds(unittest.TestCase):
         kpi, observation = self.ids.get_result()
         self.assertEqual(None, kpi)
         self.assertEqual("Nenhum incidente aberto violando SLA", observation)
-            
+        
