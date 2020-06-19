@@ -13,6 +13,7 @@ import sqlite3
 import pyclick.ranges as ranges
 import pyclick.util as util
 import pyclick.config as config
+from pyclick.repo import Repo
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -24,7 +25,7 @@ SQL_REL_MEDICAO_UPSERT      = util.get_query("CONSOLIDA__REL_MEDICAO_UPSERT")
 SQL_UPDATE_MESA_ATUAL       = util.get_query("CONSOLIDA__UPDATE_MESA_ATUAL")
 SQL_DROP_UNACTIONED_EVTS    = util.get_query("CONSOLIDA__DROP_UNACTIONED_EVTS")
 SQL_UPDATE_USER_STATUS      = util.get_query("CONSOLIDA__UPDATE_ACAO_USER_STATUS")
-SQL_UPDATE_PENDENCIA        = util.get_query("CONSOLIDA__UPDATE_PENDENCIA")
+#SQL_UPDATE_PENDENCIA        = util.get_query("CONSOLIDA__UPDATE_PENDENCIA")
 SQL_CARGA_REL_MEDICAO       = util.get_query("CONSOLIDA__CARGA_REL_MEDICAO")
 SQL_CHECK_IMPORTACAO        = util.get_query("CONSOLIDA__SQL_CHECK_IMPORTACAO")
 SQL_LISTA_ACOES             = util.get_query("CONSOLIDA__LISTA_ACOES") 
@@ -273,10 +274,33 @@ class App(object):
         conn.executescript(SQL_UPDATE_MESA_ATUAL)
         logger.info('preenchend campo USER_STATUS da tabela REL_MEDICAO')
         conn.executescript(SQL_UPDATE_USER_STATUS)
-        logger.info('preenchend campo PENDENCIA da tabela REL_MEDICAO')
-        conn.executescript(SQL_UPDATE_PENDENCIA)
+        #logger.info('preenchendo campo PENDENCIA da tabela REL_MEDICAO')
+        #conn.executescript(SQL_UPDATE_PENDENCIA)
         conn.commit()
     
+    def fill_pendencias(self, conn):
+        logger.info('preenchend campo PENDENCIA da tabela REL_MEDICAO')
+        repo = Repo(conn)
+        df = repo.get_clock_actions()
+        pendencias = []
+        last_chamado = None
+        clock_running = None
+        for row in df.itertuples():
+            if last_chamado != row.ID_CHAMADO:
+                clock_running = True
+            else:
+                if row.ULTIMA_ACAO_NOME in config.START_CLOCK_ACTIONS:
+                    clock_running = True
+                elif row.ULTIMA_ACAO_NOME in config.STOP_CLOCK_ACTIONS:
+                    clock_running = False
+                else:
+                    clock_running = clock_running # explicit is better than implicit
+            pendencias.append(not clock_running)
+            last_chamado = row.ID_CHAMADO
+        df[ 'PENDENCIA' ] = pendencias
+        repo.set_clock_actions(df)
+        repo.commit()
+        
     def do_datafix(self):
         logger.warning("STOPING LOADING PROCEDURE FOR A DATAFIX TO BE APPLIED")
         logger.warning("(remember to close the database after data analysis)")
@@ -444,6 +468,7 @@ class App(object):
             self.sanity_check(conn)
             self.drop_unactioned_events(conn)
             self.write_business_hours(conn, mesas, horarios_mesas)
+            self.fill_pendencias(conn)
             self.fill_durations(conn, horarios_mesas)
             self.drop_rel_medicao(conn)
             self.process_end_sql(conn)

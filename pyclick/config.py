@@ -180,3 +180,24 @@ COLUMN_MAPPING = {
 }
 
 RENAMED_COLUMNS = list([ COLUMN_MAPPING[ col ] for col in EXPECTED_COLUMNS ])
+
+START_CLOCK_ACTIONS = set([
+    'Iniciar Atendimento', 
+    'Pendência Sanada', 
+    'Pendência Sanada - Aprovação', 
+    'Retorno do usuário', 
+    'Reabrir', 
+    'Reaberto pelo Fornecedor'
+])
+
+STOP_CLOCK_ACTIONS = set([
+    'Resolver',
+    'Encerrar',
+    'Aguardando Cliente - Fornecedor',
+    'Aguardando Cliente',
+    'Cancelar',
+    'Aguardando Cliente - Aprovação ',
+    'Cancelado',
+    'Atendimento Agendado',
+    'Pendencia de Fornecedor',
+])

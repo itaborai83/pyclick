@@ -18,7 +18,7 @@ Planilhão
 
 
 TODO:
- ! Usar cálculo de duração baseadas em segundos 
+ ! Renomear campo PENDENCIA para RELOGIO_PARADO
  ! Permitir consolidação em paralelo
  - Paralelizar cálculo durações
  - Otimizar Tempo Durações
