@@ -382,6 +382,13 @@ class Incidente(object):
     def status(self):
         assert self.action_count > 0
         return self.acoes[ -1 ].status
+    
+    @property
+    def ultima_acao_aberta(self):
+        for acao in reversed(self.acoes):
+            if acao.status == 'ABERTO':
+                return acao
+        assert 1 == 2
         
     @classmethod
     def build_from(klass, evt):

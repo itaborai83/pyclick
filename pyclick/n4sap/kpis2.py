@@ -19,6 +19,7 @@ from pyclick.n4sap.prs import PrsV2 as Prs
 from pyclick.n4sap.ids import IdsV2 as Ids
 from pyclick.n4sap.csat import Csat
 from pyclick.n4sap.estoque import Estoque
+from pyclick.n4sap.pendfech import PendenteFechado
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -75,6 +76,7 @@ class App(object):
         ids = Ids()
         csat = Csat()
         estoque = Estoque()
+        pendfech = PendenteFechado()
         
         logger.info('computing PRP')
         prp.evaluate(click, start_dt, end_dt)
@@ -111,6 +113,11 @@ class App(object):
         estoque.update_summary(summary)
         estoque_details_df = estoque.get_details()
         
+        logger.info('computing PENDENTES FECHADOS')
+        pendfech.evaluate(click, start_dt, end_dt)
+        pendfech.update_summary(summary)
+        pendfech_df = pendfech.get_details()
+        
         logger.info('writing summary table')
         df_summary = pd.DataFrame(summary)
         df_summary.to_excel(xw, sheet_name="INDICADORES", index=False)
@@ -123,6 +130,7 @@ class App(object):
         csat_details_df.to_excel(xw, sheet_name="CSAT_DETALHES", index=False)
         csat_tecnicos_det_df.to_excel(xw, sheet_name="CSAT_TECNICOS", index=False)
         estoque_details_df.to_excel(xw, sheet_name="ESTOQUE", index=False)
+        pendfech_df.to_excel(xw, sheet_name="PENDENTES_FECHADOS", index=False)
         
     def write_business_times(self, repo, xw):
         logger.info("exporting tempo útil mesas")
