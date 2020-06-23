@@ -70,7 +70,7 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--compress', action='store_true', help='comprimir arquivo de saída' )
+    parser.add_argument('--compress', action='store_true', default=False, help='comprimir arquivo de saída' )
     parser.add_argument('dir_staging', type=str, help='diretório de staging')
     parser.add_argument('date', type=str, help='data planilhão')
     args = parser.parse_args()
