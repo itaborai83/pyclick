@@ -19,6 +19,7 @@ from pyclick.n4sap.prs import PrsV2 as Prs
 from pyclick.n4sap.ids import IdsV2 as Ids
 from pyclick.n4sap.csat import Csat
 from pyclick.n4sap.estoque import Estoque
+from pyclick.n4sap.peso30 import Peso30
 from pyclick.n4sap.pendfech import PendenteFechado
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
@@ -76,6 +77,7 @@ class App(object):
         ids = Ids()
         csat = Csat()
         estoque = Estoque()
+        peso30 = Peso30()
         pendfech = PendenteFechado()
         
         logger.info('computing PRP')
@@ -113,6 +115,11 @@ class App(object):
         estoque.update_summary(summary)
         estoque_details_df = estoque.get_details()
         
+        logger.info('computing PESO30')
+        peso30.evaluate(click, start_dt, end_dt)
+        peso30.update_summary(summary)
+        peso30_df = peso30.get_details()
+        
         logger.info('computing PENDENTES FECHADOS')
         pendfech.evaluate(click, start_dt, end_dt)
         pendfech.update_summary(summary)
@@ -130,6 +137,7 @@ class App(object):
         csat_details_df.to_excel(xw, sheet_name="CSAT_DETALHES", index=False)
         csat_tecnicos_det_df.to_excel(xw, sheet_name="CSAT_TECNICOS", index=False)
         estoque_details_df.to_excel(xw, sheet_name="ESTOQUE", index=False)
+        peso30_df.to_excel(xw, sheet_name="PESO30", index=False)
         pendfech_df.to_excel(xw, sheet_name="PENDENTES_FECHADOS", index=False)
         
     def write_business_times(self, repo, xw):

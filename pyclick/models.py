@@ -357,7 +357,12 @@ class Incidente(object):
         return sum([
             atrib.duracao_m for atrib in self.get_atribuicoes_mesas(mesas)
         ])
-    
+
+    def calc_pendencia_mesas(self, mesas):
+        return sum([
+            atrib.pendencia_m for atrib in self.get_atribuicoes_mesas(mesas)
+        ])
+        
     def get_atribuicoes_mesas(self, mesas):
         return list([
             atrib for atrib in self.atribuicoes if atrib.mesa in mesas

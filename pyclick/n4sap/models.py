@@ -6,6 +6,7 @@ class N4SapKpi(models.Kpi):
     KPI_NAME                = None
     SLA                     = None
     MESA_PRIORIDADE         = 'N4-SAP-SUSTENTACAO-PRIORIDADE'
+    MESA_ESCALADOS          = 'N4-SAP-SUSTENTACAO-ESCALADOS'
     MESAS_NAO_PRIORITARIAS  = [
         'N4-SAP-SUSTENTACAO-ABAST_GE'
     ,   'N4-SAP-SUSTENTACAO-APOIO_OPERACAO'

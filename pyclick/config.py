@@ -200,4 +200,5 @@ STOP_CLOCK_ACTIONS = set([
     'Cancelado',
     'Atendimento Agendado',
     'Pendencia de Fornecedor',
+    #'Pendência de TIC'
 ])
