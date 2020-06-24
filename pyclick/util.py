@@ -70,6 +70,20 @@ def read_mesas(dir_apuracao):
                 result.append(mesa)
         return result
 
+def read_expurgos(dir_apuracao):
+    path = os.path.join(dir_apuracao, config.EXPURGOS_FILE)
+    if not os.path.exists(path):
+        return []
+    result = []
+    with open(path) as fh:
+        for line in fh:
+            id_chamado = line.strip()
+            if path.startswith("#"):
+                continue
+            elif id_chamado:
+                result.append(id_chamado)
+        return result
+        
 def parse_date(txt):
     if pd.isna(txt) or txt is None or txt == "":
         return txt

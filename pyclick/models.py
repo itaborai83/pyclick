@@ -450,6 +450,7 @@ class Click(object):
         self.mesas = {}
         self.children_of = {}
         self.pesquisas = []
+        self.expurgos = set()
         
     def update_children_mapping(self, evt):
         if evt.chamado_pai is None:
@@ -462,6 +463,9 @@ class Click(object):
             self.children_of[ evt.chamado_pai ].add(evt.id_chamado)
     
     def update(self, event):
+        if event.id_chamado in self.expurgos:
+            return
+            
         if event.mesa_atual not in self.mesas:
             self.mesas[ event.mesa_atual ] = Mesa(event.mesa_atual)
         mesa_atual = self.mesas[ event.mesa_atual ]
@@ -520,7 +524,9 @@ class Click(object):
     
     def add_pesquisa(self, pesquisa):
         self.pesquisas.append(pesquisa)
-
+    
+    def add_expurgo(self, id_chamado):
+        self.expurgos.add(id_chamado)
     def get_pesquisas_mesas(self, mesas):
         return list([
             pesq for pesq in self.pesquisas if pesq.mesa in mesas

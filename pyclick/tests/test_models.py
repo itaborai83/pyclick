@@ -397,6 +397,11 @@ class TestClick(unittest.TestCase):
             T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411756	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:18:24	2020-05-04 11:21:30	3
             T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8412440	Atribuição interna	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:21:30	2020-05-06 09:55:13	994
             T465903	S251253	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8598958	Resolver	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-06 09:55:13		0        
+        """) + Event.parse_events("""
+            T465904	S251254	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411754	Atribuição interna	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:18:24	2020-05-04 11:18:24	0
+            T465904	S251254	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8411756	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:18:24	2020-05-04 11:21:30	3
+            T465904	S251254	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8412440	Atribuição interna	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-04 11:21:30	2020-05-06 09:55:13	994
+            T465904	S251254	Execução	FI-AA - Alteração de atribuicao contas do razão imobilizado	5400	8598958	Resolver	N	N4-SAP-SUSTENTACAO-FINANCAS	2020-05-06 09:55:13		0        
         """)
         self.eventos.sort(key=lambda x: x.data_acao)
     
@@ -404,6 +409,7 @@ class TestClick(unittest.TestCase):
         pass
     
     def test_it_process_events(self):
+        self.click.add_expurgo('T465904')
         for evt in self.eventos:
             self.click.update(evt)
         self.assertEqual(4, self.click.incident_count())
@@ -482,8 +488,7 @@ class TestClick(unittest.TestCase):
         self.assertIn('N1-SD2_WEB', self.click.mesas)
         self.assertIn('N2-SD2_SAP_PRAPO', self.click.mesas)
         self.assertIn('N4-SAP-SUSTENTACAO-APOIO_OPERACAO', self.click.mesas)
-        
-        
+                
         incidente = self.click.get_incidente('T465903')
         mesa = self.click.get_mesa('N4-SAP-SUSTENTACAO-FINANCAS')
         self.assertEqual(incidente.id_chamado, 'T465903')
@@ -503,7 +508,29 @@ class TestClick(unittest.TestCase):
         self.assertEqual(incidente.mesa_atual, mesa.name)
         self.assertFalse(mesa.has_incidente(incidente.id_chamado)) # task was closed
         self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
-
+        
+        incidente = self.click.get_incidente('T465904')
+        self.assertEqual(None, incidente)
+        """
+        mesa = self.click.get_mesa('N4-SAP-SUSTENTACAO-FINANCAS')
+        self.assertEqual(incidente.id_chamado, 'T465903')
+        self.assertEqual(incidente.chamado_pai, 'S251253')
+        self.assertEqual(incidente.categoria, 'Execução')
+        self.assertEqual(incidente.oferta, 'FI-AA - Alteração de atribuicao contas do razão imobilizado')
+        self.assertEqual(incidente.prazo, 5400)
+        self.assertEqual(incidente.action_count, 4)
+        self.assertEqual(incidente.calc_duration(), 997)
+        self.assertEqual(incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 997)
+        self.assertEqual(self.click.calc_children_duration_mesas('T465903', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ]), 0)
+        self.assertEqual(
+            incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]),
+            incidente.calc_duration_mesas([ 'N4-SAP-SUSTENTACAO-FINANCAS' ]),
+            self.click.calc_duration_mesas('T465903', [ 'N4-SAP-SUSTENTACAO-FINANCAS' ])
+        )        
+        self.assertEqual(incidente.mesa_atual, mesa.name)
+        self.assertFalse(mesa.has_incidente(incidente.id_chamado)) # task was closed
+        self.assertTrue(mesa.seen_incidente(incidente.id_chamado))
+        """
 class TestKpi(unittest.TestCase):
     
     def setUp(self):
