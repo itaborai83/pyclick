@@ -23,7 +23,7 @@ SQL_REL_MEDICAO_SELECT      = util.get_query("CONSOLIDA__REL_MEDICAO_SELECT")
 SQL_REL_MEDICAO_DDL         = util.get_query("CONSOLIDA__REL_MEDICAO_DDL")
 SQL_REL_MEDICAO_UPSERT      = util.get_query("CONSOLIDA__REL_MEDICAO_UPSERT")
 SQL_UPDATE_MESA_ATUAL       = util.get_query("CONSOLIDA__UPDATE_MESA_ATUAL")
-SQL_DROP_UNACTIONED_EVTS    = util.get_query("CONSOLIDA__DROP_UNACTIONED_EVTS")
+#SQL_DROP_UNACTIONED_EVTS    = util.get_query("CONSOLIDA__DROP_UNACTIONED_EVTS")
 SQL_UPDATE_USER_STATUS      = util.get_query("CONSOLIDA__UPDATE_ACAO_USER_STATUS")
 #SQL_UPDATE_PENDENCIA        = util.get_query("CONSOLIDA__UPDATE_PENDENCIA")
 SQL_CARGA_REL_MEDICAO       = util.get_query("CONSOLIDA__CARGA_REL_MEDICAO")
@@ -337,11 +337,12 @@ class App(object):
             logger.error("falha na checagem da consolidação do relatório de medição")
             sys.exit(config.EXIT_CONSOLIDATION_ERROR)        
     
+    """
     def drop_unactioned_events(self, conn):
         logger.info('dropando incidentes que passaram pela mesa antes do período de apuração')
         conn.executescript(SQL_DROP_UNACTIONED_EVTS)        
         conn.commit()
-        
+    """    
     def fill_durations(self, conn, horarios_mesas):
         logger.info('calculando duração de ações')
         # retrieving actions
@@ -466,7 +467,7 @@ class App(object):
             self.migrate_tables(conn)
             self.process_after_load_sql(conn)
             self.sanity_check(conn)
-            self.drop_unactioned_events(conn)
+            #self.drop_unactioned_events(conn)
             self.write_business_hours(conn, mesas, horarios_mesas)
             self.fill_pendencias(conn)
             self.fill_durations(conn, horarios_mesas)
