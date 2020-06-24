@@ -55,6 +55,12 @@ class App(object):
             click.add_pesquisa(pesq)
         return click, models.Event.to_df(evts), start_dt, end_dt
     
+    def process_expurgos(self, click):
+        logger.info('processing expurgos')
+        expurgos = util.read_expurgos(self.dir_apuracao)
+        for id_chamado in expurgos:
+            click.add_expurgo(id_chamado)
+        
     def load_relatorio_medicao(self, r):
         logger.info('loading relatório medição')
         return r.load_relatorio_medicao()
@@ -67,7 +73,7 @@ class App(object):
             os.unlink(ks)
         return pd.ExcelWriter(ks, datetime_format=None)   
     
-    def compute_kpis(self, click, xw, start_dt, end_dt):
+    def compute_kpis(self, conn, click, xw, start_dt, end_dt):
         logger.info('calculating KPI\'s')
         summary = { 'INDICADOR': [], 'VALOR': [], 'SLA': [], 'OBS': [] }
         prp = Prp()
@@ -128,38 +134,59 @@ class App(object):
         logger.info('writing summary table')
         df_summary = pd.DataFrame(summary)
         df_summary.to_excel(xw, sheet_name="INDICADORES", index=False)
+        df_summary.to_sql("INDICADORES", conn, if_exists="replace", index=False)
+        
         logger.info('writing KPI details')
         prp_details_df.to_excel(xw, sheet_name="PRP_DETALHES", index=False)
-        pro_details_df.to_excel(xw, sheet_name="PRO_DETALHES", index=False)
+        prp_details_df.to_sql("PRP_DETALHES", conn, if_exists="replace", index=False)
+        
         prc_details_df.to_excel(xw, sheet_name="PRC_DETALHES", index=False)
+        prc_details_df.to_sql("PRC_DETALHES", conn, if_exists="replace", index=False)
+        
         prs_details_df.to_excel(xw, sheet_name="PRS_DETALHES", index=False)
+        prs_details_df.to_sql("PRS_DETALHES", conn, if_exists="replace", index=False)
+        
         ids_details_df.to_excel(xw, sheet_name="IDS_DETALHES", index=False)
+        ids_details_df.to_sql("IDS_DETALHES", conn, if_exists="replace", index=False)
+        
         csat_details_df.to_excel(xw, sheet_name="CSAT_DETALHES", index=False)
+        csat_details_df.to_sql("CSAT_DETALHES", conn, if_exists="replace", index=False)
+        
         csat_tecnicos_det_df.to_excel(xw, sheet_name="CSAT_TECNICOS", index=False)
+        csat_tecnicos_det_df.to_sql("CSAT_TECNICOS", conn, if_exists="replace", index=False)
+        
         estoque_details_df.to_excel(xw, sheet_name="ESTOQUE", index=False)
-        peso30_df.to_excel(xw, sheet_name="PESO30", index=False)
+        estoque_details_df.to_sql("ESTOQUE", conn, if_exists="replace", index=False)
+        
+        peso30_df.to_excel(xw, sheet_name="PESO30_DETALHES", index=False)
+        peso30_df.to_sql("PESO30_DETALHES", conn, if_exists="replace", index=False)
+        
         pendfech_df.to_excel(xw, sheet_name="PENDENTES_FECHADOS", index=False)
+        pendfech_df.to_sql("PENDENTES_FECHADOS", conn, if_exists="replace", index=False)
         
     def write_business_times(self, repo, xw):
         logger.info("exporting tempo útil mesas")
         df = repo.get_business_times()
         df.to_excel(xw, sheet_name="TEMPO_UTIL", index=False)
-
+        df.to_sql("TEMPO_UTIL", repo.conn, if_exists="replace", index=False)
+        
     def write_pending_times(self, repo, xw):
         logger.info("exporting tempo pendências mesas")
         df = repo.get_pending_times()
         df.to_excel(xw, sheet_name="TEMPO_PENDENTE", index=False)
-            
+        df.to_sql("TEMPO_PENDENTE", repo.conn, if_exists="replace", index=False)
+        
     def run(self):
         try:
             logger.info('starting geração indicadores - version %d.%d.%d', *self.VERSION)
             conn = self.connect_db()
             r = repo.RepoN4(conn)
             click, events_df, start_dt, end_dt = self.load_click(r)
+            self.process_expurgos(click)
             df_rel_medicao = self.load_relatorio_medicao(r)
             with self.open_spreadsheet() as xw:
                 events_df.to_excel(xw, sheet_name="EVENTOS_MEDICAO", index=False)
-                self.compute_kpis(click, xw, start_dt, end_dt)
+                self.compute_kpis(conn, click, xw, start_dt, end_dt)
                 self.write_business_times(r, xw)
                 self.write_pending_times(r, xw)
             logger.info('finished')
