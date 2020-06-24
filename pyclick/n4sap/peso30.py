@@ -11,22 +11,47 @@ class Peso30(models.N4SapKpi):
         self.numerator = 0
         self.denominator = 0
         self.details = {
-            'violacao'      : [],
-            'incidente'     : [],
-            'categoria'     : [],
-            'prazo_m'       : [],
-            'duracao_m'     : [],
-            'pendencia_m'   : []
+            'violacao'          : [],
+            'id_chamado'        : [],
+            'chamado_pai'       : [],
+            'categoria'         : [],
+            'prazo'             : [],
+            'duracao'           : [],
+            'ultima_mesa'       : [],
+            'ultimo_status'     : [],
+            'atribuicao'        : [],
+            'mesa'              : [],
+            'ultima_atrib'      : [],
+            'entrada'           : [],
+            'status_entrada'    : [],
+            'saida'             : [],
+            'status_saida'      : [],
+            'duracao_m'         : [],
+            'pendencia_m'       : [],
         }
         self.mesas_idx = {}
         
     def update_details(self, inc, breached, categoria, prazo_m, duration_m, pendencia_m):
-        self.details[ 'violacao'  ].append('S' if breached else 'N')
-        self.details[ 'incidente' ].append(inc.id_chamado)
-        self.details[ 'categoria' ].append(categoria)
-        self.details[ 'prazo_m'   ].append(prazo_m)
-        self.details[ 'duracao_m' ].append(duration_m)
-        self.details[ 'pendencia_m' ].append(pendencia_m)
+        for atrib in inc.atribuicoes:
+            if atrib.mesa not in self.MESAS_CONTRATO:
+                continue
+            self.details[ 'violacao'       ].append(self.BREACHED_MAPPING[ breached ])
+            self.details[ 'id_chamado'     ].append(inc.id_chamado)
+            self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
+            self.details[ 'categoria'      ].append(categoria)
+            self.details[ 'prazo'          ].append(prazo_m)
+            self.details[ 'duracao'        ].append(duration_m + pendencia_m)
+            self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
+            self.details[ 'ultimo_status'  ].append(inc.status)
+            self.details[ 'atribuicao'     ].append(atrib.seq)
+            self.details[ 'mesa'           ].append(atrib.mesa)
+            self.details[ 'ultima_atrib'   ].append('S' if inc.ultima_atribuicao.seq == atrib.seq else 'N')
+            self.details[ 'entrada'        ].append(atrib.entrada)
+            self.details[ 'status_entrada' ].append(atrib.status_entrada)
+            self.details[ 'saida'          ].append(atrib.saida)
+            self.details[ 'status_saida'   ].append(atrib.status_saida)
+            self.details[ 'duracao_m'      ].append(atrib.duracao_m)
+            self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
                                                           
     def get_details(self):
         return pd.DataFrame(self.details)
