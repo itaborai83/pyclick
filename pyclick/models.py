@@ -394,7 +394,11 @@ class Incidente(object):
             if acao.status == 'ABERTO':
                 return acao
         assert 1 == 2
-        
+    
+    @property
+    def ultima_atribuicao(self):
+        return self.atribuicoes[ -1 ]
+
     @classmethod
     def build_from(klass, evt):
         return klass(

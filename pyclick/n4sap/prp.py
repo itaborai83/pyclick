@@ -22,6 +22,7 @@ class Prp(models.N4SapKpi):
             'ultimo_status'     : [],
             'atribuicao'        : [],
             'mesa'              : [],
+            'ultima_atrib'      : [],
             'entrada'           : [],
             'status_entrada'    : [],
             'saida'             : [],
@@ -33,7 +34,7 @@ class Prp(models.N4SapKpi):
     def update_details(self, inc, duration_m, breached):
         categoria = self.categorizar(inc)
         for atrib in inc.atribuicoes:
-            if atrib.mesa != self.MESA_PRIORIDADE:
+            if atrib.mesa not in self.MESAS_CONTRATO:
                 continue
             self.details[ 'violacao'       ].append(self.BREACHED_MAPPING[ breached ])
             self.details[ 'id_chamado'     ].append(inc.id_chamado)
@@ -45,6 +46,7 @@ class Prp(models.N4SapKpi):
             self.details[ 'ultimo_status'  ].append(inc.status)
             self.details[ 'atribuicao'     ].append(atrib.seq)
             self.details[ 'mesa'           ].append(atrib.mesa)
+            self.details[ 'ultima_atrib'   ].append('S' if inc.ultima_atribuicao.seq == atrib.seq else 'N')
             self.details[ 'entrada'        ].append(atrib.entrada)
             self.details[ 'status_entrada' ].append(atrib.status_entrada)
             self.details[ 'saida'          ].append(atrib.saida)
