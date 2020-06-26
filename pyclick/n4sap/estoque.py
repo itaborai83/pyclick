@@ -10,30 +10,47 @@ class Estoque(models.N4SapKpi):
         super().__init__()
         self.count = 0
         self.details = {
+            'id_chamado'        : [],
+            'chamado_pai'       : [],
+            'categoria'         : [],
+            'duracao'           : [],
+            'ultima_mesa'       : [],
+            'ultimo_status'     : [],
+            'atribuicao'        : [],
             'mesa'              : [],
-            'incidentes'        : [],
-            'orientar'          : [],
-            'corrigir'          : [],
-            'atender'           : []
+            'ultima_atrib'      : [],
+            'entrada'           : [],
+            'status_entrada'    : [],
+            'saida'             : [],
+            'status_saida'      : [],
+            'duracao_m'         : [],
+            'pendencia_m'       : [],
         }
         self.mesas_idx = {}
         
     def update_details(self, inc):
-        mesa = inc.mesa_atual
-        if mesa not in self.mesas_idx:
-            idx = len(self.mesas_idx)
-            self.mesas_idx[ mesa ] = idx
-            self.details[ 'mesa'        ].append(mesa)
-            self.details[ 'incidentes'  ].append(0)
-            self.details[ 'orientar'    ].append(0)
-            self.details[ 'corrigir'    ].append(0)
-            self.details[ 'atender'     ].append(0)
-        idx = self.mesas_idx[ mesa ]
         categoria = self.categorizar(inc)
-        self.details[ 'incidentes' ][ idx ] += 1
-        self.details[ 'orientar' ][ idx ]   += 1 if categoria == 'ORIENTAR' else 0
-        self.details[ 'corrigir' ][ idx ]   += 1 if categoria == 'CORRIGIR' else 0
-        self.details[ 'atender'  ][ idx ]   += 1 if categoria == 'ATENDER - TAREFA' else 0
+        duration_m = inc.calc_duration_mesas(self.MESAS_CONTRATO)
+        pendencia_m = inc.calc_pendencia_mesas(self.MESAS_CONTRATO) 
+
+        for atrib in inc.atribuicoes:
+            if atrib.mesa not in self.MESAS_CONTRATO:
+                continue
+            self.details[ 'id_chamado'     ].append(inc.id_chamado)
+            self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
+            self.details[ 'categoria'      ].append(categoria)
+            self.details[ 'duracao'        ].append(duration_m + pendencia_m)
+            self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
+            self.details[ 'ultimo_status'  ].append(inc.status)
+            self.details[ 'atribuicao'     ].append(atrib.seq)
+            self.details[ 'mesa'           ].append(atrib.mesa)
+            self.details[ 'ultima_atrib'   ].append('S' if inc.ultima_atribuicao.seq == atrib.seq else 'N')
+            self.details[ 'entrada'        ].append(atrib.entrada)
+            self.details[ 'status_entrada' ].append(atrib.status_entrada)
+            self.details[ 'saida'          ].append(atrib.saida)
+            self.details[ 'status_saida'   ].append(atrib.status_saida)
+            self.details[ 'duracao_m'      ].append(atrib.duracao_m)
+            self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
                                                           
     def get_details(self):
         return pd.DataFrame(self.details)
