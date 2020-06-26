@@ -185,7 +185,8 @@ class App(object):
         os.chdir(self.dir_import)
         try:
             closed_start_file = config.IMPORT_CLOSED_MASK.format(self.start_date) 
-            closed_end_file = config.IMPORT_CLOSED_MASK.format(self.end_date) 
+            # Nasty bug: Need to use cutff date below because the dump files are D-1.
+            closed_end_file = config.IMPORT_CLOSED_MASK.format(self.cutoff_date)
             all_closed_files = sorted(glob.iglob(config.IMPORT_CLOSED_GLOB))
             closed_files = list([ f for f in all_closed_files if closed_start_file <= f <= closed_end_file ])
             open_file = config.IMPORT_OPEN_MASK.format(self.end_date)
