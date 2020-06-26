@@ -29,10 +29,6 @@ class Csat(models.N4SapKpi):
             'score'             : [],
             'aval_positivas'    : [],
             'aval_negativas'    : [],
-            'aval_periodo'      : [],
-            'aval_pos_periodo'  : [],
-            'aval_neg_periodo'  : [],
-            'score_periodo'     : [],
         }
         self.details_tecnicos_idx = {}
             
@@ -56,21 +52,12 @@ class Csat(models.N4SapKpi):
             self.details_tecnicos[ 'score'            ].append(0)
             self.details_tecnicos[ 'aval_positivas'   ].append(0)
             self.details_tecnicos[ 'aval_negativas'   ].append(0)
-            self.details_tecnicos[ 'aval_periodo'     ].append(0)
-            self.details_tecnicos[ 'score_periodo'    ].append(0)
-            self.details_tecnicos[ 'aval_pos_periodo' ].append(0)
-            self.details_tecnicos[ 'aval_neg_periodo' ].append(0)
         idx = self.details_tecnicos_idx[ pesq.tecnico ]
-        dentro_periodo = start_dt <= pesq.data_resposta <= end_dt
         score_factor = -0.1 if not breached else +0.9
         self.details_tecnicos[ 'avaliacoes'       ][ idx ] += 1
         self.details_tecnicos[ 'score'            ][ idx ] += score_factor
         self.details_tecnicos[ 'aval_positivas'   ][ idx ] += 1 if not breached else 0
         self.details_tecnicos[ 'aval_negativas'   ][ idx ] += 1 if breached else 0
-        self.details_tecnicos[ 'aval_periodo'     ][ idx ] += 1 if dentro_periodo else 0
-        self.details_tecnicos[ 'score_periodo'    ][ idx ] += score_factor if dentro_periodo else 0
-        self.details_tecnicos[ 'aval_pos_periodo' ][ idx ] += 1 if dentro_periodo and not breached else 0
-        self.details_tecnicos[ 'aval_neg_periodo' ][ idx ] += 1 if dentro_periodo and breached else 0
                                                           
     def get_details(self):
         return pd.DataFrame(self.details), pd.DataFrame(self.details_tecnicos)
@@ -85,7 +72,7 @@ class Csat(models.N4SapKpi):
     def evaluate(self, click, start_dt, end_dt):
         super().evaluate(click)
         for pesq in click.get_pesquisas_mesas( self.MESAS_CONTRATO ):
-            breached = pesq.avaliacao < 4
+            breached = pesq.avaliacao < self.NOTA_CORTE
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
             self.update_details(pesq, breached, start_dt, end_dt)
@@ -97,3 +84,22 @@ class Csat(models.N4SapKpi):
         else:
             result = 100.0 * (1.0 - (self.numerator / self.denominator))
             return result, msg
+
+class CsatPeriodo(Csat):
+    
+    KPI_NAME    = "CSAT - Período"
+    SLA         = 90.0
+    NOTA_CORTE  = 4
+    
+    def __init__(self):    
+        super().__init__()
+            
+    def evaluate(self, click, start_dt, end_dt):
+        for pesq in click.get_pesquisas_mesas( self.MESAS_CONTRATO ):
+            if not (start_dt <= pesq.data_resposta <= end_dt):
+                continue
+            breached = pesq.avaliacao < self.NOTA_CORTE
+            self.numerator   += (1 if breached else 0)
+            self.denominator += 1
+            self.update_details(pesq, breached, start_dt, end_dt)
+        

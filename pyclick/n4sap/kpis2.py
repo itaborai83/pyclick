@@ -17,7 +17,7 @@ from pyclick.n4sap.pro import Pro
 from pyclick.n4sap.prc import Prc
 from pyclick.n4sap.prs import PrsV2 as Prs
 from pyclick.n4sap.ids import IdsV2 as Ids
-from pyclick.n4sap.csat import Csat
+from pyclick.n4sap.csat import Csat, CsatPeriodo
 from pyclick.n4sap.estoque import Estoque
 from pyclick.n4sap.peso30 import Peso30
 from pyclick.n4sap.pendfech import PendenteFechado
@@ -82,6 +82,7 @@ class App(object):
         prs = Prs()
         ids = Ids()
         csat = Csat()
+        csat_periodo = CsatPeriodo()
         estoque = Estoque()
         peso30 = Peso30()
         pendfech = PendenteFechado()
@@ -116,6 +117,11 @@ class App(object):
         csat.update_summary(summary)
         csat_details_df, csat_tecnicos_det_df = csat.get_details()
 
+        logger.info('computing CSAT - Período')
+        csat_periodo.evaluate(click, start_dt, end_dt)
+        csat_periodo.update_summary(summary)
+        csat_periodo_details_df, csat_periodo_tecnicos_det_df = csat_periodo.get_details()
+        
         logger.info('computing ESTOQUE')
         estoque.evaluate(click, start_dt, end_dt)
         estoque.update_summary(summary)
@@ -152,8 +158,14 @@ class App(object):
         csat_details_df.to_excel(xw, sheet_name="CSAT_DETALHES", index=False)
         csat_details_df.to_sql("CSAT_DETALHES", conn, if_exists="replace", index=False)
         
+        csat_periodo_details_df.to_excel(xw, sheet_name="CSAT_PERIODO_DETALHES", index=False)
+        csat_periodo_details_df.to_sql("CSAT_PERIODO_DETALHES", conn, if_exists="replace", index=False)
+        
         csat_tecnicos_det_df.to_excel(xw, sheet_name="CSAT_TECNICOS", index=False)
         csat_tecnicos_det_df.to_sql("CSAT_TECNICOS", conn, if_exists="replace", index=False)
+
+        csat_periodo_tecnicos_det_df.to_excel(xw, sheet_name="CSAT_PERIODO_TECNICOS", index=False)
+        csat_periodo_tecnicos_det_df.to_sql("CSAT_PERIODO_TECNICOS", conn, if_exists="replace", index=False)
         
         estoque_details_df.to_excel(xw, sheet_name="ESTOQUE", index=False)
         estoque_details_df.to_sql("ESTOQUE", conn, if_exists="replace", index=False)

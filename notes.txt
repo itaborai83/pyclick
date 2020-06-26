@@ -18,9 +18,9 @@ Planilhão
 
 
 TODO:
+ ! Adicionar testes para CSAT
  ! Renomear campo PENDENCIA para RELOGIO_PARADO
  ! Permitir consolidação em paralelo
- - Paralelizar cálculo durações
  - Otimizar Tempo Durações
  - Usar arquivos descomprimidos temporários durante processo de consolidação
  - Trocar as mensagens de log em inglês para português
