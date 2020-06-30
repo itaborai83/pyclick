@@ -11,6 +11,7 @@ import pyclick.config as config
 
 import pyclick.assyst.dump_schedules as dump_schedules
 import pyclick.assyst.dump_slas as dump_slas
+import pyclick.assyst.dump_surveys as dump_surveys
 import pyclick.consolida_planilhao as consolida_planilhao 
 import pyclick.tools.db2excel as db2excel
 
@@ -32,13 +33,30 @@ class App(object):
         self.start = start
         self.end = end
         self.dir_import = (DIR_IMPORT_V1 if v1 else DIR_IMPORT_V2)
+
+    def has_schedules(self):
+        path = os.path.join(self.dir_apuracao, config.BUSINESS_HOURS_SPREADSHEET)
+        return os.path.exists(path)
     
+    def has_slas(self):
+        path = os.path.join(self.dir_apuracao, config.OFFERINGS_SPREADSHEET)
+        return os.path.exists(path)    
+
+        
         
     def run(self):
         try:
             logger.info('excel2db - versão %d.%d.%d', *self.VERSION)
-            dump_schedules.App(self.dir_apuracao).run()
-            dump_slas.App(self.dir_apuracao).run()
+
+            if not self.has_schedules():
+                dump_schedules.App(self.dir_apuracao).run()
+            else:
+                logger.info('skiping schedules dump. It already exists. Delete it necessary')
+            if not self.has_slas():
+                dump_slas.App(self.dir_apuracao).run()
+            else:
+                logger.info('skiping service offerings dump. It already exists. Delete it necessary')
+            dump_surveys.App(self.dir_apuracao, self.start, self.end).run()
             consolida_planilhao.App(self.dir_apuracao, self.dir_import, self.start, self.end, False).run()
             db = os.path.join(self.dir_apuracao, config.CONSOLIDATED_DB)
             excel = os.path.join(self.dir_apuracao, "export_{}-{}.xlsx".format(self.start, self.end))
