@@ -27,6 +27,7 @@ SQL_ANALISE_PESO30 = util.get_query('N4SAP__ANALISE_PESO30')
 class App():
     
     VERSION = (0, 0, 0)
+    CUTTOF_DURACOES_H = 10 * 9
     
     def __init__(self, dir_apuracao, output):
         self.dir_apuracao = dir_apuracao
@@ -95,8 +96,8 @@ class App():
             'P05' : 0.05, 'P10' : 0.10, 'P15' : 0.15, 
             'P20' : 0.20, 'P25' : 0.25, 'P30' : 0.30, 
             'P35' : 0.35, 'P40' : 0.40, 'P45' : 0.45, 
-            'P50' : 0.50, 'P55' : 0.65, 'P60' : 0.60, 
-            'P65' : 0.75, 'P70' : 0.70, 'P75' : 0.75, 
+            'P50' : 0.50, 'P55' : 0.55, 'P60' : 0.60, 
+            'P65' : 0.65, 'P70' : 0.70, 'P75' : 0.75, 
             'P80' : 0.80, 'P85' : 0.85, 'P90' : 0.90, 
             'P95' : 0.95, 
         }
@@ -128,8 +129,20 @@ class App():
         return df
     
     def _make_histogram(self, ax, x, label_x, title):
+        p85 = x.quantile(0.85)
+        ax2 = ax.twinx()
+        n, bins, patches = ax.hist(x, bins=35, cumulative=False, density=False)
+        
+        x2 = sorted(x)
+        y2 = x.cumsum() / x.sum()
+        ax2.plot(x2, y2, 'r-')
+        
+        ax.set_xlabel(label_x)
+        ax.set_ylabel('Qtd. Incidentes', color='b')
+        ax2.set_ylabel('CDF', color='r')
+        
+        """
         #plt.figure(num=None, figsize=(8, 4), dpi=80, facecolor='w', edgecolor='k')
-        ax.hist(x, density=True, bins=35, label=label_x, cumulative=True, histtype='step')
         ax.hist(x, density=True, bins=35, label=label_x, cumulative=False)
         ax.grid(color='gray', linestyle='dotted', linewidth=0.5)
         #mn, mx = ax.xlim()
@@ -141,51 +154,51 @@ class App():
         #ax.set(ylabel='Prob.', xlabel=label_x, title=title)
         ax.set(ylabel='Prob.', xlabel=label_x)
         
+        ax2 = ax.twinx()  # instantiate a second axes that shares the same x-axis
+        ax2.hist(x, density=True, bins=35, label=label_x, cumulative=True, histtype='step')
+        ax2.grid(color='blue', linestyle='dotted', linewidth=0.5)
+        """
+        
     def make_histograms(self, incs_df):
         # https://stackoverflow.com/questions/33203645/how-to-plot-a-histogram-using-matplotlib-in-python-with-a-list-of-data
         
         logger.info("making histograms")
         # ORIENTAR
         plt.close('all')
-        gridspec_kw = { "hspace": 0.2, "wspace": 0.2 }
-        fig, (ax1, ax2, ax3) = plt.subplots(3, sharex=False, gridspec_kw=gridspec_kw, figsize=(10, 12))
-        
+        gridspec_kw = {  }
+        fig, ax = plt.subplots(1, sharex=False, gridspec_kw=gridspec_kw, figsize=(8, 4))        
         fig.suptitle('Orientar - Peso 30')
-        
-        # ORIENTAR - Duração
-        categoria_df = incs_df[ incs_df.CATEGORIA == 'ORIENTAR' ]
-        duracao_mn = np.log1p(incs_df[ 'DURACAO_M' ]) / math.log(2.0)
-        x = duracao_mn
-        self._make_histogram(ax1, x, "log2(Duração(mn))", "Duração Orientar Peso 30 em H.N.")
+        categoria_df = incs_df[ (incs_df.CATEGORIA == 'ORIENTAR') ]
+        x = categoria_df[ 'TEMPO_M' ] / 60
+        x = x[ x < self.CUTTOF_DURACOES_H ]
+        self._make_histogram(ax, x, "Tempo(HN)", "Tempo Total Orientar Peso 30 em H.N.")        
+        plt.show()
+        fig.savefig('orientar.png')
 
-        # ORIENTAR - Pendência
-        categoria_df = incs_df[ incs_df.CATEGORIA == 'ORIENTAR' ]
-        pendencia_mn = np.log1p(incs_df[ 'PENDENCIA_M' ]) / math.log(2.0)
-        x = pendencia_mn
-        self._make_histogram(ax2, x, "log2(Pendência(mn))", "Pendência Orientar Peso 30 em H.N.")
-        
-        # ORIENTAR - Tempo
-        categoria_df = incs_df[ incs_df.CATEGORIA == 'ORIENTAR' ]
-        tempo_mn = np.log1p(incs_df[ 'TEMPO_M' ]) / math.log(2.0)
-        x = tempo_mn
-        self._make_histogram(ax3, x, "log2(Tempo(mn))", "Tempo Total Orientar Peso 30 em H.N.")        
-        
-        plt.show()
-        """
+        # CORRIGIR
         plt.close('all')
-        plt.figure(num=None, figsize=(8, 4), dpi=80, facecolor='w', edgecolor='k')
-        plt.hist(x, density=True, bins=20, label="Duração(hn)")
-        mn, mx = plt.xlim()
-        plt.xlim(mn, mx)
-        kde_xs = np.linspace(mn, mx, 50)
-        kde = st.gaussian_kde(x)
-        plt.plot(kde_xs, kde.pdf(kde_xs), label="PDF")
-        plt.legend(loc="upper right")
-        plt.ylabel('Prob.')
-        plt.xlabel('Duração(hn)')
-        plt.title("Duração Orientar Peso 30 em H.N.");
+        gridspec_kw = {  }
+        fig, ax = plt.subplots(1, sharex=False, gridspec_kw=gridspec_kw, figsize=(8, 4))        
+        fig.suptitle('Corrigir - Peso 30')
+        categoria_df = incs_df[ (incs_df.CATEGORIA == 'CORRIGIR') ]
+        x = categoria_df[ 'TEMPO_M' ] / 60
+        x = x[ x < self.CUTTOF_DURACOES_H ]
+        self._make_histogram(ax, x, "Tempo(HN)", "Tempo Total Corrigir Peso 30 em H.N.")
         plt.show()
-        """
+        fig.savefig('corrigir.png')
+        
+        # REALIZAR
+        plt.close('all')
+        gridspec_kw = {  }
+        fig, ax = plt.subplots(1, sharex=False, gridspec_kw=gridspec_kw, figsize=(8, 4))        
+        fig.suptitle('Realizar - Peso 30')
+        categoria_df = incs_df[ (incs_df.CATEGORIA == 'CORRIGIR') ]
+        x = categoria_df[ 'TEMPO_M' ] / 60
+        x = x[ x < self.CUTTOF_DURACOES_H ]
+        self._make_histogram(ax, x, "Tempo(HN)", "Tempo Total Realizar Peso 30 em H.N.")
+        plt.show()
+        fig.savefig('realizar.png')
+        
     def run(self):
         try:
             logger.info('starting análise peso 30 - version %d.%d.%d', *self.VERSION)
