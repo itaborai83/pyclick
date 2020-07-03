@@ -76,7 +76,12 @@ class App(object):
     
     def compute_kpis(self, conn, click, xw, start_dt, end_dt):
         logger.info('calculating KPI\'s')
-        summary = { 'INDICADOR': [], 'VALOR': [], 'SLA': [], 'OBS': [] }
+        summary = { 
+            'INDICADOR' : [], 
+            'VALOR'     : [], 
+            'SLA'       : [], 
+            'OBS'       : [] 
+        }
         prp = Prp()
         pro = Pro()
         prc = Prc()
@@ -138,10 +143,21 @@ class App(object):
         pendfech.update_summary(summary)
         pendfech_df = pendfech.get_details()
         
+        summary[ 'INDICADOR' ].append('INÍCIO PERÍODO')
+        summary[ 'VALOR'     ].append(start_dt)   
+        summary[ 'SLA'       ].append("N/A")
+        summary[ 'OBS'       ].append("Hora Início do Período de Apuração")
+        summary[ 'INDICADOR' ].append('FIM PERÍODO')
+        summary[ 'VALOR'     ].append(end_dt)   
+        summary[ 'SLA'       ].append("N/A")
+        summary[ 'OBS'       ].append("Hora Fim do Período de Apuração")
+        
         logger.info('writing summary table')
         df_summary = pd.DataFrame(summary)
         df_summary.to_excel(xw, sheet_name="INDICADORES", index=False)
         df_summary.to_sql("INDICADORES", conn, if_exists="replace", index=False)
+
+        
         
         logger.info('writing KPI details')
         prp_details_df.to_excel(xw, sheet_name="PRP_DETALHES", index=False)
