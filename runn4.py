@@ -16,9 +16,7 @@ import pyclick.assyst.dump_slas as dump_slas
 import pyclick.assyst.dump_surveys as dump_surveys
 import pyclick.consolida_planilhao as consolida_planilhao 
 import pyclick.n4sap.ddl as ddl
-import pyclick.n4sap.override as override
 import pyclick.n4sap.kpis2 as kpis
-import pyclick.tools.db2excel as db2excel
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -49,23 +47,19 @@ class App(object):
     
     def run(self):
         try:
-            logger.info('excel2db - versão %d.%d.%d', *self.VERSION)
+            logger.info('runn4 - versão %d.%d.%d', *self.VERSION)
             if not self.has_schedules():
                 dump_schedules.App(self.dir_apuracao).run()
             else:
-                logger.info('skiping schedules dump. It already exists. Delete it necessary')
+                logger.info('skiping schedules dump. It already exists. Delete it if necessary')
             if not self.has_slas():
                 dump_slas.App(self.dir_apuracao).run()
             else:
-                logger.info('skiping service offerings dump. It already exists. Delete it necessary')
+                logger.info('skiping service offerings dump. It already exists. Delete it if necessary')
             dump_surveys.App(self.dir_apuracao, n4_config.START_CSAT_DT, self.end).run()
             consolida_planilhao.App(self.dir_apuracao, self.dir_import, self.start, self.end, False).run()
             ddl.App(self.dir_apuracao).run()
-            override.App(self.dir_apuracao, truncate=False, export=False, export_missing=True, import_=False)
             kpis.App(self.dir_apuracao).run()
-            #db = os.path.join(self.dir_apuracao, config.CONSOLIDATED_DB)
-            #excel = os.path.join(self.dir_apuracao, "export_{}-{}.xlsx".format(self.start, self.end))
-            #db2excel.App(db, VIEW_MEDICOES, excel, "PyClick", overwrite=True).run()
         except:
             logger.exception('an error has occurred')
             raise
