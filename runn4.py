@@ -31,7 +31,7 @@ class App(object):
     
     VERSION = (0, 0, 0)
         
-    def __init__(self, dir_apuracao, start, end, v1):
+    def __init__(self, dir_apuracao, start, end, v1=False):
         self.dir_apuracao = dir_apuracao
         self.start = start
         self.end = end

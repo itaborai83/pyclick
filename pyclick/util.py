@@ -113,12 +113,18 @@ def unparse_datetime(d):
     if pd.isna(d) or d is None:
         return d
     return d.strftime('%Y-%m-%d %H:%M:%S')
-    
+
+def next_n_days(txt, days):
+    return str((dt.datetime.strptime(txt, '%Y-%m-%d') + dt.timedelta(days)).date())
+
+def prior_n_days(txt, days):
+    return str((dt.datetime.strptime(txt, '%Y-%m-%d') + dt.timedelta(-days)).date())
+
 def next_date(txt):
-    return str((dt.datetime.strptime(txt, '%Y-%m-%d') + dt.timedelta(1)).date())
+    return next_n_days(txt, 1)
 
 def prior_date(txt):
-    return str((dt.datetime.strptime(txt, '%Y-%m-%d') + dt.timedelta(-1)).date())
+    return prior_n_days(txt, 1)
 
 def datetime2tstmp(txt):
     dt1 = parse_datetime(txt)
