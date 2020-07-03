@@ -3,9 +3,12 @@ import pyclick.n4sap.models as models
 
 class Peso30(models.N4SapKpi):
     
-    KPI_NAME    = "PESO30"
-    SLA         = "N/A"
-    
+    KPI_NAME         = "PESO30"
+    SLA              = "N/A"
+    PRAZO_CORRIGIR_M = 72 * 60
+    PRAZO_ORIENTAR_M = 40 * 60
+    PRAZO_REALIZAR_M = 36 * 60
+
     def __init__(self):
         super().__init__()
         self.numerator = 0
@@ -29,8 +32,7 @@ class Peso30(models.N4SapKpi):
             'duracao_m'         : [],
             'pendencia_m'       : [],
         }
-        self.mesas_idx = {}
-        
+            
     def update_details(self, inc, breached, categoria, prazo_m, duration_m, pendencia_m):
         for atrib in inc.atribuicoes:
             if atrib.mesa not in self.MESAS_CONTRATO:
@@ -52,28 +54,30 @@ class Peso30(models.N4SapKpi):
             self.details[ 'status_saida'   ].append(atrib.status_saida)
             self.details[ 'duracao_m'      ].append(atrib.duracao_m)
             self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
-                                                          
+            
     def get_details(self):
         return pd.DataFrame(self.details)
     
     def get_description(self):
         if self.denominator == 0:
-            msg = "Nenhum incidente escalado aberto"
+            msg = "Nenhum incidente peso 30 processado"
         else:
-            msg = f"{self.numerator} inc.s estourados / {self.denominator} incidentes escalados"
-        return msg    
-        
-    def calc_duration(self, inc):
-        return inc.calc_duration_mesas(self.MESA_ESCALADOS)
+            msg = f"{self.numerator} violações / {self.denominator} incidentes escalados"
+        return msg
+
+    def has_assignment_within_period(self, inc, start_dt, end_dt):
+        for atrib in inc.get_atribuicoes_mesas([ self.MESA_ESCALADOS ]):
+            if atrib.intersects_with(start_dt, end_dt):
+                return True
     
     def calcular_prazo(self, inc):
         categoria = self.categorizar(inc)
         if categoria == 'ATENDER - TAREFA':
-            return 5 * 9 * 60
+            return self.PRAZO_REALIZAR_M
         elif categoria == 'CORRIGIR':
-            return 15 * 9 * 60
+            return self.PRAZO_CORRIGIR_M
         elif categoria == 'ORIENTAR':
-            return 3 * 9 * 60
+            return self.PRAZO_ORIENTAR_M
         else:
             assert 1 == 2 # should not happen
 
@@ -82,19 +86,20 @@ class Peso30(models.N4SapKpi):
         mesa = click.get_mesa(self.MESA_ESCALADOS)
         if mesa is None:
             return
-        for inc in mesa.get_incidentes():
+        for inc in mesa.get_seen_incidentes():
             if inc.id_chamado.startswith("S"):
                 continue
-            assert inc.status == 'ABERTO'
+            if not self.has_assignment_within_period(inc, start_dt, end_dt):
+                continue            
             categoria = self.categorizar(inc)
             prazo_m = self.calcular_prazo(inc)
-            duration_m = self.calc_duration(inc)
+            duration_m = inc.calc_duration_mesas([ self.MESA_ESCALADOS ])
             pendencia_m = inc.calc_pendencia_mesas([ self.MESA_ESCALADOS ])
             breached = (duration_m + pendencia_m) > prazo_m
             self.denominator += 1
             self.numerator += 1 if breached else 0            
             self.update_details(inc, breached, categoria, prazo_m, duration_m, pendencia_m)
-    
+
     def get_result(self):
         msg = self.get_description()
         if self.denominator == 0:
@@ -102,3 +107,4 @@ class Peso30(models.N4SapKpi):
         else:
             result = 100.0 * (self.numerator / self.denominator)
             return result, msg
+            

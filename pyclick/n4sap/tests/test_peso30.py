@@ -16,7 +16,7 @@ class TestPeso30(unittest.TestCase):
     def test_it_computes_the_kpi_for_no_incidents(self):
         kpi, observation = self.peso30.get_result()
         self.assertEqual(None, kpi)
-        self.assertEqual("Nenhum incidente escalado aberto", observation)
+        self.assertEqual("Nenhum incidente peso 30 processado", observation)
         
     def test_it_skips_incs_with_prior_assignments_and_no_current_assigment(self):
         evts = Event.parse_events(r"""
@@ -28,9 +28,9 @@ class TestPeso30(unittest.TestCase):
         self.peso30.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.peso30.get_result()
         self.assertEqual(None, kpi)
-        self.assertEqual("Nenhum incidente escalado aberto", observation)
+        self.assertEqual("Nenhum incidente peso 30 processado", observation)
 
-    def test_it_does_not_compute_the_kpi_for_a_closed_incident(self):
+    def test_it_computes_the_kpi_for_a_closed_incident(self):
         evts = Event.parse_events(r"""
             BBBBBB		ORIENTAR	Dúvida sobre o serviço	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-04-24 00:00:00	2020-04-26 23:59:59	9999699
             BBBBBB		ORIENTAR	Dúvida sobre o serviço	99960	8541250	Resolver	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-04-26 01:02:03		0
@@ -39,8 +39,8 @@ class TestPeso30(unittest.TestCase):
             self.click.update(evt)
         self.peso30.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.peso30.get_result()
-        self.assertEqual(None, kpi)
-        self.assertEqual("Nenhum incidente escalado aberto", observation)
+        self.assertEqual(100.0, kpi)
+        self.assertEqual("1 violações / 1 incidentes escalados", observation)
     
     def test_it_computes_the_kpi_for_an_open_incident(self):
         evts = Event.parse_events(r"""
@@ -52,7 +52,7 @@ class TestPeso30(unittest.TestCase):
         self.peso30.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.peso30.get_result()
         self.assertEqual(0.0, kpi)
-        self.assertEqual("0 inc.s estourados / 1 incidentes escalados", observation)
+        self.assertEqual("0 violações / 1 incidentes escalados", observation)
     
     def test_it_computes_the_kpi_for_a_breached_open_incident(self):
         evts = Event.parse_events(r"""
@@ -64,7 +64,7 @@ class TestPeso30(unittest.TestCase):
         self.peso30.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.peso30.get_result()
         self.assertEqual(100.0, kpi)
-        self.assertEqual("1 inc.s estourados / 1 incidentes escalados", observation)
+        self.assertEqual("1 violações / 1 incidentes escalados", observation)
     
     if False:            
         def test_it_computes_the_kpi(self):
