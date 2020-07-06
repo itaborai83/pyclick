@@ -21,7 +21,7 @@ from pyclick.n4sap.csat import Csat, CsatPeriodo
 from pyclick.n4sap.estoque import Estoque
 from pyclick.n4sap.peso30 import Peso30
 from pyclick.n4sap.aging import Aging
-from pyclick.n4sap.pendfech import PendenteFechado
+#from pyclick.n4sap.pendfech import PendenteFechado
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -94,7 +94,7 @@ class App(object):
         csat_periodo = CsatPeriodo()
         estoque = Estoque()
         peso30 = Peso30()
-        pendfech = PendenteFechado()
+        #pendfech = PendenteFechado()
         
         logger.info('computing PRP')
         prp.evaluate(click, start_dt, end_dt)
@@ -151,10 +151,10 @@ class App(object):
         peso30.update_summary(summary)
         peso30_df = peso30.get_details()
         
-        logger.info('computing PENDENTES FECHADOS')
-        pendfech.evaluate(click, start_dt, end_dt)
-        pendfech.update_summary(summary)
-        pendfech_df = pendfech.get_details()
+        #logger.info('computing PENDENTES FECHADOS')
+        #pendfech.evaluate(click, start_dt, end_dt)
+        #pendfech.update_summary(summary)
+        #pendfech_df = pendfech.get_details()
         
         summary[ 'INDICADOR' ].append('INÍCIO PERÍODO')
         summary[ 'VALOR'     ].append(start_dt)   
@@ -210,8 +210,8 @@ class App(object):
         peso30_df.to_excel(xw, sheet_name="PESO30_DETALHES", index=False)
         peso30_df.to_sql("PESO30_DETALHES", conn, if_exists="replace", index=False)
         
-        pendfech_df.to_excel(xw, sheet_name="PENDENTES_FECHADOS", index=False)
-        pendfech_df.to_sql("PENDENTES_FECHADOS", conn, if_exists="replace", index=False)
+        #pendfech_df.to_excel(xw, sheet_name="PENDENTES_FECHADOS", index=False)
+        #pendfech_df.to_sql("PENDENTES_FECHADOS", conn, if_exists="replace", index=False)
         
     def write_business_times(self, repo, xw):
         logger.info("exporting tempo útil mesas")
