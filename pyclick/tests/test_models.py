@@ -164,6 +164,11 @@ class TestAcao(unittest.TestCase):
         for nome, status in STATUS_MAPPING.items():
             self.act1.acao_nome = nome
             self.assertEqual(self.act1.status, status)
+    
+    def test_it_clones_itself(self):
+        clone = self.act1.clone()
+        self.assertEqual(clone, self.act1)
+        self.assertNotEqual(id(clone), id(self.act1))
         
 class TestIncident(unittest.TestCase):
 
@@ -324,6 +329,48 @@ class TestIncident(unittest.TestCase):
         self.assertTrue(self.inc.possui_atribuicoes( [ 'MESA 3' ] ))
         self.assertTrue(self.inc.possui_atribuicoes( [ 'MESA 4' ] ))
         self.assertFalse(self.inc.possui_atribuicoes( [ 'MESA 5' ] ))
+
+    def test_it_clones_itself(self):
+        for action in self.actions:
+            self.inc.add_acao(action)
+        clone = self.inc.clone()
+        self.assertEqual(clone, self.inc)
+        self.assertNotEqual(id(clone), id(self.inc))
+    
+    def test_it_remap_mesas(self):
+        for action in self.actions:
+            self.inc.add_acao(action)
+        mesa_mapping = {
+            'MESA 0': 'MEXA *', # não existe no incidente
+            'MESA 2': 'MESA II',
+            'MESA 4': 'MESA II'
+        }
+        remapped = self.inc.remap_mesas({})
+        self.assertEqual(remapped, self.inc)
+        remapped = self.inc.remap_mesas(mesa_mapping)
+        self.assertNotEqual(remapped, self.inc)
+        
+        self.assertFalse(remapped.possui_atribuicoes( [ 'MESA 0' ] ))
+        self.assertFalse(remapped.possui_atribuicoes( [ 'MESA *' ] ))
+        self.assertTrue(remapped.possui_atribuicoes( [ 'MESA 1' ] ))
+        self.assertTrue(remapped.possui_atribuicoes( [ 'MESA II' ] ))
+        self.assertFalse(remapped.possui_atribuicoes( [ 'MESA 2' ] ))
+        self.assertTrue(remapped.possui_atribuicoes( [ 'MESA 3' ] ))
+        self.assertTrue(remapped.possui_atribuicoes( [ 'MESA II' ] ))
+        self.assertFalse(remapped.possui_atribuicoes( [ 'MESA 4' ] ))
+        self.assertFalse(remapped.possui_atribuicoes( [ 'MESA 5' ] ))
+
+        atrib = remapped.atribuicoes[ 0 ]
+        self.assertEqual(atrib.mesa, "MESA 1")
+        
+        atrib = remapped.atribuicoes[ 1 ]
+        self.assertEqual(atrib.mesa, "MESA II")
+        
+        atrib = remapped.atribuicoes[ 2 ]
+        self.assertEqual(atrib.mesa, "MESA 3")
+        
+        atrib = remapped.atribuicoes[ 3 ]
+        self.assertEqual(atrib.mesa, "MESA II")
         
 class TestClick(unittest.TestCase):
     

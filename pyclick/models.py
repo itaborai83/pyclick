@@ -174,8 +174,17 @@ class Acao(object):
         self.data_acao      = data_acao
         self.data_fim_acao  = data_fim_acao
         self.duracao_m      = duracao_m
-        
-
+    
+    def clone(self):
+        return Acao(
+            id_acao        = self.id_acao,
+            acao_nome      = self.acao_nome,
+            pendencia      = self.pendencia,
+            mesa_atual     = self.mesa_atual,
+            data_acao      = self.data_acao,
+            data_fim_acao  = self.data_fim_acao,
+            duracao_m      = self.duracao_m,   
+        )
     def __str__(self):
         return util.build_str(self, self.__slots__, False)
     
@@ -204,7 +213,7 @@ class Acao(object):
 class Atribuicao(object):
      
     __slots__ = [ 'seq', 'mesa', 'entrada', 'status_entrada', 'saida', 'status_saida', 'duracao_m', 'pendencia_m' ]
-     
+    
     def __init__(self, seq, mesa, entrada, status_entrada, saida, status_saida, duracao_m, pendencia_m):
         self.seq            = seq
         self.mesa           = mesa
@@ -214,7 +223,20 @@ class Atribuicao(object):
         self.status_saida   = status_saida
         self.duracao_m      = duracao_m
         self.pendencia_m    = pendencia_m
-        
+    
+    
+    def clone(self):
+        return Atribuicao(
+            seq            = self.seq,
+            mesa           = self.mesa,
+            entrada        = self.entrada,
+            status_entrada = self.status_entrada,
+            saida          = self.saida,
+            status_saida   = self.status_saida,
+            duracao_m      = self.duracao_m,
+            pendencia_m    = self.pendencia_m
+        )
+    
     def __str__(self):
         return util.build_str(self, self.__slots__, False)
     
@@ -329,6 +351,19 @@ class Incidente(object):
         self.acoes          = []
         self.atribuicoes    = []
         self.mesas          = set()
+    
+    def clone(self):
+        inc = Incidente(
+            id_chamado     = self.id_chamado,
+            chamado_pai    = self.chamado_pai,
+            categoria      = self.categoria,
+            oferta         = self.oferta,
+            prazo          = self.prazo,
+        )
+        inc.acoes = list([ a.clone() for a in self.acoes ] )
+        inc.atribuicoes = list([ a.clone() for a in self.atribuicoes ] )
+        inc.mesas = self.mesas.copy()
+        return inc
         
     def __str__(self):
         return util.build_str(self, self.__slots__)
@@ -408,7 +443,27 @@ class Incidente(object):
         ,   oferta              = evt.oferta_catalogo 
         ,   prazo               = evt.prazo_oferta_m
         )
-
+    
+    def remap_mesas(self, mapping_mesas=None):            
+        inc_clone = self.clone()
+        if mapping_mesas is None:
+            return inc_clone
+        # set mesas
+        mesas_copy = inc_clone.mesas.copy() 
+        for from_mesa in mesas_copy:
+            if from_mesa not in mapping_mesas:
+                continue
+            to_mesa = mapping_mesas[ from_mesa ]
+            inc_clone.mesas.remove(from_mesa)
+            inc_clone.mesas.add(to_mesa)
+        # atribuições
+        for atrib in inc_clone.atribuicoes:
+            atrib.mesa = mapping_mesas.get(atrib.mesa, atrib.mesa)
+        # ações
+        for acao in inc_clone.acoes:
+            acao.mesa_atual = mapping_mesas.get(acao.mesa_atual, acao.mesa_atual)
+        return inc_clone
+        
 class Mesa(object):
 
     def __init__(self, name):
@@ -527,6 +582,7 @@ class Click(object):
     
     def add_expurgo(self, id_chamado):
         self.expurgos.add(id_chamado)
+    
     def get_pesquisas_mesas(self, mesas):
         return list([
             pesq for pesq in self.pesquisas if pesq.mesa in mesas
