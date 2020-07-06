@@ -20,6 +20,7 @@ from pyclick.n4sap.ids import IdsV2 as Ids
 from pyclick.n4sap.csat import Csat, CsatPeriodo
 from pyclick.n4sap.estoque import Estoque
 from pyclick.n4sap.peso30 import Peso30
+from pyclick.n4sap.aging import Aging
 from pyclick.n4sap.pendfech import PendenteFechado
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
@@ -87,6 +88,8 @@ class App(object):
         prc = Prc()
         prs = Prs()
         ids = Ids()
+        aging60 = Aging(60, 90)
+        aging90 = Aging(90, 9999999)
         csat = Csat()
         csat_periodo = CsatPeriodo()
         estoque = Estoque()
@@ -117,6 +120,16 @@ class App(object):
         ids.evaluate(click, start_dt, end_dt)
         ids.update_summary(summary)
         ids_details_df = ids.get_details()
+        
+        logger.info('computing AGING 60')
+        aging60.evaluate(click, start_dt, end_dt)
+        aging60.update_summary(summary)
+        aging60_details_df = aging60.get_details()
+        
+        logger.info('computing AGING 90')
+        aging90.evaluate(click, start_dt, end_dt)
+        aging90.update_summary(summary)
+        aging90_details_df = aging90.get_details()
         
         logger.info('computing CSAT')
         csat.evaluate(click, start_dt, end_dt)
@@ -156,8 +169,6 @@ class App(object):
         df_summary = pd.DataFrame(summary)
         df_summary.to_excel(xw, sheet_name="INDICADORES", index=False)
         df_summary.to_sql("INDICADORES", conn, if_exists="replace", index=False)
-
-        
         
         logger.info('writing KPI details')
         prp_details_df.to_excel(xw, sheet_name="PRP_DETALHES", index=False)
@@ -174,6 +185,12 @@ class App(object):
         
         ids_details_df.to_excel(xw, sheet_name="IDS_DETALHES", index=False)
         ids_details_df.to_sql("IDS_DETALHES", conn, if_exists="replace", index=False)
+        
+        aging60_details_df.to_excel(xw, sheet_name="AGING60_DETALHES", index=False)
+        aging60_details_df.to_sql("AGING60_DETALHES", conn, if_exists="replace", index=False)
+        
+        aging90_details_df.to_excel(xw, sheet_name="AGING90_DETALHES", index=False)
+        aging90_details_df.to_sql("AGING90_DETALHES", conn, if_exists="replace", index=False)
         
         csat_details_df.to_excel(xw, sheet_name="CSAT_DETALHES", index=False)
         csat_details_df.to_sql("CSAT_DETALHES", conn, if_exists="replace", index=False)
