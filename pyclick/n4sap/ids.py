@@ -9,6 +9,9 @@ class Ids(models.N4SapKpi):
     
     def __init__(self):
         super().__init__()
+        self.reset()
+        
+    def reset(self):
         self.numerator = 0
         self.denominator = 0
         self.details = {
@@ -73,13 +76,14 @@ class Ids(models.N4SapKpi):
                 return True
         return False
         
-    def evaluate(self, click, start_dt, end_dt):
-        super().evaluate(click)
+    def evaluate(self, click, start_dt, end_dt, mesa=None):
+        mesa_mapping = self.build_mesa_mapping(mesa) if mesa is not None else {}
         for mesa_name in self.MESAS_CONTRATO:
             mesa = click.get_mesa(mesa_name)
             if mesa is None:
                 continue
             for inc in mesa.get_incidentes():
+                inc = inc.remap_mesas(mesa_mapping)
                 if inc.id_chamado.startswith("T"):
                     continue
                 if not self.has_assignment_within_period(inc, start_dt, end_dt):
@@ -125,12 +129,15 @@ class IdsV2(Ids):
         assert not inc.id_chamado.startswith('S')
         super().update_details(inc, duration_m, ids_factor)      
                 
-    def evaluate(self, click, start_dt, end_dt):
+    def evaluate(self, click, start_dt, end_dt, mesa_filter=None):
         for mesa_name in self.MESAS_CONTRATO:
             mesa = click.get_mesa(mesa_name)
             if mesa is None:
                 continue
             for inc in mesa.get_incidentes():
+                inc = self.remap_mesas_by_last(inc, mesa_filter, self.MESAS_CONTRATO)
+                if inc is None:
+                    continue
                 if inc.id_chamado.startswith("S"):
                     continue
                 if not self.has_assignment_within_period(inc, start_dt, end_dt):

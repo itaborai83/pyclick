@@ -4,11 +4,14 @@ import pyclick.n4sap.models as models
 class Prp(models.N4SapKpi):
     
     KPI_NAME    = "PRP"
-    PRAZO_M = 9 * 60
-    SLA     = 10.0
+    PRAZO_M     = 9 * 60
+    SLA         = 10.0
     
     def __init__(self):
         super().__init__()
+        self.reset()
+        
+    def reset(self):
         self.numerator = 0
         self.denominator = 0
         self.details = {
@@ -76,7 +79,6 @@ class Prp(models.N4SapKpi):
         return False
         
     def evaluate(self, click, start_dt, end_dt):
-        super().evaluate(click)
         mesa = click.get_mesa(self.MESA_PRIORIDADE)
         if mesa is None:
             return

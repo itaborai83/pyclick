@@ -337,6 +337,13 @@ class TestIncident(unittest.TestCase):
         self.assertEqual(clone, self.inc)
         self.assertNotEqual(id(clone), id(self.inc))
     
+    def test_it_returns_the_latest_mesa_from_a_set(self):
+        for action in self.actions:
+            self.inc.add_acao(action)
+        mesas = [ 'MESA 0', 'MESA 1', 'MESA 2', 'MESA 3', 'MESA 4', 'MESA 5' ]
+        latest = self.inc.get_latest_mesa_from(mesas)
+        self.assertEqual(latest, 'MESA 4')
+        
     def test_it_remap_mesas(self):
         for action in self.actions:
             self.inc.add_acao(action)

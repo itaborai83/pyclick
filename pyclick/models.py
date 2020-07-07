@@ -444,7 +444,7 @@ class Incidente(object):
         ,   prazo               = evt.prazo_oferta_m
         )
     
-    def remap_mesas(self, mapping_mesas=None):            
+    def remap_mesas(self, mapping_mesas=None):
         inc_clone = self.clone()
         if mapping_mesas is None:
             return inc_clone
@@ -463,6 +463,12 @@ class Incidente(object):
         for acao in inc_clone.acoes:
             acao.mesa_atual = mapping_mesas.get(acao.mesa_atual, acao.mesa_atual)
         return inc_clone
+    
+    def get_latest_mesa_from(self, mesas):
+        for atrib in reversed(self.atribuicoes):
+            if atrib.mesa in mesas:
+                return atrib.mesa
+        return None
         
 class Mesa(object):
 
@@ -497,7 +503,7 @@ class Mesa(object):
 
     def get_seen_incidentes(self):
         return self.seen_incs.values()
-        
+
 class Click(object):
     
     def __init__(self):
@@ -593,15 +599,26 @@ class Kpi(object):
     def __init__(self):
         self.expurgos = set()
     
+    def reset(self):
+        raise NotImplementedError()
+        
     def purge(self, id_chamado):
         self.expurgos.add(id_chamado)
     
     def is_purged(self, id_chamado):
         return id_chamado in self.expurgos
         
-    def evaluate(self, click):
+    def evaluate(self, click, start_dt, end_dt):
         raise NotImplementedError
     
     def get_result(self):
         raise NotImplementedError
     
+    def remap_mesas_by_last(self, inc, mesa_to, mesas_from):
+        if mesa_to is None:
+            return inc.clone()
+        latest = inc.get_latest_mesa_from(mesas_from)
+        if latest is None or latest != mesa_to:
+            return None
+        mapping_mesas = { m: mesa_to for m in mesas_from }
+        return inc.remap_mesas(mapping_mesas)

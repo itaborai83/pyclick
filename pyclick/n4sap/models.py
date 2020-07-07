@@ -62,9 +62,19 @@ class N4SapKpi(models.Kpi):
             return 27 * 60
         else:
             assert 1 == 2 # should not happen
-            
+    
+    def build_mesa_mapping(self, mesa):
+        return {
+            'N4-SAP-SUSTENTACAO-ABAST_GE'       : mesa
+        ,   'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' : mesa
+        ,   'N4-SAP-SUSTENTACAO-CORPORATIVO'    : mesa
+        ,   'N4-SAP-SUSTENTACAO-FINANCAS'       : mesa
+        ,   'N4-SAP-SUSTENTACAO-GRC'            : mesa
+        ,   'N4-SAP-SUSTENTACAO-PORTAL'         : mesa
+        ,   'N4-SAP-SUSTENTACAO-SERVICOS'       : mesa
+        }
     def evaluate(self, click):
-        pass
+        raise NotImplementedError
     
     def get_details(self):
         raise NotImplementedError
@@ -72,9 +82,10 @@ class N4SapKpi(models.Kpi):
     def get_result(self):
         raise NotImplementedError
         
-    def update_summary(self, summary):
+    def update_summary(self, summary, mesa=''):
         kpi, obs = self.get_result()
         summary[ 'INDICADOR'    ].append(self.KPI_NAME)
+        summary[ 'MESA'         ].append(mesa)
         summary[ 'VALOR'        ].append(kpi)
         summary[ 'SLA'          ].append(self.SLA)
         summary[ 'OBS'          ].append(obs)

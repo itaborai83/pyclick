@@ -9,6 +9,9 @@ class Csat(models.N4SapKpi):
     
     def __init__(self):
         super().__init__()
+        self.reset()
+        
+    def reset(self):
         self.numerator = 0
         self.denominator = 0
         self.details = {
@@ -69,9 +72,10 @@ class Csat(models.N4SapKpi):
             msg = f"1.0 - ({self.numerator} violações / {self.denominator} pesquisas)"
         return msg
         
-    def evaluate(self, click, start_dt, end_dt):
-        super().evaluate(click)
+    def evaluate(self, click, start_dt, end_dt, mesa_filter=None):
         for pesq in click.get_pesquisas_mesas( self.MESAS_CONTRATO ):
+            if mesa_filter is not None and pesq.mesa != mesa_filter:
+                continue
             breached = pesq.avaliacao < self.NOTA_CORTE
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
@@ -94,8 +98,10 @@ class CsatPeriodo(Csat):
     def __init__(self):    
         super().__init__()
             
-    def evaluate(self, click, start_dt, end_dt):
+    def evaluate(self, click, start_dt, end_dt, mesa_filter=None):
         for pesq in click.get_pesquisas_mesas( self.MESAS_CONTRATO ):
+            if mesa_filter is not None and pesq.mesa != mesa_filter:
+                continue            
             if not (start_dt <= pesq.data_resposta <= end_dt):
                 continue
             breached = pesq.avaliacao < self.NOTA_CORTE

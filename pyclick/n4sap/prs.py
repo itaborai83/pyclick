@@ -8,6 +8,9 @@ class Prs(models.N4SapKpi):
     
     def __init__(self):
         super().__init__()
+        self.reset()
+        
+    def reset(self):
         self.numerator = 0
         self.denominator = 0
         self.details = {
@@ -118,8 +121,11 @@ class PrsV2(Prs):
         assert not inc.id_chamado.startswith('S')
         super().update_details(inc, duration_m, breached)            
             
-    def evaluate(self, click, start_dt, end_dt):
+    def evaluate(self, click, start_dt, end_dt, mesa_filter=None):
         for inc in click.get_incidentes():
+            inc = self.remap_mesas_by_last(inc, mesa_filter, self.MESAS_CONTRATO)
+            if inc is None:
+                continue
             if not inc.id_chamado.startswith("T"):
                 continue
             if not inc.possui_atribuicoes(self.MESAS_NAO_PRIORITARIAS):

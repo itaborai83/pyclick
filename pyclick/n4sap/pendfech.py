@@ -9,6 +9,9 @@ class PendenteFechado(models.N4SapKpi):
     
     def __init__(self):
         super().__init__()
+        self.reset()
+        
+    def reset(self):
         self.numerator = 0
         self.denominator = 0
         self.details = {
@@ -21,6 +24,7 @@ class PendenteFechado(models.N4SapKpi):
             
         }
         self.mesas_idx = {}
+    
         
     def update_details(self, inc, breached):
         categoria = self.categorizar(inc)
@@ -50,13 +54,15 @@ class PendenteFechado(models.N4SapKpi):
                 return True
         return False
         
-    def evaluate(self, click, start_dt, end_dt):
-        super().evaluate(click)
+    def evaluate(self, click, start_dt, end_dt, mesa_filter=None):
         for mesa_name in self.MESAS_CONTRATO:
             mesa = click.get_mesa(mesa_name)
             if mesa is None:
                 continue
             for inc in mesa.get_seen_incidentes():
+                inc = self.remap_mesas_by_last(inc, mesa_filter, self.MESAS_CONTRATO)
+                if inc is None:
+                    continue
                 if inc.id_chamado.startswith("S"):
                     continue
                 if not self.has_assignment_within_period(inc, start_dt, end_dt):

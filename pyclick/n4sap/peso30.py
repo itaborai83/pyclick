@@ -11,6 +11,9 @@ class Peso30(models.N4SapKpi):
 
     def __init__(self):
         super().__init__()
+        self.reset()
+        
+    def reset(self):
         self.numerator = 0
         self.denominator = 0
         self.details = {
@@ -82,7 +85,6 @@ class Peso30(models.N4SapKpi):
             assert 1 == 2 # should not happen
 
     def evaluate(self, click, start_dt, end_dt):
-        super().evaluate(click)
         mesa = click.get_mesa(self.MESA_ESCALADOS)
         if mesa is None:
             return
