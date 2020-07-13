@@ -424,15 +424,15 @@ class App(object):
             df_open = self.add_dados_oferta(df_open, df_ofertas)
             self.update_event_mapping(mesa_evt_mapping, df_open)
             
-            dfs_closed = [ ]
-            logger.info('iniciando loop de parsing')
+            #dfs_closed = [ ]
+            logger.info('iniciando loop de parsing pela primeira vez') # to save memory
             for closed_dump in closed_dumps:
                 logger.info('processsando %s', closed_dump)
                 df = self.read_dump(closed_dump)
                 df = self.apply_cutoff_date_closed(df)
                 df = self.add_dados_oferta(df, df_ofertas)
                 self.update_event_mapping(mesa_evt_mapping, df)
-                dfs_closed.append(df)
+                #dfs_closed.append(df)
 
             logger.info('filtrando incidentes com base no mapeamento de mesas')
             all_events = set()
@@ -441,7 +441,18 @@ class App(object):
                     logger.info('particionando mesa %s com %d eventos', mesa, len(events))
                     all_events.update(events)
             
+            dfs_closed = [ ]
+            logger.info('iniciando loop de parsing pela segunda vez') # to save memory
+            for closed_dump in closed_dumps:
+                logger.info('processsando %s', closed_dump)
+                df = self.read_dump(closed_dump)
+                df = self.apply_cutoff_date_closed(df)
+                df = self.add_dados_oferta(df, df_ofertas)
+                df = df[ df.id_chamado.isin(all_events) ].copy()
+                dfs_closed.append(df)
+            
             # to speed up duplicated action removal
+            df_open = df_open[ df_open.id_chamado.isin(all_events) ].copy()
             df_open, dfs_closed = self.filter_incidents(all_events, df_open, dfs_closed)
             
             logger.info('concatenando planilhão')
