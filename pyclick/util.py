@@ -78,7 +78,7 @@ def read_expurgos(dir_apuracao):
     with open(path) as fh:
         for line in fh:
             id_chamado = line.strip()
-            if path.startswith("#"):
+            if line.startswith("#"):
                 continue
             elif id_chamado:
                 result.append(id_chamado)

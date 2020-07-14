@@ -53,7 +53,7 @@ class App(object):
     def load_click(self, r):
         logger.info('loading click data model')
         click = models.Click()
-        self.process_expurgos(click)
+        expurgos = self.process_expurgos(click)
         evts = r.load_events()
         start_dt, end_dt = r.get_period()
         for i, evt in enumerate(evts):
@@ -65,13 +65,16 @@ class App(object):
         pesquisas = models.Pesquisa.from_df(pesquisas_df)
         for pesq in pesquisas:
             click.add_pesquisa(pesq)
-        return click, models.Event.to_df(evts), start_dt, end_dt
+        evts_df = models.Event.to_df(evts)
+        expurgos_df = pd.DataFrame({ "expurgo": expurgos })
+        return click, evts_df, expurgos_df, start_dt, end_dt
     
     def process_expurgos(self, click):
         logger.info('processing expurgos')
         expurgos = util.read_expurgos(self.dir_apuracao)
         for id_chamado in expurgos:
             click.add_expurgo(id_chamado)
+        return expurgos
         
     def load_relatorio_medicao(self, r):
         logger.info('loading relatório medição')
@@ -264,6 +267,12 @@ class App(object):
         summary[ 'VALOR'     ].append(end_dt)   
         summary[ 'SLA'       ].append("N/A")
         summary[ 'OBS'       ].append("Hora Fim do Período de Apuração")
+
+        summary[ 'INDICADOR' ].append('EXPURGOS')
+        summary[ 'MESA'      ].append("")
+        summary[ 'VALOR'     ].append(len(click.expurgos))   
+        summary[ 'SLA'       ].append("N/A")
+        summary[ 'OBS'       ].append("Número de expurgos lançados")
         
         logger.info('writing summary table')
         df_summary = pd.DataFrame(summary)
@@ -287,13 +296,12 @@ class App(object):
             logger.info('starting geração indicadores - version %d.%d.%d', *self.VERSION)
             conn = self.connect_db()
             r = repo.RepoN4(conn)
-            click, events_df, start_dt, end_dt = self.load_click(r)
+            click, events_df, expurgos_df, start_dt, end_dt = self.load_click(r)
             df_rel_medicao = self.load_relatorio_medicao(r)
             with self.open_spreadsheet() as xw:
                 self.compute_kpis(conn, click, xw, start_dt, end_dt)
                 events_df.to_excel(xw, sheet_name="EVENTOS_MEDICAO", index=False)
-                #self.write_business_times(r, xw)
-                #self.write_pending_times(r, xw)
+                expurgos_df.to_excel(xw, sheet_name="EXPURGOS", index=False)
             logger.info('finished')
         except:
             logger.exception('an error has occurred')
