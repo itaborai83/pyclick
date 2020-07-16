@@ -182,7 +182,7 @@ class App(object):
     def run(self):
         try:
             logger.info('runn4 - versão %d.%d.%d', *self.VERSION)
-            #dump_surveys.App(self.dir_csat, self.start, self.end).run()
+            dump_surveys.App(self.dir_csat, self.start, self.end).run()
             mesas = self.read_mesas()
             pesquisas_df = self.read_pesquisas()
             pesquisas_mentor_df = self.read_pesquisas_mentor()

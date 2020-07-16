@@ -31,28 +31,28 @@ SELECT 	--ID da pesquisa de satisfação.
 		--Departamento do Técnico.
 		sectn_dept.sectn_n AS 'dept_tecnico',
 		--Item B
-		item.item_n AS 'item_b',
+		--item.item_n AS 'item_b',
 		--Categoria.
-		inc_cat.inc_cat_n AS 'categoria',
+		--inc_cat.inc_cat_n AS 'categoria',
 		--Classe de Produto de Serviço.
-		prod_cls.prod_cls_n AS 'classe_prod_serv',
+		--prod_cls.prod_cls_n AS 'classe_prod_serv',
 		--Produto de Serviço.
-		product.product_n AS 'prod_serv',
+		--product.product_n AS 'prod_serv',
 		--ANS.
-		sla.sla_n AS 'sla',
+		--sla.sla_n AS 'sla',
 		--Data de Resolução do Chamado.
 		incident.inc_resolve_act AS 'data_resolucao_chamado',
 		--Chave do Usuário.
-		usr.usr_sc AS 'chave_usuario',
+		usr2.usr_sc AS 'chave_usuario',
 		--Nome do Usuário.
-		usr.usr_n AS 'nome_usuario',
+		usr2.usr_n AS 'nome_usuario',
 		--Seção.
 		sectn_dept.sectn_n AS 'secao',
 		--Site.
 		(
 			select bldng.bldng_n from bldng  
 			INNER JOIN bldng_room ON bldng_room.bldng_id = bldng.bldng_id
-			WHERE bldng_room_id = usr.bldng_room_id
+			WHERE bldng_room_id = usr2.bldng_room_id
 		) as 'site',
 		--Data de Resposta.
 		surv_req.resp_date AS 'data_resposta',
@@ -86,8 +86,14 @@ FROM 	surv_req
 		INNER JOIN usr 
 		ON 	usr.usr_sc = assyst_usr.assyst_usr_sc
 		--
+		--LEFT OUTER JOIN assyst_usr as assyst_usr2
+		--ON 	assyst_usr2.assyst_usr_id = incident.aff_usr_id
+		--
+		LEFT OUTER JOIN usr as usr2
+		ON usr2.usr_id = incident.aff_usr_id
+		--	
 		INNER JOIN sectn_dept
-		ON 	sectn_dept.sectn_dept_id = usr.sectn_dept_id
+		ON 	sectn_dept.sectn_dept_id = usr2.sectn_dept_id
 		--
 		INNER JOIN inc_data
 		ON 	inc_data.incident_id = incident.incident_id
