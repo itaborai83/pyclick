@@ -12,15 +12,17 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 logger = util.get_logger('dump_schedules')
 
 SQL_SURVEYS = util.get_query("ASSYST__PESQ_SATISFACAO")
+SQL_SURVEYS_UNANSWERED  = util.get_query("ASSYST__PESQ_SATISFACAO_NAO_RESP")
 
 class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_apuracao, start_date, end_date):
+    def __init__(self, dir_apuracao, start_date, end_date, unanswered=False):
         self.dir_apuracao = dir_apuracao
         self.start_date = start_date + " 00:00:00"
         self.end_date = end_date + " 00:00:00"
+        self.unanswered = unanswered
     
     def connect_db(self):
         logger.info('connecting to db')
@@ -43,7 +45,10 @@ class App(object):
         logger.info('retrieving surveys')
         mesas_scrubbed = [ '\'' + self.scrub_input(mesa) + '\'' for mesa in mesas ]
         mesas_txt = ", ".join(mesas_scrubbed)
-        sql = SQL_SURVEYS.replace("{MESAS}", mesas_txt)
+        if self.unanswered:
+            sql = SQL_SURVEYS_UNANSWERED.replace("{MESAS}", mesas_txt)
+        else:
+            sql = SQL_SURVEYS.replace("{MESAS}", mesas_txt)
         args = self.start_date, self.end_date
         df = pd.read_sql(sql, conn, index_col=None, params=args)
         return df
@@ -71,6 +76,7 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--unanswered', action="store_true", default=False, help='trazer pesquisas não respondidas')
     parser.add_argument('dir_apuracao', type=str, help='diretório de apuração')
     parser.add_argument('start_date', type=str, help='data início período de apuração')
     parser.add_argument('end_date', type=str, help='data fim período de apuração')

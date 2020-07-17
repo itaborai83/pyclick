@@ -81,7 +81,6 @@ class App(object):
             def conv_date(date):
                 if date == "" or date is None or pd.isna(date):
                     return None
-                #d = dt.datetime.strptime(txt_date, "%d/%m/%Y %H:%M:%S")
                 return str(date)
             
             os.chdir(self.dir_csat)
@@ -163,6 +162,75 @@ class App(object):
                 data[ f"{periodo} Qtd" ].append(qtd)
         return pd.DataFrame(data)
     
+    def generate_controle(self, pesquisas_df, min_surveys, by_tecnico=False):
+        logger.info("generating control table")
+        data = {}
+        for row in pesquisas_df.itertuples():
+            mesa          = row.mesa_acao
+            chave_usuario = row.chave_usuario
+            nome_usuario  = row.nome_usuario
+            if by_tecnico:
+                chave_tecnico = row.chave_tecnico
+                nome_tecnico  = row.nome_tecnico
+                key = (mesa, chave_usuario, nome_usuario, chave_tecnico, nome_tecnico)
+            else:
+                key = (mesa, chave_usuario, nome_usuario)
+            qtd = 1
+            if pd.isna(row.data_resposta):
+                ruim = 0
+                boa = 0
+            else:
+                ruim = 1 if row.avaliacao < self.THRESHOLD_KPI else 0
+                boa = 1 if row.avaliacao >= self.THRESHOLD_KPI else 0
+            if key not in data:
+                data[ key ] = { 'qtd' : 0, 'avaliacoes_ruins' : 0, 'avaliacoes_boas' : 0 }
+            data[ key ][ 'qtd' ] += 1
+            data[ key ][ 'avaliacoes_ruins' ] += ruim
+            data[ key ][ 'avaliacoes_boas' ] += boa
+        
+        if by_tecnico:
+            result = { 
+                'mesa': [], 
+                'chave_usuario': [], 
+                'nome_usuario': [], 
+                'chave_tecnico': [], 
+                'nome_tecnico': [], 
+                'qtd': [], 
+                'avaliacoes_ruins': [], 
+                'avaliacoes_boas': [] 
+            }
+        else:
+            result = { 
+                'mesa': [], 
+                'chave_usuario': [], 
+                'nome_usuario': [], 
+                'qtd': [], 
+                'avaliacoes_ruins': [], 
+                'avaliacoes_boas': []             
+            }
+        for key, value in data.items():
+            if value[ 'qtd' ] < min_surveys:
+                continue
+            if by_tecnico:
+                (mesa, chave_usuario, nome_usuario, chave_tecnico, nome_tecnico) = key
+            else:
+                (mesa, chave_usuario, nome_usuario) = key
+            qtd              = value[ 'qtd' ]
+            avaliacoes_ruins = value[ 'avaliacoes_ruins' ]
+            avaliacoes_boas  = value[ 'avaliacoes_boas' ]
+            result[ 'mesa'              ].append(mesa)
+            result[ 'chave_usuario'     ].append(chave_usuario)
+            result[ 'nome_usuario'      ].append(nome_usuario)
+            if by_tecnico:
+                result[ 'chave_tecnico' ].append(chave_tecnico)
+                result[ 'nome_tecnico'  ].append(nome_tecnico)
+            result[ 'qtd' ].append(qtd)
+            result[ 'avaliacoes_ruins'  ].append(avaliacoes_ruins)
+            result[ 'avaliacoes_boas'   ].append(avaliacoes_boas)
+        result_df = pd.DataFrame(result)
+        result_df.sort_values(['qtd', 'avaliacoes_ruins', 'avaliacoes_boas'], ascending=False, inplace=True, ignore_index=True)
+        return result_df
+        
     def open_spreadsheet(self):
         logger.info("opening KPI spreadsheet")
         ks = os.path.join(self.dir_csat, "__" + self.CSAT_SPREADSHEET)
@@ -171,24 +239,28 @@ class App(object):
             os.unlink(ks)
         return pd.ExcelWriter(ks, datetime_format=None)   
     
-    def save(self, pesquisas_df, pesquisas_mentor_df, csat_df, csat_acc_df):
+    def save(self, pesquisas_df, pesquisas_mentor_df, csat_df, csat_acc_df, controle_df, controle_by_tecnico_df):
         logger.info("saving output spreadsheet")
         with self.open_spreadsheet() as xw:
             csat_acc_df.to_excel(xw, sheet_name="CSAT", index=False)
             csat_df.to_excel(xw, sheet_name="CSAT - Mês", index=False)
+            controle_df.to_excel(xw, sheet_name="CONTROLE_RESPOSTAS", index=False)
+            controle_by_tecnico_df.to_excel(xw, sheet_name="CONTROLE_RESPOSTAS_TECNICO", index=False)
             pesquisas_df.to_excel(xw, sheet_name="PESQUISAS", index=False)
             pesquisas_mentor_df.to_excel(xw, sheet_name="PESQUISAS_MENTOR", index=False)
             
     def run(self):
         try:
             logger.info('runn4 - versão %d.%d.%d', *self.VERSION)
-            dump_surveys.App(self.dir_csat, self.start, self.end).run()
+            dump_surveys.App(self.dir_csat, self.start, self.end, unanswered=True).run()
             mesas = self.read_mesas()
             pesquisas_df = self.read_pesquisas()
             pesquisas_mentor_df = self.read_pesquisas_mentor()
             csat_df = self.generate_table(mesas, pesquisas_df, pesquisas_mentor_df, acc=False)
             csat_acc_df = self.generate_table(mesas, pesquisas_df, pesquisas_mentor_df, acc=True)
-            self.save(pesquisas_df, pesquisas_mentor_df, csat_df, csat_acc_df)
+            controle_df = self.generate_controle(pesquisas_df, min_surveys=0, by_tecnico=False)
+            controle_by_tecnico_df = self.generate_controle(pesquisas_df, min_surveys=0, by_tecnico=True)
+            self.save(pesquisas_df, pesquisas_mentor_df, csat_df, csat_acc_df, controle_df, controle_by_tecnico_df)
             logger.info("finished")
         except:
             logger.exception('an error has occurred')
