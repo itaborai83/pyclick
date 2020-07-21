@@ -1,6 +1,7 @@
 import unittest
 from pyclick.models import *
-from pyclick.n4sap.estoque import Estoque
+#from pyclick.n4sap.estoque import Estoque
+from pyclick.n4sap.status import Estoque
 
 class TestEstoque(unittest.TestCase):
     

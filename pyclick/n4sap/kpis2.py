@@ -18,7 +18,8 @@ from pyclick.n4sap.prc import Prc
 from pyclick.n4sap.prs import PrsV2 as Prs
 from pyclick.n4sap.ids import IdsV2 as Ids
 from pyclick.n4sap.csat import Csat, CsatPeriodo
-from pyclick.n4sap.estoque import Estoque
+#from pyclick.n4sap.estoque import Estoque # deprecated
+from pyclick.n4sap.status import Estoque, Encerrados, Cancelados
 from pyclick.n4sap.peso30 import Peso30
 from pyclick.n4sap.aging import Aging
 #from pyclick.n4sap.pendfech import PendenteFechado
@@ -236,7 +237,35 @@ class App(object):
             estoque.reset()
             estoque.evaluate(click, start_dt, end_dt, mesa)
             estoque.update_summary(summary, sigla)
-        
+
+    def compute_encerrados(self, conn, click, xw, start_dt, end_dt, summary):
+        logger.info('computing ENCERRADOS')
+        encerrados = Encerrados()
+        encerrados.evaluate(click, start_dt, end_dt)
+        encerrados.update_summary(summary)
+        encerrados_df = encerrados.get_details()
+        encerrados_df.to_excel(xw, sheet_name="ENCERRADOS", index=False)
+        encerrados_df.to_sql("ENCERRADOS", conn, if_exists="replace", index=False)
+
+        for mesa, sigla in self.MESAS.items():
+            encerrados.reset()
+            encerrados.evaluate(click, start_dt, end_dt, mesa)
+            encerrados.update_summary(summary, sigla)
+
+    def compute_cancelados(self, conn, click, xw, start_dt, end_dt, summary):
+        logger.info('computing ENCERRADOS')
+        cancelados = Cancelados()
+        cancelados.evaluate(click, start_dt, end_dt)
+        cancelados.update_summary(summary)
+        cancelados_df = cancelados.get_details()
+        cancelados_df.to_excel(xw, sheet_name="CANCELADOS", index=False)
+        cancelados_df.to_sql("CANCELADOS", conn, if_exists="replace", index=False)
+
+        for mesa, sigla in self.MESAS.items():
+            cancelados.reset()
+            cancelados.evaluate(click, start_dt, end_dt, mesa)
+            cancelados.update_summary(summary, sigla)
+            
     def compute_kpis(self, conn, click, xw, start_dt, end_dt):
         logger.info('calculating KPI\'s')
         summary = { 
@@ -255,6 +284,8 @@ class App(object):
         self.compute_aging(conn, click, xw, start_dt, end_dt, summary)
         self.compute_csat(conn, click, xw, start_dt, end_dt, summary)
         self.compute_estoque(conn, click, xw, start_dt, end_dt, summary)
+        self.compute_encerrados(conn, click, xw, start_dt, end_dt, summary)
+        self.compute_cancelados(conn, click, xw, start_dt, end_dt, summary)
         
         summary[ 'INDICADOR' ].append('INÍCIO PERÍODO')
         summary[ 'MESA'      ].append("")
@@ -278,6 +309,7 @@ class App(object):
         df_summary = pd.DataFrame(summary)
         df_summary.to_excel(xw, sheet_name="INDICADORES", index=False)
         df_summary.to_sql("INDICADORES", conn, if_exists="replace", index=False)
+        
     """            
     def write_business_times(self, repo, xw):
         logger.info("exporting tempo útil mesas")
