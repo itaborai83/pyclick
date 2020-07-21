@@ -24,6 +24,7 @@ class App(object):
     VERSION = (0, 0, 0)
     
     PARALLEL_QUERIES = 4
+    
     def __init__(self, first, clear_work, clear_existing, dir_work, dir_staging, dir_import, begin_date, end_date):
         self.first          = first
         self.clear_work     = clear_work
