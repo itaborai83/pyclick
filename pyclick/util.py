@@ -228,3 +228,6 @@ def build_str(self, attrs, indent=True):
         result.append(txt)
     result.append(">")
     return "".join(result)
+
+def now():
+    return dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
