@@ -253,7 +253,7 @@ class App(object):
             encerrados.update_summary(summary, sigla)
 
     def compute_cancelados(self, conn, click, xw, start_dt, end_dt, summary):
-        logger.info('computing ENCERRADOS')
+        logger.info('computing CANCELADOS')
         cancelados = Cancelados()
         cancelados.evaluate(click, start_dt, end_dt)
         cancelados.update_summary(summary)
