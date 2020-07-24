@@ -31,6 +31,9 @@ class App(object):
     
     VERSION = (0, 0, 0)
     OUTPUT_SPREADSHEET = "export_kpis.xlsx"
+    CSAT_SPREADSHEET = "__csat.xlsx"
+    CSAT_ACC_SHEET = "CSAT"
+    CSAT_SHEET = "CSAT - Mês"
     CAMPOS_QUADRO = [
         "PERIODO",
         "PRP", 
@@ -225,8 +228,9 @@ class App(object):
         "EXPURGOS"              : ("EXPURGOS", None),
     }
     
-    def __init__(self, dir_n4, fb_conf, nocloud):
+    def __init__(self, dir_n4, dir_csat, fb_conf, nocloud):
         self.dir_n4 = dir_n4
+        self.dir_csat = dir_csat
         self.fb_conf = fb_conf
         self.nocloud = nocloud
         
@@ -346,13 +350,13 @@ class App(object):
         return result
     """
     
-    def import_firebase(self, cred, key, value):
+    def import_firebase(self, cred, collection, key, value):
         if self.nocloud:
             logger.warn('skipping cloud sync')
             return
         logger.info('importing data to firebase')
         db = firestore.client()
-        doc_ref = db.collection('indicadores').document(key)
+        doc_ref = db.collection(collection).document(key)
         doc_ref.set(value)
     
     def get_dirs_apuracoes(self):
@@ -416,37 +420,27 @@ class App(object):
                 valores.append(valor_txt)
             quadro[ campo ] = valores
             
-    def export_tables(self, cred, quadro, quadro_acc):
+    def export_tables(self, cred, quadro, quadro_acc, xw):
         logger.info("exporting summary table")
         quadro_df = pd.DataFrame(quadro)
         quadro_data = quadro_df.to_dict(orient='record')
-        self.import_firebase(cred, 'quadro_indicadores', { 
+        self.import_firebase(cred, 'indicadores', 'quadro_indicadores', { 
             "carga": util.now(), 
             "dados": quadro_data,
             "ordem_campos": self.CAMPOS_QUADRO
         })
-        
-        
+                
         logger.info("exporting summary table acc")
         quadro_acc_df = pd.DataFrame(quadro_acc)
         quadro_acc_data = quadro_acc_df.to_dict(orient='record')
-        self.import_firebase(cred, 'quadro_indicadores_acc', { 
+        self.import_firebase(cred, 'indicadores', 'quadro_indicadores_acc', { 
             "carga": util.now(), 
             "dados": quadro_acc_data,
             "ordem_campos": self.CAMPOS_QUADRO
         })
-        # export excel ... needs converting floats
-        #self.format_floats(quadro)
-        #quadro_df = pd.DataFrame(quadro)
-        #quadro_data = quadro_df.to_dict(orient='record')
-        
-        #self.format_floats(quadro_acc)
-        #quadro_acc_df = pd.DataFrame(quadro_acc)
-        #quadro_acc_data = quadro_acc_df.to_dict(orient='record')
 
-        with self.open_spreadsheet() as xw:
-            quadro_df.to_excel(xw, sheet_name="INDICADORES", index=False)
-            quadro_acc_df.to_excel(xw, sheet_name="INDICADORES_ACC", index=False)
+        quadro_df.to_excel(xw, sheet_name="INDICADORES", index=False)
+        quadro_acc_df.to_excel(xw, sheet_name="INDICADORES_ACC", index=False)
     
     def open_spreadsheet(self):
         logger.info("opening spreadsheet")
@@ -455,28 +449,50 @@ class App(object):
             logger.warning("spreadsheet already exists. Deleting it")
             os.unlink(ks)
         return pd.ExcelWriter(ks, datetime_format=None)   
-
+    
+    def export_csat(self, cred, xw):
+        logger.info('reading CSAT spreadsheet')
+        path = os.path.join(self.dir_csat, self.CSAT_SPREADSHEET)
+        
+        csat_df = pd.read_excel(path, sheet_name=self.CSAT_SHEET, index_col=None)
+        csat_data = csat_df.to_dict(orient="record")
+        self.import_firebase(cred, 'csat', 'quadro_csat', { 
+            "carga": util.now(), 
+            "dados": csat_data,
+            "ordem_campos": csat_df.columns.to_list()
+        })        
+        
+        csat_acc_df = pd.read_excel(path, sheet_name=self.CSAT_ACC_SHEET, index_col=None)        
+        csat_acc_data = csat_acc_df.to_dict(orient="record")
+        self.import_firebase(cred, 'csat', 'quadro_csat_acc', { 
+            "carga": util.now(), 
+            "dados": csat_acc_data,
+            "ordem_campos": csat_acc_df.columns.to_list()
+        })
+        
     def run(self):
         try:
             logger.info('export_firebase - versão %d.%d.%d', *self.VERSION)
+            cred = credentials.Certificate(self.fb_conf)
+            firebase_admin.initialize_app(cred)
             dirs_apuracoes = self.get_dirs_apuracoes()
             quadro = self.generate_table()
             quadro_acc = self.generate_table()
-            cred = credentials.Certificate(self.fb_conf)
-            firebase_admin.initialize_app(cred)
-            for dir_apuracao in dirs_apuracoes:
-                _, periodo = os.path.split(dir_apuracao)
-                logger.info(f'processing {periodo}')
-                conn = self.connect_db(dir_apuracao)
-                kpis_df = self.retrieve_kpis(conn)
-                data = kpis_df.to_dict(orient='record')
-                self.import_firebase(cred, periodo, { "periodo": periodo, "indicadores": data, "carga": util.now() } )
-                if not periodo.endswith("-ACC"):
-                    self.update_table(periodo, quadro, kpis_df)
-                else:
-                    self.update_table(periodo, quadro_acc, kpis_df)
-                del conn
-            self.export_tables(cred, quadro, quadro_acc)
+            with self.open_spreadsheet() as xw:
+                for dir_apuracao in dirs_apuracoes:
+                    _, periodo = os.path.split(dir_apuracao)
+                    logger.info(f'processing {periodo}')
+                    conn = self.connect_db(dir_apuracao)
+                    kpis_df = self.retrieve_kpis(conn)
+                    data = kpis_df.to_dict(orient='record')
+                    self.import_firebase(cred, 'indicadores', periodo, { "periodo": periodo, "indicadores": data, "carga": util.now() } )
+                    if not periodo.endswith("-ACC"):
+                        self.update_table(periodo, quadro, kpis_df)
+                    else:
+                        self.update_table(periodo, quadro_acc, kpis_df)
+                    del conn
+                self.export_tables(cred, quadro, quadro_acc, xw)
+                self.export_csat(cred, xw)
             logger.info("finished")
         except:
             logger.exception('an error has occurred')
@@ -486,8 +502,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--nocloud', action="store_true", help='skip cloud sync')
     parser.add_argument('dir_n4', type=str, help='diretório n4')
+    parser.add_argument('dir_csat', type=str, help='diretório CSAT')
     parser.add_argument('cred_json', type=str, help='json credential file for firebase')
     args = parser.parse_args()
-    app = App(args.dir_n4, args.cred_json, args.nocloud)
+    app = App(args.dir_n4, args.dir_csat, args.cred_json, args.nocloud)
     app.run()
     
