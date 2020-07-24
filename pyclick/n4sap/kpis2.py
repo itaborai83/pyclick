@@ -12,6 +12,7 @@ import pyclick.config as config
 import pyclick.n4sap.repo as repo
 
 import pyclick.n4sap.config as n4_config
+import pyclick.n4sap.models as n4_models
 from pyclick.n4sap.prp import PrpV2 as Prp
 from pyclick.n4sap.pro import Pro
 from pyclick.n4sap.prc import Prc
@@ -42,8 +43,9 @@ class App(object):
     ,   'N4-SAP-SUSTENTACAO-SERVICOS'       : 'SERV'
     }
     
-    def __init__(self, dir_apuracao):
+    def __init__(self, dir_apuracao, strict_orientar):
         self.dir_apuracao = dir_apuracao
+        self.strict_orientar = strict_orientar
     
     def connect_db(self):
         logger.info('connecting to db')
@@ -53,7 +55,7 @@ class App(object):
     
     def load_click(self, r):
         logger.info('loading click data model')
-        click = models.Click()
+        click = n4_models.ClickN4(self.strict_orientar)
         expurgos = self.process_expurgos(click)
         evts = r.load_events()
         start_dt, end_dt = r.get_period()
@@ -341,8 +343,9 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--strict-orientar', action='store_true', help='categorização estrita de orientar')
     parser.add_argument('dir_apuracao', type=str, help='diretório de apuração')
     args = parser.parse_args()
-    app = App(args.dir_apuracao)
+    app = App(args.dir_apuracao, args.strict_orientar)
     app.run()
     
