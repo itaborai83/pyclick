@@ -41,7 +41,8 @@ class Pro(models.N4SapKpi):
             self.details[ 'violacao'       ].append(self.BREACHED_MAPPING[ breached ])
             self.details[ 'id_chamado'     ].append(inc.id_chamado)
             self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
-            self.details[ 'categoria'      ].append(categoria)
+            # self.details[ 'categoria'      ].append(categoria)
+            self.details[ 'categoria'      ].append(inc.categoria) # exibindo categoria registrada para permitir análise
             self.details[ 'prazo'          ].append(self.PRAZO_M)
             self.details[ 'duracao'        ].append(duration_m)
             self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
