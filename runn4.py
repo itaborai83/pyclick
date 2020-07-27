@@ -31,11 +31,12 @@ class App(object):
     
     VERSION = (0, 0, 0)
         
-    def __init__(self, dir_apuracao, start, end, v1=False):
+    def __init__(self, dir_apuracao, start, end, v1=False, strict_orientar=False):
         self.dir_apuracao = dir_apuracao
         self.start = start
         self.end = end
         self.dir_import = (DIR_IMPORT_V1 if v1 else DIR_IMPORT_V2)
+        self.strict_orientar = strict_orientar
     
     def has_schedules(self):
         path = os.path.join(self.dir_apuracao, config.BUSINESS_HOURS_SPREADSHEET)
@@ -59,7 +60,7 @@ class App(object):
             dump_surveys.App(self.dir_apuracao, n4_config.START_CSAT_DT, self.end).run()
             consolida_planilhao.App(self.dir_apuracao, self.dir_import, self.start, self.end, False).run()
             ddl.App(self.dir_apuracao).run()
-            kpis.App(self.dir_apuracao).run()
+            kpis.App(self.dir_apuracao, strict_orientar=self.strict_orientar).run()
         except:
             logger.exception('an error has occurred')
             raise
@@ -67,9 +68,10 @@ class App(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--v1', action='store_true', default=False, help='usar diretório de importatação antigo')
+    parser.add_argument('--strict-orientar', action='store_true', help='categorização estrita de orientar')
     parser.add_argument('dir_apuracao', type=str, help='diretório apuração')
     parser.add_argument('start', type=str, help='start date')
     parser.add_argument('end', type=str, help='end date')
     args = parser.parse_args()
-    app = App(args.dir_apuracao, args.start, args.end, args.v1)
+    app = App(args.dir_apuracao, args.start, args.end, args.v1, args.strict_orientar)
     app.run()

@@ -35,17 +35,18 @@ class DelayedExecution():
         stdout_file = os.path.join(self.dir_staging, self.date + ".out")
         stdout = open(stdout_file, "w")
         if self.compress:
-            cmd = f"python -m pyclick.assyst.dump_daily --compress {self.dir_staging} {self.date}"
+            cmd = f"venv\Scripts\python.exe -m pyclick.assyst.dump_daily --compress {self.dir_staging} {self.date}"
         else:
-            cmd = f"python -m pyclick.assyst.dump_daily {self.dir_staging} {self.date}"
+            cmd = f"venv\Scripts\python.exe -m pyclick.assyst.dump_daily {self.dir_staging} {self.date}"
         self.popen = subprocess.Popen(
             args = cmd,
             stdout = stdout,
             stderr = subprocess.STDOUT,
             stdin = subprocess.DEVNULL,
-            shell = True,
+            shell = False,
             cwd = os.getcwd(),
-            env = os.environ
+            env = os.environ,
+            creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
         )
         self.waiting = False
         self.running = True
@@ -57,6 +58,10 @@ class DelayedExecution():
         assert self.finished == False
         assert self.aborted == False
         self.popen.poll()
+        try:
+            outs, errs = self.popen.communicate(timeout=1)
+        except subprocess.TimeoutExpired:
+            pass
         if self.popen.returncode is None:
             return "RUNNING"
         elif self.popen.returncode == 0:
