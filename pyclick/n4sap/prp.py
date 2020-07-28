@@ -87,8 +87,10 @@ class Prp(models.N4SapKpi):
                 continue
             if not self.has_assignment_within_period(inc, start_dt, end_dt):
                 continue
+            prazo = self.calcular_prazo(inc, self.MESA_PRIORIDADE)
+            assert prazo == self.PRAZO_M            
             duration_m = click.calc_duration_mesas(inc.id_chamado, [ self.MESA_PRIORIDADE ])
-            breached = duration_m > self.PRAZO_M
+            breached = duration_m > prazo
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
             self.update_details(inc, duration_m, breached)
@@ -105,7 +107,6 @@ class Prp(models.N4SapKpi):
             result = 100.0 * (self.numerator / self.denominator)
             return result, msg
             
-
 class PrpV2(Prp):
         
     def __init__(self):
@@ -130,8 +131,10 @@ class PrpV2(Prp):
                 continue
             if not self.has_assignment_within_period(inc, start_dt, end_dt):
                 continue
+            prazo = self.calcular_prazo(inc, self.MESA_PRIORIDADE)
+            assert prazo == self.PRAZO_M
             duration_m = click.calc_duration_mesas(inc.id_chamado, [ self.MESA_PRIORIDADE ])
-            breached = duration_m > self.PRAZO_M
+            breached = duration_m > prazo
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
             self.update_details(inc, duration_m, breached)
