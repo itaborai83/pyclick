@@ -55,7 +55,8 @@ class App(object):
     
     def load_click(self, r):
         logger.info('loading click data model')
-        click = n4_models.ClickN4(self.strict_orientar)
+        incsrv = n4_models.IncidentService()
+        click = n4_models.ClickN4(incsrv=incsrv, strict_orientar=self.strict_orientar)
         expurgos = self.process_expurgos(click)
         evts = r.load_events()
         start_dt, end_dt = r.get_period()
