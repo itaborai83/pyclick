@@ -73,17 +73,6 @@ class Peso30(models.N4SapKpi):
             if atrib.intersects_with(start_dt, end_dt):
                 return True
     
-    def calcular_prazo(self, inc):
-        categoria = self.categorizar(inc)
-        if categoria == 'ATENDER - TAREFA':
-            return self.PRAZO_REALIZAR_M
-        elif categoria == 'CORRIGIR':
-            return self.PRAZO_CORRIGIR_M
-        elif categoria == 'ORIENTAR':
-            return self.PRAZO_ORIENTAR_M
-        else:
-            assert 1 == 2 # should not happen
-
     def evaluate(self, click, start_dt, end_dt):
         mesa = click.get_mesa(self.MESA_ESCALADOS)
         if mesa is None:
@@ -92,11 +81,11 @@ class Peso30(models.N4SapKpi):
             if inc.id_chamado.startswith("S"):
                 continue
             if not self.has_assignment_within_period(inc, start_dt, end_dt):
-                continue            
+                continue
             categoria = self.categorizar(inc)
-            prazo_m = self.calcular_prazo(inc)
-            duration_m = inc.calc_duration_mesas([ self.MESA_ESCALADOS ])
-            pendencia_m = inc.calc_pendencia_mesas([ self.MESA_ESCALADOS ])
+            prazo_m = self.calcular_prazo(inc, self.MESA_ESCALADOS)
+            duration_m = self.calc_duration_mesas(inc, [ self.MESA_ESCALADOS ])
+            pendencia_m = self.calc_pendencia_mesas(inc, [ self.MESA_ESCALADOS ])
             breached = (duration_m + pendencia_m) > prazo_m
             self.denominator += 1
             self.numerator += 1 if breached else 0            

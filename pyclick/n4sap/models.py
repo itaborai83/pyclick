@@ -10,24 +10,10 @@ class ClickN4(models.Click):
         self.expurgos_orientar = set()
     
     def categorizar(self, inc):
-        #if inc.id_chamado in self.override_categorias:
-        #    return self.override_categorias[ inc.id_chamado ]
-        if inc.id_chamado.startswith('T'):
-            return 'ATENDER - TAREFA'
-        elif inc.id_chamado.startswith('S'):
-            return 'ATENDER'
-        elif 'CORRIGIR' in inc.categoria.upper():
-            return 'CORRIGIR'
-        else:
-            if not self.strict_orientar:
-                return 'ORIENTAR'
-            elif self.strict_orientar and 'ORIENTAR' in inc.categoria.upper():
-                return 'ORIENTAR'
-            else:
-                return None
+        return self.incsrv.categorizar(inc)
             
     def update(self, event):
-        if self.categorizar(event) is None:
+        if self.incsrv.categorizar(event) is None:
             self.expurgos_orientar.add(event.id_chamado)
             return
         super().update(event)
@@ -73,10 +59,18 @@ class N4SapKpi(models.Kpi):
         return self.incsrv.categorizar(inc)
         
     def calcular_prazo(self, inc, mesa_atual=None):
+        # TODO: assert mesa_atual is not None
+        # assert mesa_atual is not None
         if mesa_atual is None:
             mesa_atual = inc.mesa_atual
         return self.incsrv.calcular_prazo(inc, mesa_atual)
     
+    def calc_duration_mesas(self, inc, mesas):
+        return self.incsrv.calc_duration_mesas(inc, mesas)
+    
+    def calc_pendencia_mesas(self, inc, mesas):
+        return self.incsrv.calc_pendencia_mesas(inc, mesas)
+        
     def build_mesa_mapping(self, mesa):
         return {
             'N4-SAP-SUSTENTACAO-ABAST_GE'       : mesa
@@ -167,7 +161,7 @@ class IncidentService(object):
                 return 'ORIENTAR'
             else:
                 return None
-    
+                
     def calcular_prazo(self, inc, mesa_atual):
         assert mesa_atual is not None
         assert mesa_atual in self.MESAS_CONTRATO
