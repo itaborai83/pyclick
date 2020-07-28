@@ -1,5 +1,6 @@
 import unittest
 from pyclick.models import *
+from pyclick.n4sap.models import *
 from pyclick.n4sap.prs import Prs
 
 class TestPrs(unittest.TestCase):
@@ -184,43 +185,49 @@ class TestPrs(unittest.TestCase):
         """)
         
         self.prioritized_inc_events = Event.parse_events(r"""
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8243930	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-30 10:42:55	2020-04-30 10:42:55	0
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8243932	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-30 10:42:55	2020-04-30 10:43:17	1
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8244025	Aguardando Cliente - Aprovação	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-30 10:43:17	2020-04-30 10:43:17	0
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8244028	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-30 10:43:17	2020-04-30 10:53:04	10
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8245854	Atribuição interna	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-30 10:53:04	2020-04-30 10:53:04	0
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8245860	Atribuir ao Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-30 10:53:04	2020-04-30 10:54:00	1
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8245998	Campos alterados	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-30 10:54:00	2020-04-30 11:16:53	22
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8250890	Pendência Sanada - Aprovação	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-30 11:16:53	2020-04-30 18:55:19	459
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8313864	Aguardando Cliente	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-30 18:55:19	2020-04-30 18:55:19	0
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8313865	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-30 18:55:19	2020-05-04 16:48:08	5633
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8460390	Resolver	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 16:48:08	2020-05-06 16:53:17	0
-            S246446		ATENDER-PESO35	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8663040	Encerrar	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-06 16:53:17		0
-            T455732	S246446	Execução	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8250864	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-30 11:16:47	2020-04-30 11:16:47	0
-            T455732	S246446	Execução	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8250867	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-30 11:16:47	2020-04-30 18:55:14	459
-            T455732	S246446	Execução	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8313862	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-30 18:55:14	2020-04-30 18:55:14	0
-            T455732	S246446	Execução	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8313863	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-04-30 18:55:14	2020-05-04 16:23:22	5608
-            T455732	S246446	Execução	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8456761	Iniciar Atendimento	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 16:23:22	2020-05-04 16:23:23	0
-            T455732	S246446	Execução	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8456764	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 16:23:23	2020-05-04 16:48:07	25
-            T455732	S246446	Execução	MM / ESTOQUES - Criação, modificação ou desativação de centro	5400	8460386	Resolver	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-04 16:48:07		0
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9879757	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:53:30	2020-05-22 09:53:30	0
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9879758	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:53:30	2020-05-22 09:53:34	0
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9879759	Campo do formulário alterado	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:53:34	2020-05-22 09:53:55	0
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9879811	Aguardando Cliente - Aprovação	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:53:55	2020-05-22 09:53:56	0
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9879813	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:53:56	2020-05-22 09:57:08	4
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9880328	Pendência Sanada - Aprovação	S	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:57:08	2020-05-22 09:57:08	0
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9880330	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:57:08	2020-05-22 10:29:14	32
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9886081	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 10:29:14	2020-05-22 17:29:04	420
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9947854	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 17:29:04	2020-05-22 17:29:04	0
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9947858	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 17:29:04	2020-05-22 18:55:17	86
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9953428	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 18:55:17	2020-05-22 18:55:17	0
+            S290168		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9953429	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 18:55:17		6064
+            T558229	S290168	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9880314	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:57:01	2020-05-22 09:57:01	0
+            T558229	S290168	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9880316	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:57:01	2020-05-22 10:29:43	32
+            T558229	S290168	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9886182	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 10:29:43	2020-05-22 17:29:31	420
+            T558229	S290168	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9947899	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 17:29:31	2020-05-22 17:29:31	0
+            T558229	S290168	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9947901	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 17:29:31	2020-05-22 18:55:12	86
+            T558229	S290168	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9953424	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 18:55:12	2020-05-22 18:55:12	0
+            T558229	S290168	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9953426	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 18:55:12	2020-05-25 11:31:41	3876
+            T558229	S290168	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	10028579	Resolver	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-25 11:31:41		0        
         """)
         
         self.violated_prioritized_inc_events = Event.parse_events(r"""
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8734422	Atribuição interna	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-05-07 13:35:07	2020-05-07 13:35:07	0
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8734423	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-05-07 13:35:07	2020-05-07 13:35:23	0
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8734447	Aguardando Cliente - Aprovação	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-05-07 13:35:23	2020-05-07 13:35:23	0
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8734448	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-ABAST_GE	2020-05-07 13:35:23	2020-05-07 13:44:36	9
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8735574	Atribuição interna	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-07 13:44:36	2020-05-07 13:44:36	0
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8735576	Atribuir ao Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-07 13:44:36	2020-05-07 15:07:56	83
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8748319	Pendência Sanada - Aprovação	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-07 15:07:56	2020-05-07 15:18:44	11
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8750245	Pendência de TIC	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-07 15:18:44	2020-05-08 10:04:55	1126
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8805539	Cancelar	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-08 10:04:55	2020-05-08 10:05:01	0
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8805557	Encerrar	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-08 10:05:01	2020-05-08 10:05:11	0
-            S260020		ATENDER	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8805576	Cancelado	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-08 10:05:11		0
-            T487720	S260020	Execução	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8748307	Atribuição interna	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-05-07 15:07:49	2020-05-07 15:07:49	0
-            T487720	S260020	Execução	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8748308	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-05-07 15:07:49	2020-05-08 10:03:33	99991136
-            T487720	S260020	Execução	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8805244	Cancelar	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-05-08 10:03:33	2020-05-08 10:05:01	0
-            T487720	S260020	Execução	IS-GE - YSTPTRAN2 - Configurações da Solução Navio	2700	8805556	Encerrar	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-05-08 10:05:01		0
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9879757	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:53:30	2020-05-22 09:53:30	0
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9879758	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:53:30	2020-05-22 09:53:34	0
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9879759	Campo do formulário alterado	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:53:34	2020-05-22 09:53:55	0
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9879811	Aguardando Cliente - Aprovação	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:53:55	2020-05-22 09:53:56	0
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9879813	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:53:56	2020-05-22 09:57:08	4
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9880328	Pendência Sanada - Aprovação	S	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:57:08	2020-05-22 09:57:08	0
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9880330	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:57:08	2020-05-22 10:29:14	32
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9886081	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 10:29:14	2020-05-22 17:29:04	420
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9947854	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 17:29:04	2020-05-22 17:29:04	0
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9947858	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 17:29:04	2020-05-22 18:55:17	86
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9953428	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 18:55:17	2020-05-22 18:55:17	0
+            S290169		ATENDER	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9953429	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 18:55:17		6064
+            T558230	S290169	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9880314	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:57:01	2020-05-22 09:57:01	0
+            T558230	S290169	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9880316	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 09:57:01	2020-05-22 10:29:43	5400
+            T558230	S290169	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9886182	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-05-22 10:29:43	2020-05-22 17:29:31	420
+            T558230	S290169	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9947899	Atribuição interna	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 17:29:31	2020-05-22 17:29:31	0
+            T558230	S290169	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9947901	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 17:29:31	2020-05-22 18:55:12	86
+            T558230	S290169	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9953424	Aguardando Cliente	N	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 18:55:12	2020-05-22 18:55:12	0
+            T558230	S290169	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	9953426	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-22 18:55:12	2020-05-25 11:31:41	3876
+            T558230	S290169	Execução	MM / Estoques - Criação ou Alteração de DEPÓSITO DE TERCEIROS	2700	10028579	Resolver	S	N4-SAP-SUSTENTACAO-PRIORIDADE	2020-05-25 11:31:41		0        
         """)
         
         self.forwarded_inc_events = Event.parse_events("""
@@ -369,7 +376,7 @@ class TestPrs(unittest.TestCase):
         self.assertEqual(50.0, kpi)
         self.assertEqual("5 violações / 10 incidentes", observation)
         #self.prs.get_details().to_excel("teste.xlsx")
-
+    
     def test_it_skips_incs_with_prior_assignments_and_no_current_assigment(self):
         evts = Event.parse_events(r"""
             TXXXXXX	SYYYYYY	ATENDER	Outras Solicitações de TIC	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 00:00:00	2020-04-24 23:59:59	0
@@ -397,4 +404,4 @@ class TestPrs(unittest.TestCase):
         kpi, observation = self.prs.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
-        
+                

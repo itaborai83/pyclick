@@ -19,6 +19,7 @@ class Prs(models.N4SapKpi):
             'chamado_pai'       : [],
             'categoria'         : [],
             'prazo'             : [],
+            'prazo_click'       : [],
             'duracao'           : [],
             'ultima_mesa'       : [],
             'ultimo_status'     : [],
@@ -32,16 +33,17 @@ class Prs(models.N4SapKpi):
             'pendencia_m'       : [],
         }
             
-    def update_details(self, inc, duration_m, breached):
+    def update_details(self, inc, prazo_m, duration_m, breached):
         categoria = self.categorizar(inc)
         for atrib in inc.atribuicoes:
-            if atrib.mesa not in self.MESAS_NAO_PRIORITARIAS:
+            if atrib.mesa not in self.MESAS_NAO_PRIORITARIAS_V2:
                 continue
             self.details[ 'violacao'       ].append(self.BREACHED_MAPPING[ breached ])
             self.details[ 'id_chamado'     ].append(inc.id_chamado)
             self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
             self.details[ 'categoria'      ].append(categoria)
-            self.details[ 'prazo'          ].append(inc.prazo)
+            self.details[ 'prazo'          ].append(prazo_m)
+            self.details[ 'prazo_click'    ].append(inc.prazo)
             self.details[ 'duracao'        ].append(duration_m)
             self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
             self.details[ 'ultimo_status'  ].append(inc.status)
@@ -51,13 +53,8 @@ class Prs(models.N4SapKpi):
             self.details[ 'status_entrada' ].append(atrib.status_entrada)
             self.details[ 'saida'          ].append(atrib.saida)
             self.details[ 'status_saida'   ].append(atrib.status_saida)
-            if inc.id_chamado.startswith('S'):
-                self.details[ 'duracao_m'      ].append(None)
-                self.details[ 'pendencia_m'    ].append(None)
-            else:
-                self.details[ 'duracao_m'      ].append(atrib.duracao_m)
-                self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
-            
+            self.details[ 'duracao_m'      ].append(atrib.duracao_m)
+            self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
             
     def get_details(self):
         return pd.DataFrame(self.details)
@@ -70,38 +67,30 @@ class Prs(models.N4SapKpi):
         return msg
     
     def has_assignment_within_period(self, inc, start_dt, end_dt):
-        for atrib in inc.get_atribuicoes_mesas(self.MESAS_NAO_PRIORITARIAS):
+        for atrib in inc.get_atribuicoes_mesas(self.MESAS_NAO_PRIORITARIAS_V2):
             if atrib.intersects_with(start_dt, end_dt):
                 return True
         return False
         
-    def evaluate(self, click, start_dt, end_dt):
+    def evaluate(self, click, start_dt, end_dt, mesa_filter=None):
         for inc in click.get_incidentes():
-            if not inc.id_chamado.startswith("S"):
+            inc = self.remap_mesas_by_last(inc, mesa_filter, self.MESAS_CONTRATO)
+            if inc is None:
                 continue
-            if not inc.possui_atribuicoes(self.MESAS_NAO_PRIORITARIAS):
+            categoria = self.categorizar(inc)
+            if categoria != 'ATENDER - TAREFA':
                 continue
-            assert self.categorizar(inc) == "ATENDER"
+            if not inc.possui_atribuicoes(self.MESAS_NAO_PRIORITARIAS_V2):
+                continue
             if not self.has_assignment_within_period(inc, start_dt, end_dt):
-                continue            
-            duration_m = click.calc_duration_mesas(inc.id_chamado, self.MESAS_NAO_PRIORITARIAS)
-            try:
-                breached = duration_m > inc.prazo
-                self.numerator   += (1 if breached else 0)
-            except TypeError:
-                # TODO: add test case
-                self.logger.error(
-                    "invalid duration -> %s or SLA -> %s for inc %s",
-                    str(duration_m), str(inc.prazo), inc.id_chamado
-                )
-                self.logger.warn("skipping incident %s", inc.id_chamado)
-                breached = False
+                continue
+            ultima_mesa_contrato = inc.get_latest_mesa_from(self.MESAS_NAO_PRIORITARIAS_V2)
+            prazo_m = self.calcular_prazo(inc, ultima_mesa_contrato)
+            duration_m = self.calc_duration_mesas(inc, self.MESAS_NAO_PRIORITARIAS_V2)
+            breached = duration_m > prazo_m
+            self.numerator   += (1 if breached else 0)
             self.denominator += 1
-            self.update_details(inc, duration_m, breached)
-            if inc.id_chamado in click.children_of:
-                for child_id in click.children_of[ inc.id_chamado ]:
-                    child = click.get_incidente(child_id)
-                    self.update_details(child, duration_m, breached=None)
+            self.update_details(inc, prazo_m, duration_m, breached)
             
     def get_result(self):
         msg = self.get_description()
@@ -110,40 +99,3 @@ class Prs(models.N4SapKpi):
         else:
             result = 100.0 * (self.numerator / self.denominator)
             return result, msg
-            
-
-class PrsV2(Prs):
-        
-    def __init__(self):
-        super().__init__()
-            
-    def update_details(self, inc, duration_m, breached):
-        assert not inc.id_chamado.startswith('S')
-        super().update_details(inc, duration_m, breached)            
-            
-    def evaluate(self, click, start_dt, end_dt, mesa_filter=None):
-        for inc in click.get_incidentes():
-            inc = self.remap_mesas_by_last(inc, mesa_filter, self.MESAS_CONTRATO)
-            if inc is None:
-                continue
-            if not inc.id_chamado.startswith("T"):
-                continue
-            if not inc.possui_atribuicoes(self.MESAS_NAO_PRIORITARIAS):
-                continue
-            assert self.categorizar(inc) == "ATENDER - TAREFA"
-            if not self.has_assignment_within_period(inc, start_dt, end_dt):
-                continue
-            duration_m = click.calc_duration_mesas(inc.id_chamado, self.MESAS_NAO_PRIORITARIAS)
-            try:
-                breached = duration_m > inc.prazo
-                self.numerator   += (1 if breached else 0)
-            except TypeError:
-                # TODO: add test case
-                self.logger.error(
-                    "invalid duration -> %s or SLA -> %s for inc %s",
-                    str(duration_m), str(inc.prazo), inc.id_chamado
-                )
-                self.logger.warn("skipping incident %s", inc.id_chamado)
-                breached = False
-            self.denominator += 1
-            self.update_details(inc, duration_m, breached)
