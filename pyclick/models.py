@@ -561,6 +561,7 @@ class Click(object):
         return self.mesas.get(mesa, None)
     
     def calc_duration_mesas(self, id_chamado, mesas):
+        # TODO: remove this
         if id_chamado.startswith("S"):
             return self.calc_children_duration_mesas(id_chamado, mesas)
         else:
