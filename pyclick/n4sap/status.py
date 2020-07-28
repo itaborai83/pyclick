@@ -33,8 +33,8 @@ class StatusKpi(models.N4SapKpi):
         
     def update_details(self, inc):
         categoria = self.categorizar(inc)
-        duration_m = inc.calc_duration_mesas(self.MESAS_CONTRATO)
-        pendencia_m = inc.calc_pendencia_mesas(self.MESAS_CONTRATO) 
+        duration_m = self.calc_duration_mesas(inc, self.MESAS_CONTRATO)
+        pendencia_m = self.calc_pendencia_mesas(inc, self.MESAS_CONTRATO) 
 
         for atrib in inc.atribuicoes:
             if atrib.mesa not in self.MESAS_CONTRATO:
@@ -60,9 +60,9 @@ class StatusKpi(models.N4SapKpi):
     
     def get_description(self):
         if self.count == 0:
-            msg = "Nenhum incidente no estoque"
+            msg = f"Nenhum incidente com os status { str(self.statuses) }"
         else:
-            msg = f"{self.count} incidentes no estoque"
+            msg = f"{self.count} incidentes com os status { str(self.statuses) }"
         return msg
     
     def has_assignment_within_period(self, inc, start_dt, end_dt):
@@ -78,6 +78,10 @@ class StatusKpi(models.N4SapKpi):
             inc = self.remap_mesas_by_last(inc, mesa_filter, self.MESAS_CONTRATO)
             if inc is None:
                 continue
+            categoria = self.categorizar(inc)
+            if categoria == 'ATENDER':
+                continue
+            
             if not self.has_assignment_within_period(inc, start_dt, end_dt):
                 continue
             if inc.status not in self.statuses:
