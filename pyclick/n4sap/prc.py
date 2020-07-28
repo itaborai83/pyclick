@@ -35,7 +35,7 @@ class Prc(models.N4SapKpi):
     def update_details(self, inc, breached):
         categoria = self.categorizar(inc)
         for atrib in inc.atribuicoes:
-            if atrib.mesa not in self.MESAS_NAO_PRIORITARIAS:
+            if atrib.mesa not in self.MESAS_NAO_PRIORITARIAS_V2:
                 continue
             self.details[ 'violacao'       ].append(self.BREACHED_MAPPING[ breached ])
             self.details[ 'id_chamado'     ].append(inc.id_chamado)
