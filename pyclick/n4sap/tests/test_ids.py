@@ -128,7 +128,7 @@ class TestIds(unittest.TestCase):
         self.assertEqual(200, kpi)
         self.assertEqual("6 ids / 3 incidentes", observation)
         #self.ids.get_details().to_excel("teste.xlsx")
-    
+        
     def test_it_skips_incs_with_prior_assignments_and_no_current_assigment(self):
         evts = Event.parse_events(r"""
             XXXXXX		ORIENTAR	Dúvida sobre o serviço	99960	8193373	Atribuição interna	N	N4-SAP-SUSTENTACAO-SERVICOS	2020-04-24 00:00:00	2020-04-24 23:59:59	999961
@@ -152,4 +152,3 @@ class TestIds(unittest.TestCase):
         kpi, observation = self.ids.get_result()
         self.assertEqual(None, kpi)
         self.assertEqual("Nenhum incidente aberto violando SLA", observation)
-        

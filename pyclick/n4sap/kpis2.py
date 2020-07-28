@@ -16,8 +16,8 @@ import pyclick.n4sap.models as n4_models
 from pyclick.n4sap.prp import PrpV2 as Prp
 from pyclick.n4sap.pro import Pro
 from pyclick.n4sap.prc import Prc
-from pyclick.n4sap.prs import Prs as Prs
-from pyclick.n4sap.ids import IdsV2 as Ids
+from pyclick.n4sap.prs import Prs
+from pyclick.n4sap.ids import Ids
 from pyclick.n4sap.csat import Csat, CsatPeriodo
 #from pyclick.n4sap.estoque import Estoque # deprecated
 from pyclick.n4sap.status import Estoque, Encerrados, Cancelados
