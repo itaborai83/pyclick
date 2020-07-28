@@ -50,12 +50,8 @@ class Prc(models.N4SapKpi):
             self.details[ 'status_entrada' ].append(atrib.status_entrada)
             self.details[ 'saida'          ].append(atrib.saida)
             self.details[ 'status_saida'   ].append(atrib.status_saida)
-            if inc.id_chamado.startswith('S'):
-                self.details[ 'duracao_m'      ].append(None)
-                self.details[ 'pendencia_m'    ].append(None)
-            else:
-                self.details[ 'duracao_m'      ].append(atrib.duracao_m)
-                self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
+            self.details[ 'duracao_m'      ].append(atrib.duracao_m)
+            self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
             
     def get_details(self):
         return pd.DataFrame(self.details)
@@ -68,7 +64,7 @@ class Prc(models.N4SapKpi):
         return msg
 
     def has_assignment_within_period(self, inc, start_dt, end_dt):
-        for atrib in inc.get_atribuicoes_mesas(self.MESAS_NAO_PRIORITARIAS):
+        for atrib in inc.get_atribuicoes_mesas(self.MESAS_NAO_PRIORITARIAS_V2):
             if atrib.intersects_with(start_dt, end_dt):
                 return True
         return False
@@ -78,24 +74,21 @@ class Prc(models.N4SapKpi):
             inc = self.remap_mesas_by_last(inc, mesa_filter, self.MESAS_CONTRATO)
             if inc is None:
                 continue
-            if inc.id_chamado.startswith("T") or inc.id_chamado.startswith("S"):
-                continue
-            if not inc.possui_atribuicoes(self.MESAS_NAO_PRIORITARIAS):
-                continue
             categoria = self.categorizar(inc)
             if categoria != "CORRIGIR":
                 continue
+            if not inc.possui_atribuicoes(self.MESAS_NAO_PRIORITARIAS_V2):
+                continue
             if not self.has_assignment_within_period(inc, start_dt, end_dt):
                 continue
-            duration_m = click.calc_duration_mesas(inc.id_chamado, self.MESAS_NAO_PRIORITARIAS)
-            breached = duration_m > self.PRAZO_M
+            ultima_mesa_contrato = inc.get_latest_mesa_from(self.MESAS_NAO_PRIORITARIAS_V2)
+            prazo_m = self.calcular_prazo(inc, ultima_mesa_contrato)
+            assert prazo_m == self.PRAZO_M
+            duration_m = self.calc_duration_mesas(inc, self.MESAS_NAO_PRIORITARIAS_V2)
+            breached = duration_m > prazo_m
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
             self.update_details(inc, breached)
-            if inc.id_chamado in click.children_of:
-                for child_id in click.children_of[ inc.id_chamado ]:
-                    child = click.get_incidente(child_id)
-                    self.update_details(child, breached=None)
 
     def get_result(self):
         msg = self.get_description()
