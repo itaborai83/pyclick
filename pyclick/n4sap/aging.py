@@ -40,8 +40,8 @@ class Aging(models.N4SapKpi):
         
     def update_details(self, inc, breached, duration_days):
         categoria = self.categorizar(inc)
-        duration_m = inc.calc_duration_mesas(self.MESAS_CONTRATO)
-        pendencia_m = inc.calc_pendencia_mesas(self.MESAS_CONTRATO) 
+        duration_m = self.calc_duration_mesas(inc, self.MESAS_CONTRATO)
+        pendencia_m = self.calc_pendencia_mesas(inc, self.MESAS_CONTRATO) 
 
         for atrib in inc.atribuicoes:
             if atrib.mesa not in self.MESAS_CONTRATO:
@@ -81,6 +81,7 @@ class Aging(models.N4SapKpi):
         return False
     
     def calc_duration_days(self, inc, end_dt):
+        # TODO: add this to IncidentService class
         start_dt = util.parse_datetime(inc.acoes[ 0 ].data_acao).date()
         end_dt = util.parse_datetime(end_dt).date()
         assert start_dt <= end_dt
@@ -96,7 +97,8 @@ class Aging(models.N4SapKpi):
                 inc = self.remap_mesas_by_last(inc, mesa_filter, self.MESAS_CONTRATO)
                 if inc is None:
                     continue
-                if inc.id_chamado.startswith("S"):
+                categoria = self.categorizar(inc)
+                if categoria == 'ATENDER':
                     continue
                 if not self.has_assignment_within_period(inc, start_dt, end_dt):
                     continue
