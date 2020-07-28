@@ -128,7 +128,7 @@ class App(object):
         "CANCELADOS_SERV",
         #"INICIO_PERIODO",
         #"FIM_PERIODO",
-        "EXPURGOS",
+        #"EXPURGOS",
     ]
     
     INDICADORES_MESAS = {
@@ -225,7 +225,7 @@ class App(object):
         "CANCELADOS_SERV"       : ("CANCELADOS", "SERV"),
         #"INICIO_PERIODO"        : ("INÍCIO PERÍODO", None),
         #"FIM_PERIODO"           : ("FIM PERÍODO", None),
-        "EXPURGOS"              : ("EXPURGOS", None),
+        #"EXPURGOS"              : ("EXPURGOS", None),
     }
     
     def __init__(self, dir_n4, dir_csat, fb_conf, nocloud):
@@ -384,7 +384,7 @@ class App(object):
             ,       SLA 
             ,       OBS
             FROM    INDICADORES
-            WHERE   INDICADOR NOT IN ( 'INICIO_PERIODO', 'FIM_PERIODO' )
+            WHERE   INDICADOR NOT IN ( 'INÍCIO PERÍODO', 'FIM PERÍODO', 'EXPURGOS')
         """
         return pd.read_sql(sql, conn, index_col=None)
     
