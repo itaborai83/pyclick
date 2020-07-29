@@ -91,6 +91,8 @@ class Prp(models.N4SapKpi):
             assert prazo == self.PRAZO_M            
             duration_m = click.calc_duration_mesas(inc.id_chamado, [ self.MESA_PRIORIDADE ])
             breached = duration_m > prazo
+            if inc.status == 'ABERTO' and not breached:
+                continue
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
             self.update_details(inc, duration_m, breached)
@@ -135,6 +137,8 @@ class PrpV2(Prp):
             assert prazo == self.PRAZO_M
             duration_m = click.calc_duration_mesas(inc.id_chamado, [ self.MESA_PRIORIDADE ])
             breached = duration_m > prazo
+            if inc.status == 'ABERTO' and not breached:
+                continue
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
             self.update_details(inc, duration_m, breached)

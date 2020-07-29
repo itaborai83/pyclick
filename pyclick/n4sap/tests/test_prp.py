@@ -2,6 +2,7 @@ import unittest
 from pyclick.models import *
 from pyclick.n4sap.prp import Prp
 
+@unittest.skip
 class TestPrp(unittest.TestCase):
     
     def setUp(self):

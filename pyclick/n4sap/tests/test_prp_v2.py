@@ -378,6 +378,6 @@ class TestPrp(unittest.TestCase):
             self.click.update(evt)
         self.prp.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prp.get_result()
-        self.assertEqual(0.0, kpi)
-        self.assertEqual("0 violações / 1 incidentes", observation)
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente peso 35 processado", observation)
         

@@ -348,6 +348,6 @@ class TestPro(unittest.TestCase):
             self.click.update(evt)
         self.pro.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.pro.get_result()
-        self.assertEqual(0.0, kpi)
-        self.assertEqual("0 violações / 1 incidentes", observation)
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente orientar processado", observation)
         

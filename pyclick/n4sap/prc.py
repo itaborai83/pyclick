@@ -86,6 +86,8 @@ class Prc(models.N4SapKpi):
             assert prazo_m == self.PRAZO_M
             duration_m = self.calc_duration_mesas(inc, self.MESAS_NAO_PRIORITARIAS_V2)
             breached = duration_m > prazo_m
+            if inc.status == 'ABERTO' and not breached:
+                continue            
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
             self.update_details(inc, breached)

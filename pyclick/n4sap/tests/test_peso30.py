@@ -51,8 +51,8 @@ class TestPeso30(unittest.TestCase):
             self.click.update(evt)
         self.peso30.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.peso30.get_result()
-        self.assertEqual(0.0, kpi)
-        self.assertEqual("0 violações / 1 incidentes escalados", observation)
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente peso 30 processado", observation)
     
     def test_it_computes_the_kpi_for_a_breached_open_incident(self):
         evts = Event.parse_events(r"""
