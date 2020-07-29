@@ -81,10 +81,12 @@ class Prc(models.N4SapKpi):
                 continue
             if not self.has_assignment_within_period(inc, start_dt, end_dt):
                 continue
+            # Prazo Peso 30 não está no contrato, logo não deve ser considerado para fins de prazo no PRC
             ultima_mesa_contrato = inc.get_latest_mesa_from(self.MESAS_NAO_PRIORITARIAS_V2)
             prazo_m = self.calcular_prazo(inc, ultima_mesa_contrato)
             assert prazo_m == self.PRAZO_M
-            duration_m = self.calc_duration_mesas(inc, self.MESAS_NAO_PRIORITARIAS_V2)
+            # Mesa de Peso 30 *deve* ser considerado para fins de duração no PRC
+            duration_m = self.calc_duration_mesas(inc, self.MESAS_NAO_PRIORITARIAS)
             breached = duration_m > prazo_m
             if inc.status == 'ABERTO' and not breached:
                 continue            
