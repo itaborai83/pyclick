@@ -2,7 +2,7 @@ import unittest
 from pyclick.models import *
 from pyclick.n4sap.prc import Prc
 
-class TestPro(unittest.TestCase):
+class TestPrc(unittest.TestCase):
     
     def setUp(self):
         self.click = Click()
@@ -300,8 +300,8 @@ class TestPro(unittest.TestCase):
             self.click.update(evt)
         self.prc.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prc.get_result()
-        self.assertEqual(None, kpi)
-        self.assertEqual("Nenhum incidente corrigir processado", observation)
+        self.assertEqual(0.0, kpi)
+        self.assertEqual("0 violações / 1 incidentes", observation)
         
     def test_it_compute_the_kpi_for_forwarded_inc_events_that_violated_the_sla(self):
         for evt in self.violated_forwarded_inc_events:
@@ -316,8 +316,8 @@ class TestPro(unittest.TestCase):
             self.click.update(evt)
         self.prc.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prc.get_result()
-        self.assertEqual(55.55555555555556, kpi)
-        self.assertEqual("5 violações / 9 incidentes", observation)
+        self.assertEqual(50, kpi)
+        self.assertEqual("5 violações / 10 incidentes", observation)
         #self.prc.get_details().to_excel("teste.xlsx")
 
     def test_it_skips_incs_with_prior_assignments_and_no_current_assigment(self):
@@ -341,5 +341,5 @@ class TestPro(unittest.TestCase):
             self.click.update(evt)
         self.prc.evaluate(self.click, self.start_dt, self.end_dt)
         kpi, observation = self.prc.get_result()
-        self.assertEqual(None, kpi)
-        self.assertEqual("Nenhum incidente corrigir processado", observation)
+        self.assertEqual(0.0, kpi)
+        self.assertEqual("0 violações / 1 incidentes", observation)
