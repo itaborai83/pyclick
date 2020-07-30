@@ -167,7 +167,7 @@ def compress_to(filename, new_filename):
     parts = filename.split(".") # file needs to have a name and an extension
     assert len(parts) == 2 
     _, extension = parts[0], parts[1]
-    assert new_filename.ends_with(extension + ".gz")
+    assert new_filename.endswith(extension + ".gz")
     # actually compress
     _compress_to(filename, new_filename)
             
