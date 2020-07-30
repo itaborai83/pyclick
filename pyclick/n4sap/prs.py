@@ -90,7 +90,7 @@ class Prs(models.N4SapKpi):
             # Prazo Peso 30 não está no contrato, logo não deve ser considerado para fins de prazo no PRS
             ultima_mesa_contrato = inc.get_latest_mesa_from(self.MESAS_NAO_PRIORITARIAS_V2)
             if ultima_mesa_contrato is None:
-                prazo_m = inc.prazo
+                prazo_m = inc.prazo if inc.prazo is not None else models.IncidentService.SLA_ATENDER_DEFAULT
             else:
                 prazo_m = self.calcular_prazo(inc, ultima_mesa_contrato)
             # Mesa de Peso 30 *deve* ser considerado para fins de duração no PRS
