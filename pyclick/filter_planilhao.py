@@ -15,6 +15,7 @@ import pyclick.ranges as ranges
 import pyclick.util as util
 import pyclick.config as config
 from pyclick.repo import Repo
+from pyclick.consolidator import ConsolidatorSrv
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -39,73 +40,31 @@ class App(object):
         self.agg_index_file = agg_index_file
         dump_file_without_db_gz = self.dump_file[ :-6 ]
         self.output_file = dump_file_without_db_gz + "-FILTER.db"
-    
+        self.csrv = ConsolidatorSrv(dir_import, None, dir_apuracao, dir_work)
+        
     def read_index(self):
         logger.info(f'reading index file {self.agg_index_file}')
-        currdir = os.getcwd()
-        try:
-            os.chdir(self.dir_work)
-            with open(self.agg_index_file) as fh:
-                result = []
-                for line in fh:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    elif line.startswith("#"):
-                        continue
-                    inc = line
-                    result.append(inc)
-            return set(result)
-        finally:
-            os.chdir(currdir)
-    
+        return self.csrv.read_index(self.agg_index_file)
+        
     def validate_filename(self):
         logger.info(f'validating filename {self.dump_file}')
-        is_open = 'OPEN' in self.dump_file
-        is_closed = 'CLOSED' in self.dump_file
-        is_db_gz = self.dump_file.endswith('.db.gz')
-        if not is_db_gz or (not is_open and not is_closed):
-            logger.error(f'invalid filename {self.dump_file}')
-            sys.exit(1)
-        return is_open
+        return self.csrv.validate_filename(self.dump_file)
     
     def read_dump(self):
         logger.info(f'readig dump file {self.dump_file}')
-        filename = os.path.join(self.dir_import, self.dump_file)
-        dump_file_without_gz = self.dump_file[ :-3 ]
-        decompressed_filename = os.path.join(self.dir_work, "$WORK-" + dump_file_without_gz)
-        logger.info('lendo arquivo %s', filename)
-        util.decompress_to(filename, decompressed_filename)
-        conn = sqlite3.connect(decompressed_filename)
-        df = pd.read_sql(SQL_REL_MEDICAO_SELECT, conn)
-        util.sort_rel_medicao(df)
-        del conn
-        os.unlink(decompressed_filename)
-        return df
+        return self.csrv.read_dump(self.dump_file)
     
     def apply_cutoff_date_closed(self, df):
         logger.info('filtrando eventos encerrados após a data de corte %s', self.cutoff_date)
-        df = df[ df.data_resolucao_chamado < self.cutoff_date ]
-        return df.copy()
+        return self.csrv.apply_cutoff_date(df, self.cutoff_date, closed=True)
 
     def apply_cutoff_date_open(self, df):
         logger.info('filtrando eventos abertos após a data de corte %s', self.cutoff_date)
-        df = df[ df.data_abertura_chamado < self.cutoff_date ]
-        return df.copy()
-    
+        return self.csrv.apply_cutoff_date(df, self.cutoff_date, closed=False)
+        
     def save(self, df, db_name):
         logger.info(f'salvando planilhão filtrado {db_name}')
-        conn = sqlite3.connect(db_name)
-        conn.executescript(SQL_REL_MEDICAO_DDL)
-        param_sets = list(df.itertuples(index=False))
-        conn.executemany(SQL_REL_MEDICAO_UPSERT, param_sets)
-        conn.commit()
-        conn.execute("VACUUM")
-        conn.close()
-        del conn
-        logger.info('compressing...')
-        util.compress_to(db_name, db_name + '.gz')
-        os.unlink(db_name)
+        self.csrv.save(df, db_name)
         
     def run(self):
         try:
@@ -117,7 +76,7 @@ class App(object):
                 df = self.apply_cutoff_date_open(df)
             else:
                 df = self.apply_cutoff_date_closed(df)
-            df = df[ df.id_chamado.isin(all_events) ].copy()
+            df = self.csrv.filter_events(df, all_events)
             dbname = os.path.join(self.dir_work, self.output_file)
             self.save(df, dbname)
             logger.info("finished")

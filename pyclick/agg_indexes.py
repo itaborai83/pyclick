@@ -14,6 +14,7 @@ import concurrent.futures
 import pyclick.ranges as ranges
 import pyclick.util as util
 import pyclick.config as config
+from pyclick.consolidator import ConsolidatorSrv
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -27,43 +28,23 @@ class App(object):
         self.dir_apuracao = dir_apuracao
         self.dir_work = dir_work
         self.agg_index_file = agg_index_file        
-    
+        self.csrv = ConsolidatorSrv(None, None, dir_apuracao, dir_work)
+        
     def read_mesas(self):
         logger.info('recuperando a listagem de mesas para apuração')
         return set(util.read_mesas(self.dir_apuracao))
 
     def read_index_files(self):
         logger.info(f"reading index files within {self.dir_work}")
-        currdir = os.getcwd()
-        try:
-            os.chdir(self.dir_work)
-            files = sorted(glob.glob("*.idx"))
-            paths = [ os.path.join(self.dir_work, f) for f in files ]
-            return list(paths)
-        finally:
-            os.chdir(currdir)
+        return self.csrv.read_index_files()
     
     def process_index_file(self, mesas, all_events, index_file):
         logger.info(f'processing index file {index_file}')
-        with open(index_file) as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                mesa, inc = line.split('\t')
-                if mesa in mesas:
-                    all_events.add(inc)
+        self.csrv.process_index_file(mesas, all_events, index_file)
     
     def write_index_file(self, all_events):
         logger.info(f'writing aggregated index file {self.agg_index_file}')
-        currdir = os.getcwd()
-        try:
-            os.chdir(self.dir_work)        
-            with open(self.agg_index_file, 'w') as fh:
-                for event in sorted(all_events):
-                    print(event, file=fh)
-        finally:
-            os.chdir(currdir)
+        self.csrv.write_index_file(self.agg_index_file, all_events)
                 
     def run(self):
         try:

@@ -15,6 +15,7 @@ import pyclick.ranges as ranges
 import pyclick.util as util
 import pyclick.config as config
 from pyclick.repo import Repo
+from pyclick.consolidator import ConsolidatorSrv
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -34,53 +35,27 @@ class App(object):
         self.cutoff_date = cutoff_date
         dump_file_without_db_gz = self.dump_file[ :-6 ]
         self.index_file = dump_file_without_db_gz + ".idx"
-        
+        self.csrv = ConsolidatorSrv(dir_import, None, None, dir_work)
         
     def read_dump(self):
-        filename = os.path.join(self.dir_import, self.dump_file)
-        dump_file_without_gz = self.dump_file[ :-3 ]
-        decompressed_filename = os.path.join(self.dir_work, "$WORK-" + dump_file_without_gz)
-        logger.info('lendo arquivo %s', filename)
-        util.decompress_to(filename, decompressed_filename)
-        conn = sqlite3.connect(decompressed_filename)
-        df = pd.read_sql(SQL_REL_MEDICAO_SELECT, conn)
-        util.sort_rel_medicao(df)
-        del conn
-        os.unlink(decompressed_filename)
-        return df
+        logger.info(f'lendo planilhão {self.dump_file}')
+        return self.csrv.read_dump(self.dump_file)
     
     def apply_cutoff_date_closed(self, df):
         logger.info('filtrando eventos encerrados após a data de corte %s', self.cutoff_date)
-        df = df[ df.data_resolucao_chamado < self.cutoff_date ]
-        return df.copy()
+        return self.csrv.apply_cutoff_date(df, self.cutoff_date, closed=True)
 
     def apply_cutoff_date_open(self, df):
         logger.info('filtrando eventos abertos após a data de corte %s', self.cutoff_date)
-        df = df[ df.data_abertura_chamado < self.cutoff_date ]
-        return df.copy()
+        return self.csrv.apply_cutoff_date(df, self.cutoff_date, closed=False)
         
     def update_event_mapping(self, mesa_evt_mapping, df):
         logger.info('atualizando mapeamento evento mesa')
-        df_mesas        = df[ ~(df.mesa.isna()) ]
-        id_chamados     = df_mesas.id_chamado.to_list() # to allow ordering
-        chamados_pai    = df_mesas.chamado_pai.to_list()
-        mesas           = df_mesas.mesa.to_list()
-        for id_chamado, chamado_pai, mesa in zip(id_chamados, chamados_pai, mesas):
-            if mesa not in mesa_evt_mapping:
-                mesa_evt_mapping[ mesa ] = set()
-            mesa_evt_mapping[ mesa ].add(id_chamado)
-            if not pd.isna(chamado_pai):
-                mesa_evt_mapping[ mesa ].add(chamado_pai)        
+        self.csrv.update_event_mapping(mesa_evt_mapping, df)
     
     def validate_filename(self):
         logger.info(f'validating filename {self.dump_file}')
-        is_open = 'OPEN' in self.dump_file
-        is_closed = 'CLOSED' in self.dump_file
-        is_db_gz = self.dump_file.endswith('.db.gz')
-        if not is_db_gz or (not is_open and not is_closed):
-            logger.error(f'invalid filename {self.dump_file}')
-            sys.exit(1)
-        return is_open
+        return self.csrv.validate_filename(self.dump_file)
             
     def run(self):
         try:
