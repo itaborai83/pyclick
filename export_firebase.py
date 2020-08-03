@@ -86,22 +86,14 @@ class App(object):
         "AGING90_GRC", 
         "AGING90_PORTAL", 
         "AGING90_SERV", 
-        "CSAT", 
-        "CSAT_ABGE", 
-        "CSAT_PRAPO", 
-        "CSAT_CORP", 
-        "CSAT_FIN", 
-        "CSAT_GRC", 
-        "CSAT_PORTAL", 
-        "CSAT_SERV", 
-        "CSAT_PERIODO", 
-        "CSAT_PERIODO_ABGE", 
-        "CSAT_PERIODO_PRAPO", 
-        "CSAT_PERIODO_CORP", 
-        "CSAT_PERIODO_FIN", 
-        "CSAT_PERIODO_GRC", 
-        "CSAT_PERIODO_PORTAL", 
-        "CSAT_PERIODO_SERV",
+        "CSAT_INDRA", 
+        "CSAT_INDRA_ABGE", 
+        "CSAT_INDRA_PRAPO", 
+        "CSAT_INDRA_CORP", 
+        "CSAT_INDRA_FIN", 
+        "CSAT_INDRA_GRC", 
+        "CSAT_INDRA_PORTAL", 
+        "CSAT_INDRA_SERV", 
         "ESTOQUE",
         "ESTOQUE_ABGE",
         "ESTOQUE_PRAPO",
@@ -183,22 +175,14 @@ class App(object):
         "AGING90_GRC"           : ("AGING 90", "GRC"),
         "AGING90_PORTAL"        : ("AGING 90", "PORTAL"),
         "AGING90_SERV"          : ("AGING 90", "SERV"),
-        "CSAT"                  : ("CSAT", None),
-        "CSAT_ABGE"             : ("CSAT", "ABGE"),
-        "CSAT_PRAPO"            : ("CSAT", "PRAPO"),
-        "CSAT_CORP"             : ("CSAT", "CORP"),
-        "CSAT_FIN"              : ("CSAT", "FIN"),
-        "CSAT_GRC"              : ("CSAT", "GRC"),
-        "CSAT_PORTAL"           : ("CSAT", "PORTAL"),
-        "CSAT_SERV"             : ("CSAT", "SERV"),
-        "CSAT_PERIODO"          : ("CSAT", None),
-        "CSAT_PERIODO_ABGE"     : ("CSAT - Período", "ABGE"),
-        "CSAT_PERIODO_PRAPO"    : ("CSAT - Período", "PRAPO"),
-        "CSAT_PERIODO_CORP"     : ("CSAT - Período", "CORP"),
-        "CSAT_PERIODO_FIN"      : ("CSAT - Período", "FIN"),
-        "CSAT_PERIODO_GRC"      : ("CSAT - Período", "GRC"),
-        "CSAT_PERIODO_PORTAL"   : ("CSAT - Período", "PORTAL"),
-        "CSAT_PERIODO_SERV"     : ("CSAT - Período", "SERV"),
+        "CSAT_INDRA"            : ("CSAT - Indra", None),
+        "CSAT_INDRA_ABGE"       : ("CSAT - Indra", "ABGE"),
+        "CSAT_INDRA_PRAPO"      : ("CSAT - Indra", "PRAPO"),
+        "CSAT_INDRA_CORP"       : ("CSAT - Indra", "CORP"),
+        "CSAT_INDRA_FIN"        : ("CSAT - Indra", "FIN"),
+        "CSAT_INDRA_GRC"        : ("CSAT - Indra", "GRC"),
+        "CSAT_INDRA_PORTAL"     : ("CSAT - Indra", "PORTAL"),
+        "CSAT_INDRA_SERV"       : ("CSAT - Indra", "SERV"),
         "ESTOQUE"               : ("ESTOQUE", None),
         "ESTOQUE_ABGE"          : ("ESTOQUE", "ABGE"),
         "ESTOQUE_PRAPO"         : ("ESTOQUE", "PRAPO"),
@@ -378,13 +362,13 @@ class App(object):
     def retrieve_kpis(self, conn):
         logger.info("retrieving KPI's")
         sql = """
-            SELECT  INDICADOR
+            SELECT  CASE WHEN INDICADOR = 'CSAT - Período' THEN 'CSAT - Indra' ELSE INDICADOR END AS INDICADOR
             ,       MESA
-            ,       CAST(VALOR AS REAL) AS VALOR
+            ,       COALESCE(CAST(VALOR AS REAL), 0) AS VALOR
             ,       SLA 
             ,       OBS
             FROM    INDICADORES
-            WHERE   INDICADOR NOT IN ( 'INÍCIO PERÍODO', 'FIM PERÍODO', 'EXPURGOS')
+            WHERE   INDICADOR NOT IN ( 'INÍCIO PERÍODO', 'FIM PERÍODO', 'EXPURGOS', 'CSAT')
         """
         return pd.read_sql(sql, conn, index_col=None)
     
