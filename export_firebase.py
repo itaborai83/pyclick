@@ -34,6 +34,7 @@ class App(object):
     CSAT_SPREADSHEET = "__csat.xlsx"
     CSAT_ACC_SHEET = "CSAT"
     CSAT_SHEET = "CSAT - Mês"
+    SLA_CSAT = "90"
     CAMPOS_QUADRO = [
         "PERIODO",
         "PRP", 
@@ -94,18 +95,31 @@ class App(object):
         "CSAT_INDRA_GRC", 
         "CSAT_INDRA_PORTAL", 
         "CSAT_INDRA_SERV", 
-        "ESTOQUE",
-        "ESTOQUE_ABGE",
-        "ESTOQUE_PRAPO",
-        "ESTOQUE_CORP",
-        "ESTOQUE_FIN",
-        "ESTOQUE_GRC",
-        "ESTOQUE_PORTAL",
-        "ESTOQUE_SERV",
-        "ENCERRADOS",
-        "ENCERRADOS_ABGE",
-        "ENCERRADOS_PRAPO",
-        "ENCERRADOS_CORP",
+        "CSAT_GERENCIA",
+        "CSAT_GERENCIA_ABGE",
+        "CSAT_GERENCIA_PRAPO",
+        "CSAT_GERENCIA_CORP",
+        "CSAT_GERENCIA_FIN",
+        "CSAT_GERENCIA_GRC",
+        "CSAT_GERENCIA_GRCAC",
+        "CSAT_GERENCIA_PORTAL",
+        "CSAT_GERENCIA_SERV",
+        "CSAT_GERENCIA_BW",
+        "CSAT_GERENCIA_CE",
+        "CSAT_GERENCIA_SATI",
+        "CSAT_GERENCIA_DESENV",
+        "ESTOQUE", 
+        "ESTOQUE_ABGE", 
+        "ESTOQUE_PRAPO", 
+        "ESTOQUE_CORP", 
+        "ESTOQUE_FIN", 
+        "ESTOQUE_GRC", 
+        "ESTOQUE_PORTAL", 
+        "ESTOQUE_SERV", 
+        "ENCERRADOS", 
+        "ENCERRADOS_ABGE", 
+        "ENCERRADOS_PRAPO", 
+        "ENCERRADOS_CORP", 
         "ENCERRADOS_FIN",
         "ENCERRADOS_GRC",
         "ENCERRADOS_PORTAL",
@@ -182,7 +196,20 @@ class App(object):
         "CSAT_INDRA_FIN"        : ("CSAT - Indra", "FIN"),
         "CSAT_INDRA_GRC"        : ("CSAT - Indra", "GRC"),
         "CSAT_INDRA_PORTAL"     : ("CSAT - Indra", "PORTAL"),
-        "CSAT_INDRA_SERV"       : ("CSAT - Indra", "SERV"),
+        "CSAT_INDRA_SERV"       : ("CSAT - Indra", "SERV"),        
+        "CSAT_GERENCIA"         : ("CSAT - Gerência", None),
+        "CSAT_GERENCIA_ABGE"    : ("CSAT - Gerência", "ABGE"  ),
+        "CSAT_GERENCIA_PRAPO"   : ("CSAT - Gerência", "PRAPO" ),
+        "CSAT_GERENCIA_CORP"    : ("CSAT - Gerência", "CORP"  ),
+        "CSAT_GERENCIA_FIN"     : ("CSAT - Gerência", "FIN"   ),
+        "CSAT_GERENCIA_GRC"     : ("CSAT - Gerência", "GRC"   ),
+        "CSAT_GERENCIA_GRCAC"   : ("CSAT - Gerência", "GRCAC" ),
+        "CSAT_GERENCIA_PORTAL"  : ("CSAT - Gerência", "PORTAL"),
+        "CSAT_GERENCIA_SERV"    : ("CSAT - Gerência", "SERV"  ),
+        "CSAT_GERENCIA_BW"      : ("CSAT - Gerência", "BW"    ),
+        "CSAT_GERENCIA_CE"      : ("CSAT - Gerência", "CE"    ),
+        "CSAT_GERENCIA_SATI"    : ("CSAT - Gerência", "SATI"  ),
+        "CSAT_GERENCIA_DESENV"  : ("CSAT - Gerência", "DESENV"),
         "ESTOQUE"               : ("ESTOQUE", None),
         "ESTOQUE_ABGE"          : ("ESTOQUE", "ABGE"),
         "ESTOQUE_PRAPO"         : ("ESTOQUE", "PRAPO"),
@@ -211,132 +238,32 @@ class App(object):
         #"FIM_PERIODO"           : ("FIM PERÍODO", None),
         #"EXPURGOS"              : ("EXPURGOS", None),
     }
-    
+    LAST_CSAT_INDRA = 'CSAT_INDRA_SERV'
+    CSAT_SPLICED_ENTRIES = [ 
+        "CSAT_GERENCIA"         , 
+        "CSAT_GERENCIA_ABGE"    , 
+        "CSAT_GERENCIA_PRAPO"   , 
+        "CSAT_GERENCIA_CORP"    , 
+        "CSAT_GERENCIA_FIN"     , 
+        "CSAT_GERENCIA_GRC"     , 
+        "CSAT_GERENCIA_GRCAC"   , 
+        "CSAT_GERENCIA_PORTAL"  , 
+        "CSAT_GERENCIA_SERV"    , 
+        "CSAT_GERENCIA_BW"      , 
+        "CSAT_GERENCIA_CE"      , 
+        "CSAT_GERENCIA_SATI"    , 
+        "CSAT_GERENCIA_DESENV"
+    ]
+
     def __init__(self, dir_n4, dir_csat, fb_conf, nocloud):
         self.dir_n4 = dir_n4
         self.dir_csat = dir_csat
         self.fb_conf = fb_conf
         self.nocloud = nocloud
-        
-    """
-    def process_expurgos(self, click):
-        logger.info('processing expurgos')
-        expurgos = util.read_expurgos(self.dir_apuracao)
-        for id_chamado in expurgos:
-            click.add_expurgo(id_chamado)
-        return expurgos
-    
-    def load_click(self, r):
-        logger.info('loading click data model')
-        click = models.Click()
-        expurgos = self.process_expurgos(click)
-        evts = r.load_events()
-        start_dt, end_dt = r.get_period()
-        for i, evt in enumerate(evts):
-            if (i + 1) % 10000 == 0:
-                logger.info("%d events loaded so far", i+1)
-            click.update(evt)
-        logger.info("%d events loaded in total", len(evts))
-        pesquisas_df = r.get_surveys()
-        pesquisas = models.Pesquisa.from_df(pesquisas_df)
-        for pesq in pesquisas:
-            click.add_pesquisa(pesq)
-        evts_df = models.Event.to_df(evts)
-        expurgos_df = pd.DataFrame({ "expurgo": expurgos })
-        return click, evts_df, expurgos_df, start_dt, end_dt
-            
-    def inc2json(self, inc):
-        if inc.categoria.startswith('S'):
-            categoria = 'REALIZAR'
-        elif inc.categoria.startswith('T'):
-            categoria = 'REALIZAR - TAREFA'
-        elif 'CORRIGIR' in inc.categoria:
-            categoria = 'CORRIGIR'
-        else:
-            categoria = 'ORIENTAR'
-        mesa = inc.mesa_atual
-        status = inc.status
-        
-        if mesa == 'N4-SAP-SUSTENTACAO-PRIORIDADE':
-            duracao_m   = inc.calc_duration_mesas( [ 'N4-SAP-SUSTENTACAO-PRIORIDADE' ] )
-            pendencia_m = inc.calc_pendencia_mesas( [ 'N4-SAP-SUSTENTACAO-PRIORIDADE' ] )
-        elif mesa == 'N4-SAP-SUSTENTACAO-ESCALADOS':
-            duracao_m   = inc.calc_duration_mesas( [ 'N4-SAP-SUSTENTACAO-ESCALADOS' ] )
-            pendencia_m = inc.calc_pendencia_mesas( [ 'N4-SAP-SUSTENTACAO-ESCALADOS' ] )
-        else:
-            duracao_m   = inc.calc_duration_mesas( n4_config.MESAS_NAO_PRIORITARIAS )
-            pendencia_m = inc.calc_pendencia_mesas( n4_config.MESAS_NAO_PRIORITARIAS )
-        
-        if mesa == 'N4-SAP-SUSTENTACAO-PRIORIDADE':
-            prazo_m = prp.Prp.PRAZO_M
-        elif mesa == 'N4-SAP-SUSTENTACAO-ESCALADOS' and categoria in ('REALIZAR', 'REALIZAR - TAREFA'):
-            prazo_m = peso30.Peso30.PRAZO_REALIZAR_M
-        elif mesa == 'N4-SAP-SUSTENTACAO-ESCALADOS' and categoria == 'CORRIGIR':
-            prazo_m = peso30.Peso30.PRAZO_CORRIGIR_M
-        elif mesa == 'N4-SAP-SUSTENTACAO-ESCALADOS' and categoria == 'CORRIGIR':
-            prazo_m = peso30.Peso30.PRAZO_ORIENTAR_M
-        elif categoria == 'ORIENTAR':
-            prazo_m = pro.Pro.PRAZO_M
-        elif categoria == 'CORRIGIR':
-            prazo_m = prc.Prc.PRAZO_M
-        elif categoria in ('REALIZAR', 'REALIZAR - TAREFA'):
-            prazo_m = inc.prazo
-        else:
-            assert 1 == 2
-        
-        result = {
-            'id_chamado'    : inc.id_chamado
-        ,   'chamado_pai'   : inc.chamado_pai
-        ,   'categoria'     : categoria
-        ,   'mesa_atual'    : mesa
-        ,   'status'        : status
-        ,   'oferta'        : inc.oferta
-        ,   'prazo'         : prazo_m
-        ,   'duracao_m'     : duracao_m
-        ,   'pendencia_m'   : pendencia_m
-        ,   'acoes'         : []
-        ,   'atribuicoes'   : []
-        }
-        for acao in inc.acoes:
-            result[ 'acoes' ].append({
-                'id_acao'       : acao.id_acao
-            ,   'acao_nome'     : acao.acao_nome
-            ,   'pendencia'     : acao.pendencia == 'S'
-            ,   'mesa_atual'    : acao.mesa_atual
-            ,   'data_acao'     : acao.data_acao
-            ,   'data_fim_acao' : acao.data_fim_acao
-            ,   'duracao_m'     : acao.duracao_m
-            ,   'status'        : acao.status            
-            })
-        for atrib in inc.atribuicoes:
-            result[ 'atribuicoes' ].append({
-                'seq'               : atrib.seq
-            ,   'mesa'              : atrib.mesa
-            ,   'entrada'           : atrib.entrada
-            ,   'status_entrada'    : atrib.status_entrada
-            ,   'saida'             : atrib.saida
-            ,   'status_saida'      : atrib.status_saida
-            ,   'duracao_m'         : atrib.duracao_m
-            ,   'pendencia_m'       : atrib.pendencia_m
-            })
-        return result
-        
-    def export_incidents(self, click):
-        logger.info('exporting incidents')
-        result = []
-        for mesa_name in n4_config.MESAS:
-            logger.info(f" -> {mesa_name}")
-            mesa = click.get_mesa(mesa_name)
-            result.append({ "name": mesa_name, "incidents": [] })
-            for inc in mesa.get_incidentes():
-                data = self.inc2json(inc)
-                result[ -1 ][ "incidents" ].append(data)
-        return result
-    """
     
     def import_firebase(self, cred, collection, key, value):
         if self.nocloud:
-            logger.warn('skipping cloud sync')
+            logger.warning('skipping cloud sync')
             return
         logger.info('importing data to firebase')
         db = firestore.client()
@@ -359,70 +286,75 @@ class App(object):
         path = os.path.join(dir_apuracao, config.CONSOLIDATED_DB)
         return sqlite3.connect(path)
     
-    def retrieve_kpis(self, conn):
+    def retrieve_kpis(self, periodo, conn, csat_gerencia_df):
         logger.info("retrieving KPI's")
         sql = """
-            SELECT  CASE WHEN INDICADOR = 'CSAT - Período' THEN 'CSAT - Indra' ELSE INDICADOR END AS INDICADOR
+            SELECT  CASE WHEN INDICADOR = 'CSAT - Período' THEN 'CSAT - Indra'
+                         ELSE INDICADOR END AS INDICADOR
             ,       MESA
             ,       COALESCE(CAST(VALOR AS REAL), 0) AS VALOR
-            ,       SLA 
+            ,       SLA
             ,       OBS
             FROM    INDICADORES
-            WHERE   INDICADOR NOT IN ( 'INÍCIO PERÍODO', 'FIM PERÍODO', 'EXPURGOS', 'CSAT')
+            WHERE   INDICADOR NOT IN ( 'INÍCIO PERÍODO', 'FIM PERÍODO', 'EXPURGOS', '--CSAT')
         """
-        return pd.read_sql(sql, conn, index_col=None)
+        df = pd.read_sql(sql, conn, index_col=None)
+        data = df.to_dict('list')
+        nan = float('NaN')
+        indicador, mesa = self.INDICADORES_MESAS[ self.LAST_CSAT_INDRA ]
+        csat_idx = data[ 'INDICADOR' ].index(indicador, 0)
+        serv_idx = data[ 'MESA' ].index(mesa, csat_idx)
+        start_idx = serv_idx + 1
+        for i, campo in enumerate(self.CSAT_SPLICED_ENTRIES):
+            indicador, mesa = self.INDICADORES_MESAS[ campo ]
+            if mesa is None:
+                csat_df = csat_gerencia_df[ ( csat_gerencia_df[ 'PERIODO'   ]   == periodo )    & 
+                                            ( csat_gerencia_df[ 'INDICADOR' ]   == indicador )  & 
+                                            ( ( csat_gerencia_df[ 'MESA'    ].isna() )          |
+                                              ( csat_gerencia_df[ 'MESA'    ]   == ""  ) )      ]
+            else:
+                csat_df = csat_gerencia_df[ ( csat_gerencia_df[ 'PERIODO'   ]   == periodo )    & 
+                                            ( csat_gerencia_df[ 'INDICADOR' ]   == indicador )  &
+                                            ( csat_gerencia_df[ 'MESA'      ]   == mesa )       ]
+                                            
+            if len(csat_df) > 0:
+                data[ 'INDICADOR'   ].insert(start_idx + i, indicador)
+                data[ 'MESA'        ].insert(start_idx + i, mesa if mesa else "" )
+                data[ 'VALOR'       ].insert(start_idx + i, csat_df[ 'VALOR' ].iat[ 0 ])
+                data[ 'SLA'         ].insert(start_idx + i, csat_df[ 'SLA'   ].iat[ 0 ])
+                data[ 'OBS'         ].insert(start_idx + i, csat_df[ 'OBS'   ].iat[ 0 ])
+        return pd.DataFrame(data)
     
     def generate_table(self):
         return { campo: [] for campo in self.CAMPOS_QUADRO }
     
     def update_value(self, campo, quadro, df):
         indicador, mesa = self.INDICADORES_MESAS[ campo ]
-        if not mesa: 
-            valor = df[ df[ "INDICADOR" ] == indicador ][ 'VALOR' ].iat[ 0 ]
-        else:
-            valor = df[ ( df[ "INDICADOR" ] == indicador) & ( df[ "MESA" ] == mesa) ][ 'VALOR' ].iat[ 0 ]
-        quadro[ campo ].append(valor)
-        
+        try:
+            if not mesa: 
+                valor = df[ df[ "INDICADOR" ] == indicador ][ 'VALOR' ].iat[ 0 ]
+            else:
+                valor = df[ ( df[ "INDICADOR" ] == indicador) & 
+                            ( df[ "MESA" ]      == mesa) ][ 'VALOR' ].iat[ 0 ]
+        except IndexError:
+            valor = float('NaN')
+        quadro[ campo ].append(valor)    
+    
     def update_table(self, periodo, quadro, df):
         quadro[ "PERIODO" ].append(periodo)
         for campo in self.CAMPOS_QUADRO:
             if campo == "PERIODO":
                 continue
+            
             self.update_value(campo, quadro, df)
             if campo == "PRP" or campo == "PESO30":
                 quadro[ campo ][ -1 ] = 100.0 - quadro[ campo ][ -1 ]
-                
-    def format_floats(self, quadro):
-        import locale
-        for campo in self.CAMPOS_QUADRO:
-            valores = []
-            for valor in quadro[ campo ]:
-                if isinstance(valor, float):
-                    valor = valor.replace(".", ",")
-                else:
-                    valor_txt = valor
-                valores.append(valor_txt)
-            quadro[ campo ] = valores
             
     def export_tables(self, cred, quadro, quadro_acc, xw):
         logger.info("exporting summary table")
         quadro_df = pd.DataFrame(quadro)
-        quadro_data = quadro_df.to_dict(orient='record')
-        self.import_firebase(cred, 'indicadores', 'quadro_indicadores', { 
-            "carga": util.now(), 
-            "dados": quadro_data,
-            "ordem_campos": self.CAMPOS_QUADRO
-        })
-                
         logger.info("exporting summary table acc")
         quadro_acc_df = pd.DataFrame(quadro_acc)
-        quadro_acc_data = quadro_acc_df.to_dict(orient='record')
-        self.import_firebase(cred, 'indicadores', 'quadro_indicadores_acc', { 
-            "carga": util.now(), 
-            "dados": quadro_acc_data,
-            "ordem_campos": self.CAMPOS_QUADRO
-        })
-
         quadro_df.to_excel(xw, sheet_name="INDICADORES", index=False)
         quadro_acc_df.to_excel(xw, sheet_name="INDICADORES_ACC", index=False)
     
@@ -434,7 +366,7 @@ class App(object):
             os.unlink(ks)
         return pd.ExcelWriter(ks, datetime_format=None)   
     
-    def export_csat(self, cred, xw):
+    def process_csat(self, cred):
         logger.info('reading CSAT spreadsheet')
         path = os.path.join(self.dir_csat, self.CSAT_SPREADSHEET)
         
@@ -453,6 +385,124 @@ class App(object):
             "dados": csat_acc_data,
             "ordem_campos": csat_acc_df.columns.to_list()
         })
+    
+        mesas = [
+            'N4-SAP-SUSTENTACAO-ABAST_GE',
+            'N4-SAP-SUSTENTACAO-APOIO_OPERACAO',
+            'N4-SAP-SUSTENTACAO-CORPORATIVO',
+            'N4-SAP-SUSTENTACAO-FINANCAS',
+            'N4-SAP-SUSTENTACAO-GRC',
+            'N4-SAP_APOIO_E_CORRECAO-GRC',
+            'N4-SAP-SUSTENTACAO-PORTAL',
+            'N4-SAP-SUSTENTACAO-SERVICOS',
+            'N4-SAP-SUSTENTACAO-BI',
+            'N4-SAP-SUSTENTACAO-CE',
+            'N4-SAP-SUSTENTACAO-SATI',
+            'N4-SAP-SUSTENTACAO-DESENV',
+        ]
+        mesa_mapping = {
+            'N4-SAP-SUSTENTACAO-ABAST_GE'       : 'ABGE',
+            'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' : 'PRAPO',
+            'N4-SAP-SUSTENTACAO-CORPORATIVO'    : 'CORP',
+            'N4-SAP-SUSTENTACAO-FINANCAS'       : 'FIN',
+            'N4-SAP-SUSTENTACAO-GRC'            : 'GRC',
+            'N4-SAP_APOIO_E_CORRECAO-GRC'       : 'GRCAC',
+            'N4-SAP-SUSTENTACAO-PORTAL'         : 'PORTAL',
+            'N4-SAP-SUSTENTACAO-SERVICOS'       : 'SERV',
+            'N4-SAP-SUSTENTACAO-BI'             : 'BW',
+            'N4-SAP-SUSTENTACAO-CE'             : 'CE',
+            'N4-SAP-SUSTENTACAO-SATI'           : 'SATI',
+            'N4-SAP-SUSTENTACAO-DESENV'         : 'DESENV',
+        }
+        meses = [ 'JAN', 'FEV', 'MAR', 'ABR', 'MAIO', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ' ]
+        periodo_mapping = {
+            'JAN'   : '2020-01', 
+            'FEV'   : '2020-02', 
+            'MAR'   : '2020-03', 
+            'ABR'   : '2020-04', 
+            'MAIO'  : '2020-05', 
+            'JUN'   : '2020-06', 
+            'JUL'   : '2020-07', 
+            'AGO'   : '2020-08', 
+            'SET'   : '2020-09', 
+            'OUT'   : '2020-10', 
+            'NOV'   : '2020-11', 
+            'DEZ'   : '2020-12'
+        }
+        csat_gerencia = { 
+            'PERIODO' : [], 'INDICADOR' : [], 'MESA' : [], 'VALOR' : [], 'SLA' : [], 'OBS' : [] 
+        }        
+        for mes in meses:
+            periodo = periodo_mapping[ mes ]
+            valor = csat_df[ csat_df[ 'MESA' ].isna() ][ mes ].iat[0]
+            if not pd.isna(valor):
+                qtd = csat_df[ csat_df[ 'MESA' ].isna() ][ mes + " Qtd" ].iat[0]
+                non_breached = int(valor/100.0 * qtd)
+                breached = int((100.0-valor)/100.0 * qtd)
+                obs = f'1.0 - ({breached} violações / {non_breached + breached})'
+                csat_gerencia[ 'PERIODO' ].append(periodo)
+                csat_gerencia[ 'INDICADOR' ].append('CSAT - Gerência')
+                csat_gerencia[ 'MESA' ].append("")
+                csat_gerencia[ 'VALOR' ].append(valor)
+                csat_gerencia[ 'SLA' ].append(self.SLA_CSAT)
+                csat_gerencia[ 'OBS' ].append(obs)
+            
+            periodo_acc = periodo + "-ACC"
+            valor_acc = csat_acc_df[ csat_acc_df[ 'MESA' ].isna() ][ mes ].iat[0]
+            if not pd.isna(valor):
+                qtd_acc = csat_acc_df[ csat_acc_df[ 'MESA' ].isna() ][ mes + " Qtd" ].iat[0]
+                non_breached_acc = int(valor_acc/100.0 * qtd_acc)
+                breached_acc = int((100.0-valor_acc)/100.0 * qtd_acc)
+                obs_acc = f'1.0 - ({breached} violações / {non_breached + breached})'
+                csat_gerencia[ 'PERIODO' ].append(periodo_acc)
+                csat_gerencia[ 'INDICADOR' ].append('CSAT - Gerência')
+                csat_gerencia[ 'MESA' ].append("")
+                csat_gerencia[ 'VALOR' ].append(valor_acc)
+                csat_gerencia[ 'SLA' ].append(self.SLA_CSAT)
+                csat_gerencia[ 'OBS' ].append(obs_acc)
+            
+            for mesa in mesas:
+                valor = csat_df[ csat_df[ 'MESA' ] == mesa ][ mes ].iat[0]
+                if not pd.isna(valor):
+                    qtd = csat_df[ csat_df[ 'MESA' ] == mesa ][ mes + " Qtd" ].iat[0]
+                    non_breached = int(valor/100.0 * qtd)
+                    breached = int((100.0-valor)/100.0 * qtd)
+                    obs = f'1.0 - ({breached} violações / {non_breached + breached})'
+                    csat_gerencia[ 'PERIODO' ].append(periodo)
+                    csat_gerencia[ 'INDICADOR' ].append('CSAT - Gerência')
+                    csat_gerencia[ 'MESA' ].append(mesa_mapping[ mesa ])
+                    csat_gerencia[ 'VALOR' ].append(valor)
+                    csat_gerencia[ 'SLA' ].append(self.SLA_CSAT)
+                    csat_gerencia[ 'OBS' ].append(obs)
+                
+                periodo_acc = periodo + "-ACC"
+                valor_acc = csat_acc_df[ csat_acc_df[ 'MESA' ] == mesa ][ mes ].iat[0]
+                if not pd.isna(valor):
+                    qtd_acc = csat_acc_df[ csat_acc_df[ 'MESA' ] == mesa ][ mes + " Qtd" ].iat[0]
+                    non_breached_acc = int(valor_acc/100.0 * qtd_acc)
+                    breached_acc = int((100.0-valor_acc)/100.0 * qtd_acc)
+                    obs_acc = f'1.0 - ({breached_acc} violações / {non_breached_acc + breached_acc})'
+                    csat_gerencia[ 'PERIODO' ].append(periodo_acc)
+                    csat_gerencia[ 'INDICADOR' ].append('CSAT - Gerência')
+                    csat_gerencia[ 'MESA' ].append(mesa_mapping[ mesa ])
+                    csat_gerencia[ 'VALOR' ].append(valor_acc)
+                    csat_gerencia[ 'SLA' ].append(self.SLA_CSAT)
+                    csat_gerencia[ 'OBS' ].append(obs_acc)
+                periodo_acc = periodo + "-ACC"
+        #print(csat_gerencia)
+        return pd.DataFrame(csat_gerencia)
+    
+    def parse_periodo(self, dir_apuracao):
+        parts = dir_apuracao.split("-")
+        num_parts = len(parts)
+        assert 2 <= num_parts <= 3
+        ano, mes = int(num_parts[0]), int(num_parts[1])
+        if num_parts == 3:
+            assert num_parts[2] == 'ACC'
+            acc = True
+        else:
+            acc = False
+        return ano, mes, acc
         
     def run(self):
         try:
@@ -462,21 +512,25 @@ class App(object):
             dirs_apuracoes = self.get_dirs_apuracoes()
             quadro = self.generate_table()
             quadro_acc = self.generate_table()
-            with self.open_spreadsheet() as xw:
-                for dir_apuracao in dirs_apuracoes:
-                    _, periodo = os.path.split(dir_apuracao)
-                    logger.info(f'processing {periodo}')
-                    conn = self.connect_db(dir_apuracao)
-                    kpis_df = self.retrieve_kpis(conn)
-                    data = kpis_df.to_dict(orient='record')
-                    self.import_firebase(cred, 'indicadores', periodo, { "periodo": periodo, "indicadores": data, "carga": util.now() } )
-                    if not periodo.endswith("-ACC"):
-                        self.update_table(periodo, quadro, kpis_df)
-                    else:
-                        self.update_table(periodo, quadro_acc, kpis_df)
-                    del conn
+            #self.extract_csat_gerencia(quadro, acc=False)
+            #self.extract_csat_gerencia(quadro_acc, acc=True)            
+            csat_gerencia_df = self.process_csat(cred)
+            for dir_apuracao in dirs_apuracoes:
+                _, periodo = os.path.split(dir_apuracao)
+                logger.info(f'processing {periodo}')
+                #ano, mes, acc = self.parse_periodo(periodo)
+                conn = self.connect_db(dir_apuracao)
+                kpis_df = self.retrieve_kpis(periodo, conn, csat_gerencia_df)
+                data = kpis_df.to_dict(orient='record')
+                self.import_firebase(cred, 'indicadores', periodo, { "periodo": periodo, "indicadores": data, "carga": util.now() } )
+                if not periodo.endswith("-ACC"):
+                    self.update_table(periodo, quadro, kpis_df)
+                else:
+                    self.update_table(periodo, quadro_acc, kpis_df)
+                del conn
+            with self.open_spreadsheet() as xw:                
                 self.export_tables(cred, quadro, quadro_acc, xw)
-                self.export_csat(cred, xw)
+                
             logger.info("finished")
         except:
             logger.exception('an error has occurred')
