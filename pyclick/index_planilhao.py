@@ -15,7 +15,7 @@ import pyclick.ranges as ranges
 import pyclick.util as util
 import pyclick.config as config
 from pyclick.repo import Repo
-from pyclick.consolidator import ConsolidatorSrv
+import pyclick.consolidator
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -35,7 +35,7 @@ class App(object):
         self.cutoff_date = cutoff_date
         dump_file_without_db_gz = self.dump_file[ :-6 ]
         self.index_file = dump_file_without_db_gz + ".idx"
-        self.csrv = ConsolidatorSrv(dir_import, None, None, dir_work)
+        self.csrv = pyclick.consolidator.ConsolidatorSrv(dir_import, None, None, dir_work)
         
     def read_dump(self):
         logger.info(f'lendo planilhão {self.dump_file}')

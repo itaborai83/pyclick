@@ -15,7 +15,7 @@ import pyclick.ranges as ranges
 import pyclick.util as util
 import pyclick.config as config
 from pyclick.repo import Repo
-from pyclick.consolidator import ConsolidatorSrv
+import pyclick.consolidator
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -30,9 +30,10 @@ class App(object):
         
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_work):
+    def __init__(self, dir_work, output_db):
         self.dir_work = dir_work
-        self.csrv = ConsolidatorSrv(None, None, None, dir_work)
+        self.output_db = output_db
+        self.csrv = pyclick.consolidator.ConsolidatorSrv(None, None, None, dir_work)
         
     def save(self, df, db_name):
         logger.info(f'salvando planilhão filtrado {db_name}')
@@ -43,7 +44,7 @@ class App(object):
         
     def get_filtered_planilhoes(self):
         logger.info("reading filtered dump files")
-        return self.csrv.get_filtered_planilhoes("*OPEN-FILTER.db.gz", "*CLOSED-FILTER.db.gz")
+        return self.csrv.get_filtered_planilhoes("*OPEN-FILTER.db.gz", "*CLOSED-FILTER.db.gz") # FIXME: Implicit coupling
     
     def concat_planilhoes(self, open_df, closed_dfs):
         logger.info("concatenating dump files")
@@ -63,7 +64,7 @@ class App(object):
                 closed_dfs.append(closed_df)
 
             df = self.concat_planilhoes(open_df, closed_dfs)
-            db_name = os.path.join(self.dir_work, 'df.db')
+            db_name = os.path.join(self.dir_work, self.output_db)
             self.save(df, db_name)
             logger.info("finished")
         except:
@@ -73,8 +74,9 @@ class App(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('dir_work', type=str, help='diretório de trabalho')
+    parser.add_argument('output_db', type=str, help='banco de dados de saída')
     args = parser.parse_args()
-    app = App(args.dir_work)
+    app = App(args.dir_work, args.output_db)
     app.run()
     
     

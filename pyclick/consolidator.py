@@ -15,14 +15,40 @@ import pyclick.util as util
 import pyclick.config as config
 from pyclick.repo import Repo
 
+import pyclick.index_planilhao
+import pyclick.agg_indexes
+import pyclick.filter_planilhao
+import pyclick.agg_planilhao
+
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 SQL_REL_MEDICAO_SELECT = util.get_query("CONSOLIDA__REL_MEDICAO_SELECT")
 
 logger = util.get_logger('consolidator')
 
-class ConsolidatorSrv(object):
 
+def index_planilhao_cbk(params):
+    dir_work, dir_import, dump_file, cutoff_date = params
+    app = pyclick.index_planilhao.App(dir_work, dir_import, dump_file, cutoff_date)
+    app.run()
+
+def index_planilhao(dir_work, dir_import, dump_file, cutoff_date):
+    app = pyclick.index_planilhao.App(dir_work, dir_import, dump_file, cutoff_date)
+    app.run()
+
+def filter_planilhao_cbk(params):
+    dir_apuracao, dir_import, dir_work, dump_file, cutoff_date, agg_index_file = params
+    app = pyclick.filter_planilhao.App(dir_apuracao, dir_import, dir_work, dump_file, cutoff_date, agg_index_file)
+    app.run()
+
+def filter_planilhao(dir_apuracao, dir_import, dir_work, dump_file, cutoff_date, agg_index_file):
+    app = pyclick.filter_planilhao.App(dir_apuracao, dir_import, dir_work, dump_file, cutoff_date, agg_index_file)
+    app.run()
+    
+class ConsolidatorSrv(object):
+    
+    MASTER_INDEX_FILE = "MASTER-INDEX-FILE.idx"
+    
     def __init__(self, dir_import, dir_staging, dir_apuracao, dir_work):
         self.dir_import = dir_import 
         self.dir_staging = dir_staging
@@ -162,3 +188,80 @@ class ConsolidatorSrv(object):
         self._drop_duplicated_actions(closed_df)
         df = pd.concat([ closed_df, open_df ])
         return df
+   
+    def clear_work(self):
+        currdir = os.getcwd()
+        try:
+            os.chdir(self.dir_work)
+            files = [ f for f in os.listdir() if os.path.isfile(f) ]
+            for f in files:
+                logger.warning(f'unlinking file {f} in {self.dir_work}')
+                os.unlink(f)
+        finally:
+            os.chdir(currdir)
+    def get_dump_files(self, start_date, end_date, cutoff_date):
+        currdir = os.getcwd()
+        os.chdir(self.dir_import)
+        try:
+            closed_start_file = config.IMPORT_CLOSED_MASK.format(start_date) 
+            # Nasty bug: Need to use cutff date below because the dump files are D-1.
+            closed_end_file = config.IMPORT_CLOSED_MASK.format(cutoff_date)
+            all_closed_files = sorted(glob.iglob(config.IMPORT_CLOSED_GLOB))
+            closed_files = list([ f for f in all_closed_files if closed_start_file <= f <= closed_end_file ])
+            open_file = config.IMPORT_OPEN_MASK.format(end_date)
+            return closed_files, open_file
+        finally:
+            os.chdir(currdir)
+        
+    def index_planilhoes(self, start_date, end_date, cutoff_date, parallel=True):
+        closed_dumps, open_dump = self.get_dump_files(start_date, end_date, cutoff_date)
+        dumps = [ open_dump ] + closed_dumps
+        qty_dumps = len(dumps)
+        params_set = zip(
+            [ self.dir_work   ] * qty_dumps,
+            [ self.dir_import ] * qty_dumps,
+            dumps,
+            [ cutoff_date     ] * qty_dumps
+        )
+        
+        if parallel:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
+                for dump, params in zip(dumps, executor.map(index_planilhao_cbk, params_set)):
+                    logger.info(f'{dump} indexed in parallel')
+        else:
+            for params in params_set:
+                dir_work, dir_import, dump, cutoff_date = params = params
+                logger.info(f'indexing {dump} sequentially')
+                index_planilhao(dir_work, dir_import, dump, cutoff_date)
+    
+    def aggregate_indexes(self, start_date, end_date, cutoff_date):
+        app = pyclick.agg_indexes.App(self.dir_apuracao, self.dir_work, self.MASTER_INDEX_FILE)
+        app.run()
+
+    def filter_planilhoes(self, start_date, end_date, cutoff_date, parallel=True):
+        closed_dumps, open_dump = self.get_dump_files(start_date, end_date, cutoff_date)        
+        dumps = [ open_dump ] + closed_dumps
+        qty_dumps = len(dumps)
+        params_set = zip(
+            [ self.dir_apuracao      ] * qty_dumps,
+            [ self.dir_import        ] * qty_dumps,
+            [ self.dir_work          ] * qty_dumps,
+            dumps,
+            [ cutoff_date            ] * qty_dumps,
+            [ self.MASTER_INDEX_FILE ] * qty_dumps
+        )
+        
+        if parallel:
+            with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
+                for dump, params in zip(dumps, executor.map(filter_planilhao_cbk, params_set)):
+                    logger.info(f'{dump} indexed in parallel')
+        else:
+            for params in params_set:
+                dir_apuracao, dir_import, dir_work, dump, cutoff_date, agg_index_file = params
+                logger.info(f'filtering {dump} sequentially')
+                filter_planilhao_cbk(params)
+    
+    def aggregate_planilhoes(self, output_db):
+        app = pyclick.agg_planilhao.App(self.dir_work, output_db)
+        app.run()
+        

@@ -15,7 +15,7 @@ import pyclick.ranges as ranges
 import pyclick.util as util
 import pyclick.config as config
 from pyclick.repo import Repo
-from pyclick.consolidator import ConsolidatorSrv
+import pyclick.consolidator
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -40,7 +40,7 @@ class App(object):
         self.agg_index_file = agg_index_file
         dump_file_without_db_gz = self.dump_file[ :-6 ]
         self.output_file = dump_file_without_db_gz + "-FILTER.db"
-        self.csrv = ConsolidatorSrv(dir_import, None, dir_apuracao, dir_work)
+        self.csrv = pyclick.consolidator.ConsolidatorSrv(dir_import, None, dir_apuracao, dir_work)
         
     def read_index(self):
         logger.info(f'reading index file {self.agg_index_file}')

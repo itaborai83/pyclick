@@ -14,7 +14,7 @@ import concurrent.futures
 import pyclick.ranges as ranges
 import pyclick.util as util
 import pyclick.config as config
-from pyclick.consolidator import ConsolidatorSrv
+import pyclick.consolidator
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -28,7 +28,7 @@ class App(object):
         self.dir_apuracao = dir_apuracao
         self.dir_work = dir_work
         self.agg_index_file = agg_index_file        
-        self.csrv = ConsolidatorSrv(None, None, dir_apuracao, dir_work)
+        self.csrv = pyclick.consolidator.ConsolidatorSrv(None, None, dir_apuracao, dir_work)
         
     def read_mesas(self):
         logger.info('recuperando a listagem de mesas para apuração')
