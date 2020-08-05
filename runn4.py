@@ -57,7 +57,7 @@ class App(object):
                 dump_slas.App(self.dir_apuracao).run()
             else:
                 logger.info('skiping service offerings dump. It already exists. Delete it if necessary')
-            dump_surveys.App(self.dir_apuracao, n4_config.START_CSAT_DT, self.end).run()
+            dump_surveys.App(self.dir_apuracao, n4_config.START_CSAT_DT, self.end, delspotfire=True).run()
             consolida_planilhao.App(self.dir_apuracao, self.dir_import, self.start, self.end, False).run()
             ddl.App(self.dir_apuracao).run()
             kpis.App(self.dir_apuracao, strict_orientar=self.strict_orientar).run()

@@ -31,7 +31,7 @@ SELECT 	--ID da pesquisa de satisfação.
 		--Departamento do Técnico.
 		sectn_dept.sectn_n AS 'dept_tecnico',
 		--Item B
-		--item.item_n AS 'item_b',
+		item.item_n AS 'item_b',
 		--Categoria.
 		--inc_cat.inc_cat_n AS 'categoria',
 		--Classe de Produto de Serviço.

@@ -18,11 +18,14 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_apuracao, start_date, end_date, unanswered=False):
+    ITEM_B_SPOTFIRE = 'QACT - GOVERNANCA SPOTFIRE'
+    
+    def __init__(self, dir_apuracao, start_date, end_date, unanswered=False, delspotfire=True):
         self.dir_apuracao = dir_apuracao
         self.start_date = start_date + " 00:00:00"
         self.end_date = end_date + " 00:00:00"
         self.unanswered = unanswered
+        self.delspotfire = delspotfire
     
     def connect_db(self):
         logger.info('connecting to db')
@@ -62,12 +65,19 @@ class App(object):
         finally:
             os.chdir(curdir)
     
+    def delete_spotfire(self, df):
+        logger.info('removing spotfire surveys')
+        df = df[ df[ 'item_b' ] != self.ITEM_B_SPOTFIRE ].copy()
+        return df
+        
     def run(self):
         try:
             logger.info('starting surveys dumper - version %d.%d.%d', *self.VERSION)
             conn = self.connect_db()
             mesas = self.read_mesas()
             df = self.get_surveys(conn, mesas)
+            if self.delspotfire:
+                df = self.delete_spotfire(df)
             self.save_surveys(df)
             logger.info('finished')
         except:
@@ -77,10 +87,11 @@ class App(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--unanswered', action="store_true", default=False, help='trazer pesquisas não respondidas')
+    parser.add_argument('--delspotfire', action="store_true", default=False, help='remover pesquisas de spotfire')
     parser.add_argument('dir_apuracao', type=str, help='diretório de apuração')
     parser.add_argument('start_date', type=str, help='data início período de apuração')
     parser.add_argument('end_date', type=str, help='data fim período de apuração')
     args = parser.parse_args()
-    app = App(args.dir_apuracao, args.start_date, args.end_date)
+    app = App(args.dir_apuracao, args.start_date, args.end_date, args.unanswered, args.delspotfire)
     app.run()
     
