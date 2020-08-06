@@ -111,7 +111,9 @@ class TestIncidentService(unittest.TestCase):
         self.assertEqual(27*60, sla)
         sla = self.incserv.calcular_prazo(self.inc_orientar, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
         self.assertEqual(9*60, sla)
-        sla = self.incserv.calcular_prazo(self.inc_orientar, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS')
+        sla = self.incserv.calcular_prazo(self.inc_orientar, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=False)
+        self.assertEqual(27*60, sla)
+        sla = self.incserv.calcular_prazo(self.inc_orientar, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
         self.assertEqual(9*60, sla)
         
         # corrigir
@@ -119,7 +121,9 @@ class TestIncidentService(unittest.TestCase):
         self.assertEqual(135*60, sla)
         sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
         self.assertEqual(9*60, sla)
-        sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS')
+        sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=False)
+        self.assertEqual(135*60, sla)
+        sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
         self.assertEqual(72*60, sla)
         
         # atender - tarefa
@@ -127,7 +131,9 @@ class TestIncidentService(unittest.TestCase):
         self.assertEqual(45*60, sla)
         sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
         self.assertEqual(9*60, sla)
-        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=False)
+        self.assertEqual(45*60, sla)
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
         self.assertEqual(36*60, sla)
         
         # atender - solicitação de serviço
@@ -135,7 +141,9 @@ class TestIncidentService(unittest.TestCase):
         self.assertEqual(45*60, sla)
         sla = self.incserv.calcular_prazo(self.inc_sreq, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
         self.assertEqual(9*60, sla)
-        sla = self.incserv.calcular_prazo(self.inc_sreq, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS')
+        sla = self.incserv.calcular_prazo(self.inc_sreq, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=False)
+        self.assertEqual(45*60, sla)
+        sla = self.incserv.calcular_prazo(self.inc_sreq, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
         self.assertEqual(36*60, sla)
         
         # atender - tarefa - complexidade simples
@@ -144,7 +152,9 @@ class TestIncidentService(unittest.TestCase):
         self.assertEqual(IncidentService.SLA_ATENDER_SIMPLES, sla)
         sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
         self.assertEqual(9*60, sla)
-        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=False)
+        self.assertEqual(45*60, sla)
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
         self.assertEqual(36*60, sla)
 
         # atender - tarefa - complexidade média
@@ -153,7 +163,9 @@ class TestIncidentService(unittest.TestCase):
         self.assertEqual(IncidentService.SLA_ATENDER_MEDIO, sla)
         sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
         self.assertEqual(9*60, sla)
-        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=False)
+        self.assertEqual(90*60, sla)
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
         self.assertEqual(36*60, sla)
 
         # atender - tarefa - complexidade alta
@@ -162,7 +174,9 @@ class TestIncidentService(unittest.TestCase):
         self.assertEqual(IncidentService.SLA_ATENDER_COMPLEXO, sla)
         sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
         self.assertEqual(9*60, sla)
-        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=False)
+        self.assertEqual(180*60, sla)
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
         self.assertEqual(36*60, sla)
 
         # atender - tarefa - complexidade não padronizada
@@ -171,5 +185,7 @@ class TestIncidentService(unittest.TestCase):
         self.assertEqual(IncidentService.SLA_ATENDER_SIMPLES, sla)
         sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
         self.assertEqual(9*60, sla)
-        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=False)
+        self.assertEqual(45*60, sla)
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
         self.assertEqual(36*60, sla)

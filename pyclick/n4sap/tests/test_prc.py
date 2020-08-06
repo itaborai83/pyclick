@@ -210,6 +210,7 @@ class TestPrc(unittest.TestCase):
             351487		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	8317804	Atribuição interna	N	N4-SAP-DEMANDAS-SBS	2020-04-30 21:24:33	2020-04-30 21:24:33	0
             351487		CORRIGIR-NÃO EMERGENCIAL	Suporte ao serviço de SAP	540	8317806	Atribuir ao Fornecedor	N	N4-SAP-DEMANDAS-SBS	2020-04-30 21:24:33		8640
         """)
+        
         self.events = self.closed_inc_evts                 \
         +             self.violated_closed_inc_evts        \
         +             self.solved_inc_events               \
@@ -343,3 +344,75 @@ class TestPrc(unittest.TestCase):
         kpi, observation = self.prc.get_result()
         self.assertEqual(0.0, kpi)
         self.assertEqual("0 violações / 1 incidentes", observation)
+        
+    def test_it_does_not_consider_incs_with_a_wrong_category(self):
+        inc749261_evts = Event.parse_events("""
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12938986	Atribuição interna	N	N2-SD2_SAP_CANAL_CLIENTE	2020-06-29 09:43:35	2020-06-29 09:43:35	0
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12938987	Atribuir ao Fornecedor	N	N2-SD2_SAP_CANAL_CLIENTE	2020-06-29 09:43:35	2020-06-29 09:56:13	12
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12941389	Atribuição interna	N	N2-SD2_SAP_CANAL_CLIENTE	2020-06-29 09:56:13	2020-06-29 10:03:25	7
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12942789	Atribuição interna	N	N4-APP_CRITICAS_CSC	2020-06-29 10:03:25	2020-06-29 10:03:25	0
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12942792	Atribuir ao Fornecedor	N	N4-APP_CRITICAS_CSC	2020-06-29 10:03:25	2020-06-29 10:28:27	25
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12948384	Atribuição interna	N	N4-APP_CRITICAS_CSC	2020-06-29 10:28:27	2020-06-29 10:50:04	21
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12953223	Atribuição interna	N	N4-APP_CRITICAS_CSC	2020-06-29 10:50:04	2020-06-29 10:53:44	3
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12953907	Atribuição interna	N	N4-APP_CRITICAS_CSC	2020-06-29 10:53:44	2020-06-29 12:30:51	97
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12973168	Atribuição interna	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-06-29 12:30:51	2020-06-29 12:30:51	0
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12973174	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-06-29 12:30:51	2020-06-29 13:00:10	29
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12977348	Atribuição interna	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-06-29 13:00:10	2020-06-29 14:15:15	75
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	12989446	Atribuição interna	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-06-29 14:15:15	2020-06-29 19:10:43	224
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	13037600	Atribuição interna	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-06-29 19:10:43	2020-06-29 21:00:04	0
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	13040672	Atribuição interna	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-06-29 21:00:04	2020-07-23 22:33:32	9720
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	16135665	Atribuição interna	N	N4-APP_CRITICAS_CSC	2020-07-23 22:33:32	2020-07-23 22:33:32	0
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	16135670	Atribuir ao Fornecedor	N	N4-APP_CRITICAS_CSC	2020-07-23 22:33:32	2020-07-24 08:23:51	23
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	16149115	Atribuição interna	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-07-24 08:23:51	2020-07-24 08:23:51	0
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	16149120	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-ABAST_GE	2020-07-24 08:23:51	2020-07-24 08:39:28	0
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	16152094	Atribuição interna	N	N4-SAP-SUSTENTACAO-ESCALADOS	2020-07-24 08:39:28	2020-07-24 20:53:44	540
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	16281917	Atribuição interna	N	N4-APP_CRITICAS_CSC	2020-07-24 20:53:44	2020-07-24 20:53:44	0
+            749261		CONSULT-INVESTIGACAO-PROB	Suporte ao serviço de SAP	540	16281919	Atribuir ao Fornecedor	N	N4-APP_CRITICAS_CSC	2020-07-24 20:53:44		0
+        """)    
+        for evt in inc749261_evts:
+            self.click.update(evt)
+        self.prc.evaluate(self.click, '2020-06-26', '2020-07-25')
+        kpi, observation = self.prc.get_result()
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente corrigir processado", observation)
+
+    def test_it_does_not_consider_open_unbreached_incidents(self):
+        inc580059_evts = Event.parse_events("""
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10237031	Atribuição interna	N	N1-SD2_SAP	2020-05-27 13:01:34	2020-05-27 13:01:34	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10237032	Atribuir ao Fornecedor	N	N1-SD2_SAP	2020-05-27 13:01:34	2020-05-27 14:20:57	79
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10246607	Atribuição interna	N	N2-SD2_SAP_PRAPO	2020-05-27 14:20:57	2020-05-27 14:20:57	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10246609	Atribuir ao Fornecedor	N	N2-SD2_SAP_PRAPO	2020-05-27 14:20:57	2020-05-27 14:36:50	15
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10248908	Atribuição interna	N	N2-SD2_SAP_PRAPO	2020-05-27 14:36:50	2020-05-27 14:46:00	9
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10250450	Aguardando Cliente	S	N2-SD2_SAP_PRAPO	2020-05-27 14:46:00	2020-05-27 14:46:01	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10250452	Aguardando Cliente - Fornecedor	S	N2-SD2_SAP_PRAPO	2020-05-27 14:46:01	2020-05-27 16:48:04	122
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10271185	Iniciar Atendimento	N	N2-SD2_SAP_PRAPO	2020-05-27 16:48:04	2020-05-27 16:48:05	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10271187	Pendência Sanada - Fornecedor/TIC	N	N2-SD2_SAP_PRAPO	2020-05-27 16:48:05	2020-05-27 17:14:15	26
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10274972	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-05-27 17:14:15	2020-05-27 17:14:15	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10274975	Atribuir ao Fornecedor	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-05-27 17:14:15	2020-05-27 17:14:42	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10275026	Item alterado	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-05-27 17:14:42	2020-05-27 18:25:14	45
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10280658	Atribuição interna	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-05-27 18:25:14	2020-05-29 11:40:53	700
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10432210	Reabrir	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-05-29 11:40:53	2020-05-29 11:40:53	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10432211	Reaberto pelo Fornecedor	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-05-29 11:40:53	2020-06-01 12:07:35	566
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10583036	Aguardando Cliente	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-06-01 12:07:35	2020-06-01 12:07:35	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10583038	Aguardando Cliente - Fornecedor	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-06-01 12:07:35	2020-06-01 13:57:52	110
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10597304	Campos alterados	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-06-01 13:57:52	2020-06-01 13:59:00	1
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	10597529	Atribuição interna	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-06-01 13:59:00	2020-06-18 13:43:28	6464
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	12074095	Pendência Sanada - Fornecedor/TIC	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-06-18 13:43:28	2020-06-30 18:10:07	4576
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	13165662	Atribuição interna	S	N4-CCI	2020-06-30 18:10:07	2020-06-30 18:10:07	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	13165664	Atribuir ao Fornecedor	S	N4-CCI	2020-06-30 18:10:07	2020-07-10 15:59:58	4199
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	14696864	Atribuição interna	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-07-10 15:59:58	2020-07-10 15:59:58	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	14696871	Atribuir ao Fornecedor	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-07-10 15:59:58	2020-07-10 16:03:22	3
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	14697572	Atribuição interna	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-07-10 16:03:22	2020-07-10 16:05:42	2
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	14698275	Atribuição interna	S	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-07-10 16:05:42	2020-07-11 15:06:50	114
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	14749075	Retorno do usuário	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-07-11 15:06:50	2020-07-11 15:06:50	0
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	14749076	Pendência Sanada	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-07-11 15:06:50	2020-07-13 09:25:36	25
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	14804969	Pendência de TIC	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-07-13 09:25:36	2020-07-21 20:14:34	3754
+            580059		CORRIGIR-NÃO EMERGENCIAL	Dúvida sobre o serviço	1620	15802505	Pendência Sanada - Fornecedor/TIC	N	N4-SAP-SUSTENTACAO-APOIO_OPERACAO	2020-07-21 20:14:34		1620
+        """)    
+        for evt in inc580059_evts:
+            self.click.update(evt)
+        self.prc.evaluate(self.click, '2020-06-26', '2020-07-25')
+        kpi, observation = self.prc.get_result()
+        self.assertEqual(None, kpi)
+        self.assertEqual("Nenhum incidente corrigir processado", observation)
+        

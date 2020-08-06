@@ -83,7 +83,7 @@ class Peso30(models.N4SapKpi):
             if not self.has_assignment_within_period(inc, start_dt, end_dt):
                 continue
             categoria = self.categorizar(inc)
-            prazo_m = self.calcular_prazo(inc, self.MESA_ESCALADOS)
+            prazo_m = self.calcular_prazo(inc, self.MESA_ESCALADOS, enable_peso30=True)
             duration_m = self.calc_duration_mesas(inc, [ self.MESA_ESCALADOS ])
             pendencia_m = self.calc_pendencia_mesas(inc, [ self.MESA_ESCALADOS ])
             breached = (duration_m + pendencia_m) > prazo_m

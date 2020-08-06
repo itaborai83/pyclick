@@ -68,12 +68,12 @@ class N4SapKpi(models.Kpi):
     def categorizar(self, inc):
         return self.incsrv.categorizar(inc)
         
-    def calcular_prazo(self, inc, mesa_atual=None):
+    def calcular_prazo(self, inc, mesa_atual=None, enable_peso30=False):
         # TODO: assert mesa_atual is not None
         # assert mesa_atual is not None
         if mesa_atual is None:
             mesa_atual = inc.mesa_atual
-        return self.incsrv.calcular_prazo(inc, mesa_atual)
+        return self.incsrv.calcular_prazo(inc, mesa_atual, enable_peso30=enable_peso30)
     
     def calc_duration_mesas(self, inc, mesas):
         return self.incsrv.calc_duration_mesas(inc, mesas)
@@ -172,14 +172,14 @@ class IncidentService(object):
             else:
                 return None
                 
-    def calcular_prazo(self, inc, mesa_atual):
+    def calcular_prazo(self, inc, mesa_atual, enable_peso30=False):
         assert mesa_atual is not None
         assert mesa_atual in self.MESAS_CONTRATO
         categoria = self.categorizar(inc)
         assert categoria is not None
         if mesa_atual == self.MESA_PRIORIDADE:
             return self.SLA_PESO35
-        elif mesa_atual == self.MESA_ESCALADOS:
+        elif mesa_atual == self.MESA_ESCALADOS and enable_peso30:
             if categoria in ('ATENDER', 'ATENDER - TAREFA'):
                 return self.SLA_PESO30_ATENDER
             elif categoria == 'CORRIGIR':
