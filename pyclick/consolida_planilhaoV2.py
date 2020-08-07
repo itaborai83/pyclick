@@ -410,36 +410,13 @@ class App(object):
         logger.info("compactando a base de dados")
         conn.execute("VACUUM");
     
-    def index_planilhoes(self, closed_dumps, open_dump):
-        logger.info('indexing planilhoes for mesa filtering')
-        
-        dumps = [ open_dump ] + [ closed_dumps ]
-        args_set = []
-        for dump in dumps:
-            filename, _db, _gz = dump.split('.')
-            dir_work = r'DADOS\WORK'
-            dump_file = dump
-            cutoff_date = self.cutoff_date
-            index_file = filename + '-IDX.pkl'
-            app = index_planilhao.App(dir_work, self.dir_import, dump_file, self.cutoff_date, index_file)
-            
-            
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            for closed_dump, mapping in zip(closed_dumps, executor.map(process_mapping, args_sets, chunksize=10)):
-                for mesa, incs_set in mapping.items():
-                    if mesa not in mesa_evt_mapping:
-                        mesa_evt_mapping[ mesa ] = set()
-                    mesa_evt_mapping[ mesa ].update(incs_set)
-
-        dir_work = r'DADOS\WORK'
-    
-    def aggregate_planilhoes(self, ofertas_df):
+    def aggregate_planilhoes(self, mesas, ofertas_df):
         logger.info('limpando diretório de trabalho')
         self.csrv.clear_work()
-        logger.info('indexando planilhões')
-        self.csrv.index_planilhoes(self.start_date, self.end_date, self.cutoff_date, parallel=self.parallel)
-        logger.info('agregando índice planilhões')
-        self.csrv.aggregate_indexes(self.start_date, self.end_date, self.cutoff_date)
+        #logger.info('indexando planilhões')
+        #self.csrv.index_planilhoes(self.start_date, self.end_date, self.cutoff_date, parallel=self.parallel)
+        #logger.info('agregando índice planilhões')
+        self.csrv.aggregate_indexes(self.dir_import, self.start_date, self.end_date, mesas)
         logger.info('filtrando planilhões com índice agregado')
         self.csrv.filter_planilhoes(self.start_date, self.end_date, self.cutoff_date, parallel=self.parallel)
         logger.info('agregando planilhao')
@@ -461,8 +438,7 @@ class App(object):
             df_pesquisas    = self.read_pesquisas()
             horarios_mesas  = self.load_planilha_horarios()
             
-            df = self.aggregate_planilhoes(df_ofertas)
-            
+            df = self.aggregate_planilhoes(mesas, df_ofertas)
             conn = self.get_connection()
             self.write_mesas(conn, mesas)
             self.write_pesquisas(conn, df_pesquisas)

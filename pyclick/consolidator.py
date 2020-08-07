@@ -15,8 +15,9 @@ import pyclick.util as util
 import pyclick.config as config
 from pyclick.repo import Repo
 
-import pyclick.index_planilhao
-import pyclick.agg_indexes
+#import pyclick.index_planilhao
+#import pyclick.agg_indexes
+import pyclick.indexer
 import pyclick.filter_planilhao
 import pyclick.agg_planilhao
 
@@ -26,23 +27,13 @@ SQL_REL_MEDICAO_SELECT = util.get_query("CONSOLIDA__REL_MEDICAO_SELECT")
 
 logger = util.get_logger('consolidator')
 
-
-def index_planilhao_cbk(params):
-    dir_work, dir_import, dump_file, cutoff_date = params
-    app = pyclick.index_planilhao.App(dir_work, dir_import, dump_file, cutoff_date)
-    app.run()
-
-def index_planilhao(dir_work, dir_import, dump_file, cutoff_date):
-    app = pyclick.index_planilhao.App(dir_work, dir_import, dump_file, cutoff_date)
-    app.run()
-
 def filter_planilhao_cbk(params):
-    dir_apuracao, dir_import, dir_work, dump_file, cutoff_date, agg_index_file = params
-    app = pyclick.filter_planilhao.App(dir_apuracao, dir_import, dir_work, dump_file, cutoff_date, agg_index_file)
+    dir_apuracao, dir_import, dir_work, dump_file, cutoff_date = params
+    app = pyclick.filter_planilhao.App(dir_apuracao, dir_import, dir_work, dump_file, cutoff_date)
     app.run()
 
-def filter_planilhao(dir_apuracao, dir_import, dir_work, dump_file, cutoff_date, agg_index_file):
-    app = pyclick.filter_planilhao.App(dir_apuracao, dir_import, dir_work, dump_file, cutoff_date, agg_index_file)
+def filter_planilhao(dir_apuracao, dir_import, dir_work, dump_file, cutoff_date):
+    app = pyclick.filter_planilhao.App(dir_apuracao, dir_import, dir_work, dump_file, cutoff_date)
     app.run()
     
 class ConsolidatorSrv(object):
@@ -55,7 +46,8 @@ class ConsolidatorSrv(object):
         self.dir_staging = dir_staging
         self.dir_apuracao = dir_apuracao
         self.dir_work = dir_work
-    
+        self.indexer = pyclick.indexer.IndexerSrv()
+        
     def _read_dump(self, dir_import, dump_file):
         filename = os.path.join(dir_import, dump_file)
         dump_file_without_gz = dump_file[ :-3 ]
@@ -100,56 +92,9 @@ class ConsolidatorSrv(object):
             raise ValueError(f'invalid filename {dump_file}')
         return is_open
 
-    def read_index_files(self):
-        currdir = os.getcwd()
-        try:
-            os.chdir(self.dir_work)
-            files = sorted(glob.glob("*.idx"))
-            paths = [ os.path.join(self.dir_work, f) for f in files ]
-            return list(paths)
-        finally:
-            os.chdir(currdir)
-        
-    def process_index_file(self, set_mesas, all_events, index_file):
-        with open(index_file) as fh:
-            for line in fh:
-                line = line.strip()
-                if not line:
-                    continue
-                if '\t' not in line:
-                    continue
-                mesa, inc = line.split('\t')
-                if mesa in set_mesas:
-                    all_events.add(inc)
-
-    def write_index_file(self, agg_index_file, all_events):
-        currdir = os.getcwd()
-        try:
-            os.chdir(self.dir_work)
-            with open(agg_index_file, 'w') as fh:
-                for event in sorted(all_events):
-                    print(event, file=fh)
-        finally:
-            os.chdir(currdir)
-    
-    def read_index(self, agg_index_file):
-        currdir = os.getcwd()
-        try:
-            os.chdir(self.dir_work)
-            with open(agg_index_file) as fh:
-                result = []
-                for line in fh:
-                    line = line.strip()
-                    if not line:
-                        continue
-                    elif line.startswith("#"):
-                        continue
-                    inc = line
-                    result.append(inc)
-            return set(result)
-        finally:
-            os.chdir(currdir)
-    
+    def read_aggregate_index_mesas(self, dir_work):
+        return self.indexer.read_aggregate_index_mesas(dir_work)
+            
     def filter_events(self, df, all_events):
         return df[ df.id_chamado.isin(all_events) ].copy()
 
@@ -214,30 +159,11 @@ class ConsolidatorSrv(object):
         finally:
             os.chdir(currdir)
         
-    def index_planilhoes(self, start_date, end_date, cutoff_date, parallel=True):
-        closed_dumps, open_dump = self.get_dump_files(start_date, end_date, cutoff_date)
-        dumps = [ open_dump ] + closed_dumps
-        qty_dumps = len(dumps)
-        params_set = zip(
-            [ self.dir_work   ] * qty_dumps,
-            [ self.dir_import ] * qty_dumps,
-            dumps,
-            [ cutoff_date     ] * qty_dumps
-        )
-        
-        if parallel:
-            with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
-                for dump, params in zip(dumps, executor.map(index_planilhao_cbk, params_set)):
-                    logger.info(f'{dump} indexed in parallel')
-        else:
-            for params in params_set:
-                dir_work, dir_import, dump, cutoff_date = params = params
-                logger.info(f'indexing {dump} sequentially')
-                index_planilhao(dir_work, dir_import, dump, cutoff_date)
-    
-    def aggregate_indexes(self, start_date, end_date, cutoff_date):
-        app = pyclick.agg_indexes.App(self.dir_apuracao, self.dir_work, self.MASTER_INDEX_FILE)
-        app.run()
+    def aggregate_indexes(self, dir_import, start_date, end_date, mesas):
+        mesas_set = set(mesas)
+        index_df = self.indexer.read_indexes_mesas(dir_import, start_date, end_date)
+        index_df = index_df[ index_df[ "mesa"].isin(mesas_set) ].copy()
+        self.indexer.write_aggregate_index_mesas(self.dir_work, index_df)
 
     def filter_planilhoes(self, start_date, end_date, cutoff_date, parallel=True):
         closed_dumps, open_dump = self.get_dump_files(start_date, end_date, cutoff_date)        
@@ -248,8 +174,7 @@ class ConsolidatorSrv(object):
             [ self.dir_import        ] * qty_dumps,
             [ self.dir_work          ] * qty_dumps,
             dumps,
-            [ cutoff_date            ] * qty_dumps,
-            [ self.MASTER_INDEX_FILE ] * qty_dumps
+            [ cutoff_date            ] * qty_dumps
         )
         
         if parallel:
@@ -258,7 +183,7 @@ class ConsolidatorSrv(object):
                     logger.info(f'{dump} indexed in parallel')
         else:
             for params in params_set:
-                dir_apuracao, dir_import, dir_work, dump, cutoff_date, agg_index_file = params
+                dir_apuracao, dir_import, dir_work, dump, cutoff_date = params
                 logger.info(f'filtering {dump} sequentially')
                 filter_planilhao_cbk(params)
     

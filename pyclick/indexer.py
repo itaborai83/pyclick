@@ -22,7 +22,9 @@ SQL_FILE_INDEX_DDL      = util.get_query('IMPORT__FILE_INDEX_DDL')
 SQL_FILE_INDEX_INSERT   = util.get_query('IMPORT__FILE_INDEX_INSERT')
 
 class IndexerSrv(object):
-
+    
+    AGGREGATE_INDEX_FILE = 'AGG-INDEX-FILE.idx'
+    
     def __init__(self):
         pass
     
@@ -50,13 +52,34 @@ class IndexerSrv(object):
         path = self._build_path_index_mesas(dir, date, is_open)
         logger.info('writing index file %s', path)
         df.to_csv(path, sep='\t', index=False)
+            
+    def read_indexes_mesas(self, dir, start_date, end_date):
+        assert start_date <= end_date
+        result_df = self.read_index_mesas(dir, end_date, is_open=True)
+        date = start_date
+        while date <= end_date:
+            closed_index_df = self.read_index_mesas(dir, date, is_open=False)
+            result_df = pd.concat( [ result_df, closed_index_df ], ignore_index=True )
+            date = util.next_date(date)
+        result_df.sort_values( ["mesa", "id_chamado"], inplace=True, ignore_index=True)
+        result_df.drop_duplicates(inplace=True, ignore_index=True)
+        return result_df
         
     def read_index_mesas(self, dir, date, is_open):
         path = self._build_path_index_mesas(dir, date, is_open)
         logger.info('reading index file %s', path)
+        index_df = pd.read_csv(path, sep='\t', index_col=False)
+        return index_df
+
+    def write_aggregate_index_mesas(self, dir_work, index_df):
+        path = os.path.join(dir_work, self.AGGREGATE_INDEX_FILE)
+        index_df.to_csv(path, sep='\t', index=False)
+
+    def read_aggregate_index_mesas(self, dir_work):
+        path = os.path.join(dir_work, self.AGGREGATE_INDEX_FILE)
         df = pd.read_csv(path, sep='\t', index_col=False)
         return df
-    
+        
     def delete_index_mesas(self, dir, date, is_open):
         path = self._build_path_index_mesas(dir, date, is_open)
         logger.info('deleting index file %s', path)

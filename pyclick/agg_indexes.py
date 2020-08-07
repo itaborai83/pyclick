@@ -24,11 +24,14 @@ class App(object):
         
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_apuracao, dir_work, agg_index_file):
-        self.dir_apuracao = dir_apuracao
-        self.dir_work = dir_work
+    def __init__(self, dir_import, dir_apuracao, dir_work, start_date, end_date, agg_index_file):
+        self.dir_import     = dir_import
+        self.dir_apuracao   = dir_apuracao
+        self.dir_work       = dir_work
+        self.start_date     = start_date
+        self.end_date       = end_date
         self.agg_index_file = agg_index_file        
-        self.csrv = pyclick.consolidator.ConsolidatorSrv(None, None, dir_apuracao, dir_work)
+        self.csrv           = pyclick.consolidator.ConsolidatorSrv(None, None, dir_apuracao, dir_work)
         
     def read_mesas(self):
         logger.info('recuperando a listagem de mesas para apuração')

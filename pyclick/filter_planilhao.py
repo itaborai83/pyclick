@@ -25,26 +25,26 @@ SQL_REL_MEDICAO_SELECT  = util.get_query("IMPORT__REL_MEDICAO_SELECT")
 SQL_REL_MEDICAO_DDL     = util.get_query("IMPORT__REL_MEDICAO_DDL")
 SQL_REL_MEDICAO_UPSERT  = util.get_query("IMPORT__REL_MEDICAO_UPSERT")
 
-
 class App(object):
         
     VERSION = (0, 0, 0)
     
-    def __init__(self, dir_apuracao, dir_import, dir_work, dump_file, cutoff_date, agg_index_file):
+    def __init__(self, dir_apuracao, dir_import, dir_work, dump_file, cutoff_date):
         assert dump_file.endswith('.db.gz')
         self.dir_apuracao = dir_apuracao
         self.dir_import = dir_import
         self.dir_work = dir_work
         self.dump_file = dump_file
         self.cutoff_date = cutoff_date
-        self.agg_index_file = agg_index_file
         dump_file_without_db_gz = self.dump_file[ :-6 ]
         self.output_file = dump_file_without_db_gz + "-FILTER.db"
         self.csrv = pyclick.consolidator.ConsolidatorSrv(dir_import, None, dir_apuracao, dir_work)
         
     def read_index(self):
-        logger.info(f'reading index file {self.agg_index_file}')
-        return self.csrv.read_index(self.agg_index_file)
+        logger.info(f'reading aggregate index file')
+        index_df = self.csrv.read_aggregate_index_mesas(self.dir_work)
+        all_events = set(index_df[ 'id_chamado' ].to_list())
+        return all_events
         
     def validate_filename(self):
         logger.info(f'validating filename {self.dump_file}')
