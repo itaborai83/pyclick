@@ -50,6 +50,7 @@ class ConsolidatorSrv(object):
     MASTER_INDEX_FILE = "MASTER-INDEX-FILE.idx"
     
     def __init__(self, dir_import, dir_staging, dir_apuracao, dir_work):
+        assert dir_staging is None # FIXME: remove references to dir_staging
         self.dir_import = dir_import 
         self.dir_staging = dir_staging
         self.dir_apuracao = dir_apuracao
@@ -264,4 +265,26 @@ class ConsolidatorSrv(object):
     def aggregate_planilhoes(self, output_db):
         app = pyclick.agg_planilhao.App(self.dir_work, output_db)
         app.run()
+
+    def index_mesas(self, df):
+        # TODO: create indexer class
+        mesa_evt_mapping = {}
+        df_mesas         = df[ ~(df.mesa.isna()) ]
+        id_chamados      = df_mesas.id_chamado.to_list() # to allow ordering
+        chamados_pai     = df_mesas.chamado_pai.to_list()
+        mesas            = df_mesas.mesa.to_list()
+        for id_chamado, chamado_pai, mesa in zip(id_chamados, chamados_pai, mesas):
+            if mesa not in mesa_evt_mapping:
+                mesa_evt_mapping[ mesa ] = set()
+            mesa_evt_mapping[ mesa ].add(id_chamado)
+            if not pd.isna(chamado_pai):
+                mesa_evt_mapping[ mesa ].add(chamado_pai)
+        currdir = os.getcwd()
+        try:
+            os.chdir(self.dir_work)
+            with open(agg_index_file, 'w') as fh:
+                for event in sorted(all_events):
+                    print(event, file=fh)
+        finally:
+            os.chdir(currdir)
         
