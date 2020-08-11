@@ -58,7 +58,11 @@ class N4SapKpi(models.Kpi):
         super().__init__()
         self.incsrv = incsrv
         self.logger = logger
-        
+    
+    def set_override_categorias(self, categorias):
+        for id_chamado, categoria in categorias.items():
+            self.set_override_categoria(id_chamado, categoria)
+            
     def set_override_categoria(self, id_chamado, categoria):
         self.incsrv.set_override_categoria(id_chamado, categoria)
     
@@ -148,7 +152,7 @@ class IncidentService(object):
     def __init__(self, strict_orientar=False):
         self.override_categorias = {}
         self.strict_orientar = strict_orientar
-
+    
     def set_override_categoria(self, id_chamado, categoria):
         self.override_categorias[ id_chamado ] = categoria
     

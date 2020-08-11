@@ -83,6 +83,21 @@ def read_expurgos(dir_apuracao):
             elif id_chamado:
                 result.append(id_chamado)
         return result
+
+def read_categorias(dir_apuracao):
+    path = os.path.join(dir_apuracao, config.CATEGORIES_FILE)
+    result = {}
+    if not os.path.exists(path):
+        return result
+    with open(path) as fh:
+        for line in fh:
+            line = line.strip()
+            if line.startswith("#"):
+                continue
+            id_chamado, categoria = line.split("\t")
+            assert categoria
+            result[ id_chamado ] = categoria
+        return result
         
 def parse_date(txt):
     if pd.isna(txt) or txt is None or txt == "":

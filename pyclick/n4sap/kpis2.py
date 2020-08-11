@@ -57,6 +57,7 @@ class App(object):
         logger.info('loading click data model')
         incsrv = n4_models.IncidentService()
         click = n4_models.ClickN4(incsrv=incsrv, strict_orientar=self.strict_orientar)
+        categorias = self.process_recategorizacoes()
         expurgos = self.process_expurgos(click)
         evts = r.load_events()
         start_dt, end_dt = r.get_period()
@@ -71,7 +72,7 @@ class App(object):
             click.add_pesquisa(pesq)
         evts_df = models.Event.to_df(evts)
         expurgos_df = pd.DataFrame({ "expurgo": expurgos })
-        return click, evts_df, expurgos_df, start_dt, end_dt
+        return click, evts_df, expurgos_df, start_dt, end_dt, categorias
     
     def process_expurgos(self, click):
         logger.info('processing expurgos')
@@ -79,6 +80,13 @@ class App(object):
         for id_chamado in expurgos:
             click.add_expurgo(id_chamado)
         return expurgos
+
+    def process_recategorizacoes(self):
+        logger.info('processing recategorization')
+        categorias = util.read_categorias(self.dir_apuracao)
+        for id_chamado, categoria in sorted(categorias.items()):
+            logger.info("recategorizing incident %s as %s", id_chamado, categoria)
+        return categorias
         
     def load_relatorio_medicao(self, r):
         logger.info('loading relatório medição')
@@ -92,10 +100,10 @@ class App(object):
             os.unlink(ks)
         return pd.ExcelWriter(ks, datetime_format=None)   
 
-    def compute_prp(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_prp(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing PRP')
         prp = Prp()
-        
+        prp.set_override_categorias(categorias)
         prp.evaluate(click, start_dt, end_dt)
         prp.update_summary(summary)
         prp_details_df = prp.get_details()
@@ -104,18 +112,20 @@ class App(object):
         prp_details_df.to_excel(xw, sheet_name="PRP", index=False)
         prp_details_df.to_sql("PRP", conn, if_exists="replace", index=False)
 
-    def compute_peso30(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_peso30(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing PESO30')
         peso30 = Peso30()
+        peso30.set_override_categorias(categorias)
         peso30.evaluate(click, start_dt, end_dt)
         peso30.update_summary(summary)
         peso30_df = peso30.get_details()
         peso30_df.to_excel(xw, sheet_name="PESO30", index=False)
         peso30_df.to_sql("PESO30", conn, if_exists="replace", index=False)
             
-    def compute_pro(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_pro(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing PRO')
         pro = Pro()
+        pro.set_override_categorias(categorias)
         pro.evaluate(click, start_dt, end_dt)
         pro.update_summary(summary)
         pro_details_df = pro.get_details()
@@ -127,9 +137,10 @@ class App(object):
             pro.evaluate(click, start_dt, end_dt, mesa)
             pro.update_summary(summary, sigla)
 
-    def compute_prc(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_prc(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing PRC')
         prc = Prc()
+        prc.set_override_categorias(categorias)
         prc.evaluate(click, start_dt, end_dt)
         prc.update_summary(summary)
         prc_details_df = prc.get_details()
@@ -141,9 +152,10 @@ class App(object):
             prc.evaluate(click, start_dt, end_dt, mesa)
             prc.update_summary(summary, sigla)
             
-    def compute_prs(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_prs(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing PRS')
         prs = Prs()
+        prs.set_override_categorias(categorias)
         prs.evaluate(click, start_dt, end_dt)
         prs.update_summary(summary)
         prs_details_df = prs.get_details()
@@ -155,9 +167,10 @@ class App(object):
             prs.evaluate(click, start_dt, end_dt, mesa)
             prs.update_summary(summary, sigla)
             
-    def compute_ids(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_ids(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing IDS')
         ids = Ids()
+        ids.set_override_categorias(categorias)
         ids.evaluate(click, start_dt, end_dt)
         ids.update_summary(summary)
         ids_details_df = ids.get_details()
@@ -169,10 +182,13 @@ class App(object):
             ids.evaluate(click, start_dt, end_dt, mesa)
             ids.update_summary(summary, sigla)
             
-    def compute_aging(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_aging(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing AGING')
         aging60 = Aging(60, 90)
         aging90 = Aging(90, 9999999)
+        
+        aging60.set_override_categorias(categorias)
+        aging90.set_override_categorias(categorias)
         
         aging60.evaluate(click, start_dt, end_dt)
         aging60.update_summary(summary)
@@ -196,10 +212,11 @@ class App(object):
             aging90.evaluate(click, start_dt, end_dt, mesa)
             aging90.update_summary(summary, sigla)
         
-    def compute_csat(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_csat(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing CSAT')
         
         csat = Csat()
+        csat.set_override_categorias(categorias)
         csat.evaluate(click, start_dt, end_dt)
         csat.update_summary(summary)
         csat_details_df, csat_tecnicos_det_df = csat.get_details()
@@ -214,6 +231,7 @@ class App(object):
             csat.update_summary(summary, sigla)
         
         csat_periodo = CsatPeriodo()
+        csat_periodo.set_override_categorias(categorias)
         csat_periodo.evaluate(click, start_dt, end_dt)
         csat_periodo.update_summary(summary)
         csat_periodo_details_df, csat_periodo_tecnicos_det_df = csat_periodo.get_details()
@@ -227,9 +245,10 @@ class App(object):
             csat_periodo.evaluate(click, start_dt, end_dt, mesa)
             csat_periodo.update_summary(summary, sigla)
         
-    def compute_estoque(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_estoque(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing ESTOQUE')
         estoque = Estoque()
+        estoque.set_override_categorias(categorias)
         estoque.evaluate(click, start_dt, end_dt)
         estoque.update_summary(summary)
         estoque_details_df = estoque.get_details()
@@ -241,9 +260,10 @@ class App(object):
             estoque.evaluate(click, start_dt, end_dt, mesa)
             estoque.update_summary(summary, sigla)
 
-    def compute_encerrados(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_encerrados(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing ENCERRADOS')
         encerrados = Encerrados()
+        encerrados.set_override_categorias(categorias)
         encerrados.evaluate(click, start_dt, end_dt)
         encerrados.update_summary(summary)
         encerrados_df = encerrados.get_details()
@@ -255,9 +275,10 @@ class App(object):
             encerrados.evaluate(click, start_dt, end_dt, mesa)
             encerrados.update_summary(summary, sigla)
 
-    def compute_cancelados(self, conn, click, xw, start_dt, end_dt, summary):
+    def compute_cancelados(self, conn, click, xw, start_dt, end_dt, categorias, summary):
         logger.info('computing CANCELADOS')
         cancelados = Cancelados()
+        cancelados.set_override_categorias(categorias)
         cancelados.evaluate(click, start_dt, end_dt)
         cancelados.update_summary(summary)
         cancelados_df = cancelados.get_details()
@@ -269,7 +290,7 @@ class App(object):
             cancelados.evaluate(click, start_dt, end_dt, mesa)
             cancelados.update_summary(summary, sigla)
             
-    def compute_kpis(self, conn, click, xw, start_dt, end_dt):
+    def compute_kpis(self, conn, click, xw, start_dt, end_dt, categorias):
         logger.info('calculating KPI\'s')
         summary = { 
             'INDICADOR' : [], 
@@ -278,17 +299,17 @@ class App(object):
             'SLA'       : [], 
             'OBS'       : [] 
         }
-        self.compute_prp(conn, click, xw, start_dt, end_dt, summary)
-        self.compute_peso30(conn, click, xw, start_dt, end_dt, summary)
-        self.compute_pro(conn, click, xw, start_dt, end_dt, summary)
-        self.compute_prc(conn, click, xw, start_dt, end_dt, summary)
-        self.compute_prs(conn, click, xw, start_dt, end_dt, summary)
-        self.compute_ids(conn, click, xw, start_dt, end_dt, summary)
-        self.compute_aging(conn, click, xw, start_dt, end_dt, summary)
-        self.compute_csat(conn, click, xw, start_dt, end_dt, summary)
-        self.compute_estoque(conn, click, xw, start_dt, end_dt, summary)
-        self.compute_encerrados(conn, click, xw, start_dt, end_dt, summary)
-        self.compute_cancelados(conn, click, xw, start_dt, end_dt, summary)
+        self.compute_prp(conn, click, xw, start_dt, end_dt, categorias, summary)
+        self.compute_peso30(conn, click, xw, start_dt, end_dt, categorias, summary)
+        self.compute_pro(conn, click, xw, start_dt, end_dt, categorias, summary)
+        self.compute_prc(conn, click, xw, start_dt, end_dt, categorias, summary)
+        self.compute_prs(conn, click, xw, start_dt, end_dt, categorias, summary)
+        self.compute_ids(conn, click, xw, start_dt, end_dt, categorias, summary)
+        self.compute_aging(conn, click, xw, start_dt, end_dt, categorias, summary)
+        self.compute_csat(conn, click, xw, start_dt, end_dt, categorias, summary)
+        self.compute_estoque(conn, click, xw, start_dt, end_dt, categorias, summary)
+        self.compute_encerrados(conn, click, xw, start_dt, end_dt, categorias, summary)
+        self.compute_cancelados(conn, click, xw, start_dt, end_dt, categorias, summary)
         
         summary[ 'INDICADOR' ].append('INÍCIO PERÍODO')
         summary[ 'MESA'      ].append("")
@@ -331,12 +352,16 @@ class App(object):
             logger.info('starting geração indicadores - version %d.%d.%d', *self.VERSION)
             conn = self.connect_db()
             r = repo.RepoN4(conn)
-            click, events_df, expurgos_df, start_dt, end_dt = self.load_click(r)
+            click, events_df, expurgos_df, start_dt, end_dt, categorias = self.load_click(r)
             df_rel_medicao = self.load_relatorio_medicao(r)
             with self.open_spreadsheet() as xw:
-                self.compute_kpis(conn, click, xw, start_dt, end_dt)
+                self.compute_kpis(conn, click, xw, start_dt, end_dt, categorias)
                 events_df.to_excel(xw, sheet_name="EVENTOS_MEDICAO", index=False)
                 expurgos_df.to_excel(xw, sheet_name="EXPURGOS", index=False)
+                pd.DataFrame({ 
+                    "id_chamado" : list(categorias.keys()), 
+                    "categoria": list(categorias.values())
+                }).to_excel(xw, sheet_name="CATEGORIAS", index=False)
             logger.info('finished')
         except:
             logger.exception('an error has occurred')

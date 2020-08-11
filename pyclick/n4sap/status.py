@@ -17,6 +17,7 @@ class StatusKpi(models.N4SapKpi):
             'id_chamado'        : [],
             'chamado_pai'       : [],
             'categoria'         : [],
+            'categoria_click'   : [],
             'duracao'           : [],
             'ultima_mesa'       : [],
             'ultimo_status'     : [],
@@ -39,21 +40,22 @@ class StatusKpi(models.N4SapKpi):
         for atrib in inc.atribuicoes:
             if atrib.mesa not in self.MESAS_CONTRATO:
                 continue
-            self.details[ 'id_chamado'     ].append(inc.id_chamado)
-            self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
-            self.details[ 'categoria'      ].append(categoria)
-            self.details[ 'duracao'        ].append(duration_m + pendencia_m)
-            self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
-            self.details[ 'ultimo_status'  ].append(inc.status)
-            self.details[ 'atribuicao'     ].append(atrib.seq)
-            self.details[ 'mesa'           ].append(atrib.mesa)
-            self.details[ 'ultima_atrib'   ].append('S' if inc.ultima_atribuicao.seq == atrib.seq else 'N')
-            self.details[ 'entrada'        ].append(atrib.entrada)
-            self.details[ 'status_entrada' ].append(atrib.status_entrada)
-            self.details[ 'saida'          ].append(atrib.saida)
-            self.details[ 'status_saida'   ].append(atrib.status_saida)
-            self.details[ 'duracao_m'      ].append(atrib.duracao_m)
-            self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
+            self.details[ 'id_chamado'      ].append(inc.id_chamado)
+            self.details[ 'chamado_pai'     ].append(inc.chamado_pai)
+            self.details[ 'categoria'       ].append(categoria)
+            self.details[ 'categoria_click' ].append(inc.categoria)
+            self.details[ 'duracao'         ].append(duration_m + pendencia_m)
+            self.details[ 'ultima_mesa'     ].append(inc.mesa_atual)
+            self.details[ 'ultimo_status'   ].append(inc.status)
+            self.details[ 'atribuicao'      ].append(atrib.seq)
+            self.details[ 'mesa'            ].append(atrib.mesa)
+            self.details[ 'ultima_atrib'    ].append('S' if inc.ultima_atribuicao.seq == atrib.seq else 'N')
+            self.details[ 'entrada'         ].append(atrib.entrada)
+            self.details[ 'status_entrada'  ].append(atrib.status_entrada)
+            self.details[ 'saida'           ].append(atrib.saida)
+            self.details[ 'status_saida'    ].append(atrib.status_saida)
+            self.details[ 'duracao_m'       ].append(atrib.duracao_m)
+            self.details[ 'pendencia_m'     ].append(atrib.pendencia_m)
                                                           
     def get_details(self):
         return pd.DataFrame(self.details)

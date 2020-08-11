@@ -22,6 +22,7 @@ class Prc(models.N4SapKpi):
             'id_chamado'        : [],
             'chamado_pai'       : [],
             'categoria'         : [],
+            'categoria_click'   : [],
             'prazo'             : [],
             'ultima_mesa'       : [],
             'ultimo_status'     : [],
@@ -40,21 +41,22 @@ class Prc(models.N4SapKpi):
         for atrib in inc.atribuicoes:
             if atrib.mesa not in self.MESAS_NAO_PRIORITARIAS:
                 continue
-            self.details[ 'violacao'       ].append(self.BREACHED_MAPPING[ breached ])
-            self.details[ 'id_chamado'     ].append(inc.id_chamado)
-            self.details[ 'chamado_pai'    ].append(inc.chamado_pai)
-            self.details[ 'categoria'      ].append(categoria)
-            self.details[ 'prazo'          ].append(self.PRAZO_M)
-            self.details[ 'ultima_mesa'    ].append(inc.mesa_atual)
-            self.details[ 'ultimo_status'  ].append(inc.status)
-            self.details[ 'atribuicao'     ].append(atrib.seq)
-            self.details[ 'mesa'           ].append(atrib.mesa)
-            self.details[ 'entrada'        ].append(atrib.entrada)
-            self.details[ 'status_entrada' ].append(atrib.status_entrada)
-            self.details[ 'saida'          ].append(atrib.saida)
-            self.details[ 'status_saida'   ].append(atrib.status_saida)
-            self.details[ 'duracao_m'      ].append(atrib.duracao_m)
-            self.details[ 'pendencia_m'    ].append(atrib.pendencia_m)
+            self.details[ 'violacao'        ].append(self.BREACHED_MAPPING[ breached ])
+            self.details[ 'id_chamado'      ].append(inc.id_chamado)
+            self.details[ 'chamado_pai'     ].append(inc.chamado_pai)
+            self.details[ 'categoria'       ].append(categoria)
+            self.details[ 'categoria_click' ].append(inc.categoria)
+            self.details[ 'prazo'           ].append(self.PRAZO_M)
+            self.details[ 'ultima_mesa'     ].append(inc.mesa_atual)
+            self.details[ 'ultimo_status'   ].append(inc.status)
+            self.details[ 'atribuicao'      ].append(atrib.seq)
+            self.details[ 'mesa'            ].append(atrib.mesa)
+            self.details[ 'entrada'         ].append(atrib.entrada)
+            self.details[ 'status_entrada'  ].append(atrib.status_entrada)
+            self.details[ 'saida'           ].append(atrib.saida)
+            self.details[ 'status_saida'    ].append(atrib.status_saida)
+            self.details[ 'duracao_m'       ].append(atrib.duracao_m)
+            self.details[ 'pendencia_m'     ].append(atrib.pendencia_m)
             
     def get_details(self):
         return pd.DataFrame(self.details)
