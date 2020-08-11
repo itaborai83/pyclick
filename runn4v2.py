@@ -15,7 +15,7 @@ import pyclick.assyst.dump_schedules as dump_schedules
 import pyclick.assyst.dump_slas as dump_slas
 import pyclick.assyst.dump_surveys as dump_surveys
 import pyclick.consolida_planilhaoV2 as consolida_planilhaoV2 
-import pyclick.n4sap.ddl as ddl
+#import pyclick.n4sap.ddl as ddl # TODO: remove me
 import pyclick.n4sap.kpis2 as kpis
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
@@ -57,7 +57,7 @@ class App(object):
                 logger.info('skiping service offerings dump. It already exists. Delete it if necessary')
             dump_surveys.App(self.dir_apuracao, n4_config.START_CSAT_DT, self.end, delspotfire=True).run()
             consolida_planilhaoV2.App(DIR_WORK, self.dir_apuracao, self.dir_import, self.start, self.end, False, True).run()
-            ddl.App(self.dir_apuracao).run()
+            # ddl.App(self.dir_apuracao).run() # TODO: remove me
             kpis.App(self.dir_apuracao, strict_orientar=False).run()
         except:
             logger.exception('an error has occurred')

@@ -28,7 +28,9 @@ from pyclick.n4sap.aging import Aging
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('kpis2')
-    
+
+SQL_PROCESSA_CONSOLIDADO = SQL_PROCESSA_CONSOLIDADO = util.get_query("PROCESSA_CONSOLIDADO")
+
 class App(object):
     
     VERSION = (0, 0, 0)
@@ -52,6 +54,10 @@ class App(object):
         result_db = os.path.join(self.dir_apuracao, config.CONSOLIDATED_DB)
         conn = sqlite3.connect(result_db)
         return conn
+    
+    def run_ddl(self, conn):
+        logger.info('running DDL script if necessary')
+        conn.executescript(SQL_PROCESSA_CONSOLIDADO)
     
     def load_click(self, r):
         logger.info('loading click data model')
@@ -351,6 +357,7 @@ class App(object):
         try:
             logger.info('starting geração indicadores - version %d.%d.%d', *self.VERSION)
             conn = self.connect_db()
+            self.run_ddl(conn)
             r = repo.RepoN4(conn)
             click, events_df, expurgos_df, start_dt, end_dt, categorias = self.load_click(r)
             df_rel_medicao = self.load_relatorio_medicao(r)

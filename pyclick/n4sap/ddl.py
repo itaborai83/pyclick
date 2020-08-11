@@ -14,6 +14,10 @@ import pyclick.util as util
 import pyclick.config as config
 import pyclick.n4sap.config as n4_config
 
+# TODO: Delete this file
+
+ASSERT 1 == 2 # DISABLE IT FROM RUNNING
+"""
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('consolida_planilhao')
@@ -54,3 +58,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     app = App(args.dir_apuracao)
     app.run()
+"""
