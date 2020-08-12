@@ -416,7 +416,8 @@ class App(object):
         #logger.info('indexando planilhões')
         #self.csrv.index_planilhoes(self.start_date, self.end_date, self.cutoff_date, parallel=self.parallel)
         #logger.info('agregando índice planilhões')
-        self.csrv.aggregate_indexes(self.dir_import, self.start_date, self.end_date, mesas)
+        #self.csrv.aggregate_indexes(self.dir_import, self.start_date, self.end_date, mesas) # Nasty bug ... used end_date instead of cutoff_date
+        self.csrv.aggregate_indexes(self.dir_import, self.start_date, self.cutoff_date, mesas) # Nasty bug ... used end_date instead of cutoff_date
         logger.info('filtrando planilhões com índice agregado')
         self.csrv.filter_planilhoes(self.start_date, self.end_date, self.cutoff_date, parallel=self.parallel)
         logger.info('agregando planilhao')
