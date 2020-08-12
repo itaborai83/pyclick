@@ -36,7 +36,8 @@ class App(object):
     VERSION = (0, 0, 0)
 
     MESAS  = {
-        'N4-SAP-SUSTENTACAO-ABAST_GE'       : 'ABGE'
+        'N4-SAP-SUSTENTACAO-ESCALADOS'      : 'PESO30'
+    ,   'N4-SAP-SUSTENTACAO-ABAST_GE'       : 'ABGE'
     ,   'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' : 'PRAPO'
     ,   'N4-SAP-SUSTENTACAO-CORPORATIVO'    : 'CORP'
     ,   'N4-SAP-SUSTENTACAO-FINANCAS'       : 'FIN'
@@ -44,7 +45,19 @@ class App(object):
     ,   'N4-SAP-SUSTENTACAO-PORTAL'         : 'PORTAL'
     ,   'N4-SAP-SUSTENTACAO-SERVICOS'       : 'SERV'
     }
-    
+
+    MESAS_COM_PESO35  = {
+        'N4-SAP-SUSTENTACAO-PRIORIDADE'     : 'PESO35'
+    ,   'N4-SAP-SUSTENTACAO-ESCALADOS'      : 'PESO30'
+    ,   'N4-SAP-SUSTENTACAO-ABAST_GE'       : 'ABGE'
+    ,   'N4-SAP-SUSTENTACAO-APOIO_OPERACAO' : 'PRAPO'
+    ,   'N4-SAP-SUSTENTACAO-CORPORATIVO'    : 'CORP'
+    ,   'N4-SAP-SUSTENTACAO-FINANCAS'       : 'FIN'
+    ,   'N4-SAP-SUSTENTACAO-GRC'            : 'GRC'
+    ,   'N4-SAP-SUSTENTACAO-PORTAL'         : 'PORTAL'
+    ,   'N4-SAP-SUSTENTACAO-SERVICOS'       : 'SERV'
+    }
+
     def __init__(self, dir_apuracao, strict_orientar):
         self.dir_apuracao = dir_apuracao
         self.strict_orientar = strict_orientar
@@ -183,7 +196,7 @@ class App(object):
         ids_details_df.to_excel(xw, sheet_name="IDS", index=False)
         ids_details_df.to_sql("IDS", conn, if_exists="replace", index=False)
 
-        for mesa, sigla in self.MESAS.items():
+        for mesa, sigla in self.MESAS_COM_PESO35.items():
             ids.reset()
             ids.evaluate(click, start_dt, end_dt, mesa)
             ids.update_summary(summary, sigla)
@@ -202,7 +215,7 @@ class App(object):
         aging60_details_df.to_excel(xw, sheet_name="AGING60", index=False)
         aging60_details_df.to_sql("AGING60", conn, if_exists="replace", index=False)
 
-        for mesa, sigla in self.MESAS.items():
+        for mesa, sigla in self.MESAS_COM_PESO35.items():
             aging60.reset()
             aging60.evaluate(click, start_dt, end_dt, mesa)
             aging60.update_summary(summary, sigla)
@@ -213,7 +226,7 @@ class App(object):
         aging90_details_df.to_excel(xw, sheet_name="AGING90", index=False)
         aging90_details_df.to_sql("AGING90", conn, if_exists="replace", index=False)
 
-        for mesa, sigla in self.MESAS.items():
+        for mesa, sigla in self.MESAS_COM_PESO35.items():
             aging90.reset()
             aging90.evaluate(click, start_dt, end_dt, mesa)
             aging90.update_summary(summary, sigla)
@@ -231,7 +244,7 @@ class App(object):
         csat_tecnicos_det_df.to_excel(xw, sheet_name="CSAT_TECNICOS", index=False)
         csat_tecnicos_det_df.to_sql("CSAT_TECNICOS", conn, if_exists="replace", index=False)
 
-        for mesa, sigla in self.MESAS.items():
+        for mesa, sigla in self.MESAS_COM_PESO35.items():
             csat.reset()
             csat.evaluate(click, start_dt, end_dt, mesa)
             csat.update_summary(summary, sigla)
@@ -246,7 +259,7 @@ class App(object):
         csat_periodo_tecnicos_det_df.to_excel(xw, sheet_name="CSAT_PERIODO_TECNICOS", index=False)
         csat_periodo_tecnicos_det_df.to_sql("CSAT_PERIODO_TECNICOS", conn, if_exists="replace", index=False)
         
-        for mesa, sigla in self.MESAS.items():
+        for mesa, sigla in self.MESAS_COM_PESO35.items():
             csat_periodo.reset()
             csat_periodo.evaluate(click, start_dt, end_dt, mesa)
             csat_periodo.update_summary(summary, sigla)
@@ -261,7 +274,7 @@ class App(object):
         estoque_details_df.to_excel(xw, sheet_name="ESTOQUE", index=False)
         estoque_details_df.to_sql("ESTOQUE", conn, if_exists="replace", index=False)
 
-        for mesa, sigla in self.MESAS.items():
+        for mesa, sigla in self.MESAS_COM_PESO35.items():
             estoque.reset()
             estoque.evaluate(click, start_dt, end_dt, mesa)
             estoque.update_summary(summary, sigla)
@@ -276,7 +289,7 @@ class App(object):
         encerrados_df.to_excel(xw, sheet_name="ENCERRADOS", index=False)
         encerrados_df.to_sql("ENCERRADOS", conn, if_exists="replace", index=False)
 
-        for mesa, sigla in self.MESAS.items():
+        for mesa, sigla in self.MESAS_COM_PESO35.items():
             encerrados.reset()
             encerrados.evaluate(click, start_dt, end_dt, mesa)
             encerrados.update_summary(summary, sigla)
@@ -291,7 +304,7 @@ class App(object):
         cancelados_df.to_excel(xw, sheet_name="CANCELADOS", index=False)
         cancelados_df.to_sql("CANCELADOS", conn, if_exists="replace", index=False)
 
-        for mesa, sigla in self.MESAS.items():
+        for mesa, sigla in self.MESAS_COM_PESO35.items():
             cancelados.reset()
             cancelados.evaluate(click, start_dt, end_dt, mesa)
             cancelados.update_summary(summary, sigla)
