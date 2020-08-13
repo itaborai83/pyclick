@@ -20,7 +20,7 @@ logger = util.get_logger('db2excel')
 
 class App(object):
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
         
     def __init__(self, db, table, excel, sheet, overwrite):
         self.db         = db

@@ -22,7 +22,7 @@ logger = util.get_logger('agg_indexes')
 
 class App(object):
         
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
     def __init__(self, dir_import, dir_apuracao, dir_work, start_date, end_date, agg_index_file):
         self.dir_import     = dir_import

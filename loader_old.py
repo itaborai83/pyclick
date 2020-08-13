@@ -13,7 +13,7 @@ import pyclick.config as config
 import pyclick.n4sap.config as n4_config
 
 import pyclick.assyst.dump_multi_days as dump_multi_days
-import pyclick.import_planilhao as import_planilhao
+import pyclick.import_planilhao_old as import_planilhao
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -21,7 +21,7 @@ logger = util.get_logger('loader')
 
 class App(object):
     
-    VERSION = (1, 0, 0)
+    VERSION = (0, 0, 0)
     
     PARALLEL_QUERIES = 4
     
@@ -91,7 +91,7 @@ class App(object):
     
     def check_import_dir(self, dates):
         logger.info('checking import directory before processing')
-        date_regex = re.compile(r'\d{4}-\d{2}-\d{2}-(CLOSED|OPEN)[.][db|idx]([.]gz)?')
+        date_regex = re.compile(r'\d{4}-\d{2}-\d{2}-(CLOSED|OPEN)[.]db([.]gz)?')
         min_date = min(dates)
         files = self.get_dir_files(self.dir_import)
         to_delete = []
@@ -145,11 +145,11 @@ class App(object):
             planilhao = os.path.join(self.dir_staging, f"{date}.csv")
             util.decompress_to(planilhao_compressed, planilhao)
             if i == 0 and self.first:
-                app = import_planilhao.App(open_acc=None, staging_file=planilhao, import_dir=self.dir_import) # TODO: fix naming inconsistency
+                app = import_planilhao.App(open_acc=None, staging_file=planilhao, import_dir = self.dir_import, latin1=False) # TODO: fix naming inconsistency
             else:
                 prior_date = util.prior_date(date)
                 open_acc = os.path.join(self.dir_import, f"{prior_date}-OPEN.db.gz")
-                app = import_planilhao.App(open_acc=open_acc, staging_file=planilhao, import_dir=self.dir_import) # TODO: fix naming inconsistency
+                app = import_planilhao.App(open_acc=open_acc, staging_file=planilhao, import_dir=self.dir_import, latin1=False) # TODO: fix naming inconsistency
             app.run()
             os.unlink(planilhao)
     

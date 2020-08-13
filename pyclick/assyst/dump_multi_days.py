@@ -123,7 +123,7 @@ class DelayedExecution():
     
 class App(object):
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
     def __init__(self, dir_staging, begin_date, end_date, compress, parallel):
         self.dir_staging    = dir_staging

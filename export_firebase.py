@@ -29,7 +29,7 @@ logger = util.get_logger('firebase')
 
 class App(object):
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     OUTPUT_SPREADSHEET = "export_kpis.xlsx"
     CSAT_SPREADSHEET = "__csat.xlsx"
     CSAT_ACC_SHEET = "CSAT"

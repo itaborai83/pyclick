@@ -23,7 +23,7 @@ EXPORT_TABLE = 'CSV'
 
 class App(object):
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
         
     def __init__(self, overwrite, latin1, csv, db):
         self.overwrite = overwrite

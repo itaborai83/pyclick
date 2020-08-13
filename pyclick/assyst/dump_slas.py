@@ -18,7 +18,7 @@ SQL_SCHEDULES_INFO = util.get_query("ASSYST_CATALOGO_SERV_COMPLETO")
 
 class App(object):
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
     def __init__(self, dir_apuracao):
         self.dir_apuracao = dir_apuracao

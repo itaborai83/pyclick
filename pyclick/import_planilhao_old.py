@@ -6,7 +6,6 @@ import os.path
 import glob
 import shutil
 import argparse
-import re
 import logging
 import datetime as dt
 import pandas as pd
@@ -14,8 +13,6 @@ import sqlite3
 
 import pyclick.util as util
 import pyclick.config as config
-import pyclick.consolidator as consolidator
-import pyclick.indexer as indexer
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -31,11 +28,11 @@ class App(object):
     
     VERSION = (0, 0, 0)
     
-    def __init__(self, open_acc, staging_file, import_dir):
+    def __init__(self, open_acc, latin1, staging_file, import_dir):
         self.open_acc       = open_acc
+        self.latin1         = latin1
         self.staging_file   = staging_file
         self.import_dir     = import_dir
-        self.indexer_srv    = indexer.IndexerSrv()
         
     def update_open_acc(self, df_open_acc, df_open, df_closed):
         logger.info('updating open incident accumulator')
@@ -125,9 +122,9 @@ class App(object):
             sys.exit(config.EXIT_RENAMED_MISMATCH)
         return df_renamed
 
-    def read_staging_file(self):
-        logger.info('lendo arquivo de staging %s', self.staging_file)
-        path, filename = os.path.split(self.staging_file)
+    def read_staging_file(self, fullpath):
+        logger.info('lendo arquivo de staging %s', fullpath)
+        path, filename = os.path.split(fullpath)
         currdir = os.getcwd()
         try:
             os.chdir(path)
@@ -136,8 +133,7 @@ class App(object):
                 sep             = config.CSV_SEPARATOR,
                 verbose         = True,
                 header          = 0, 
-                compression     = ("gzip" if self.staging_file.endswith(".gz") else None),
-                #encoding        = ("latin_1" if self.latin1 else "utf-8"),
+                encoding        = ("latin_1" if self.latin1 else "utf-8"),
                 error_bad_lines = True, 
                 warn_bad_lines  = True,
                 low_memory      = False
@@ -153,8 +149,7 @@ class App(object):
             return df
         finally:
             os.chdir(currdir)
-                
-    """
+            
     def handle_filename(self, filename):
         orig_filename = filename
         if not orig_filename.startswith(config.INPUT_FILENAME_PREFIX):
@@ -175,7 +170,7 @@ class App(object):
         try:
             os.chdir(path)
             filename = self.handle_filename(filename)
-            encoding = "utf-8" #("latin-1" if self.latin1 else "utf-8")
+            encoding = ("latin-1" if self.latin1 else "utf-8")
             with open(filename, encoding=encoding) as fh:
                 line = fh.readline()
                 if not line.startswith(config.SEPARATOR_HEADER):
@@ -191,8 +186,7 @@ class App(object):
             return os.path.join(path, filename)
         finally:
             os.chdir(currdir)
-    """
-    
+
     def split_open_events(self, df):
         logger.info('separando eventos abertos de fechados')
         df_open = df[ (df.data_resolucao_chamado.isna()) | (df.status_de_evento == "Aberto") ]
@@ -220,24 +214,7 @@ class App(object):
         conn.close()
         del conn
         logger.info('compressing...')
-        util.compress_to(db_name, db_name + '.gz')
-        os.unlink(db_name)
-
-    def index_mesas(self, open_acc_df, closed_df):
-        path, filename_ext = os.path.split(self.staging_file)
-        filename_parts = filename_ext.split(".")
-        num_parts = len(filename_parts)
-        assert 2 <= num_parts <= 3
-        assert filename_parts[ 1 ] == 'csv'
-        if num_parts == 3:
-            assert filename_parts[ 2 ] == 'gz'
-        assert re.match(r'\d{4}-\d{2}-\d{2}', filename_parts[ 0 ])
-        date = filename_parts[ 0 ]
-        
-        open_acc_idx_df = self.indexer_srv.index_mesas(open_acc_df)
-        closed_idx_df = self.indexer_srv.index_mesas(closed_df)
-        self.indexer_srv.write_index_mesas(self.import_dir, date, True, open_acc_idx_df)
-        self.indexer_srv.write_index_mesas(self.import_dir, date, False, closed_idx_df)
+        util.compress(db_name)
         
     def read_open_acc(self):
         assert self.open_acc is not None
@@ -252,33 +229,59 @@ class App(object):
         if self.open_acc.endswith('.gz'):
             decompressed_name = util.compress(decompressed_name)
         return df
-    
-    def update_event_mapping(self, mesa_evt_mapping, df):
-        df_mesas        = df[ ~(df.mesa.isna()) ]
-        id_chamados     = df_mesas.id_chamado.to_list() # to allow ordering
-        chamados_pai    = df_mesas.chamado_pai.to_list()
-        mesas           = df_mesas.mesa.to_list()
-        for id_chamado, chamado_pai, mesa in zip(id_chamados, chamados_pai, mesas):
-            if mesa not in mesa_evt_mapping:
-                mesa_evt_mapping[ mesa ] = set()
-            mesa_evt_mapping[ mesa ].add(id_chamado)
-            if not pd.isna(chamado_pai):
-                mesa_evt_mapping[ mesa ].add(chamado_pai)
 
-    def index_staging_file(self, df):
-        index_df = self.indexer_srv.index_staging_file(self.staging_file, df)
-        self.indexer_srv.write_staging_file_index(self.import_dir, self.staging_file, index_df)
-                   
+    def index_file(self, df):
+        logger.info('indexing staging file')
+        db_filename = os.path.join(self.import_dir, config.FILE_INDEX_DB)
+        conn = sqlite3.connect(db_filename)
+        conn.executescript(SQL_FILE_INDEX_DDL)
+        logger.info("clearing stale index data")
+        conn.execute("DELETE FROM FILE_INDEX WHERE NOME_ARQ = ?", (self.staging_file,))
+        chamados = {}
+        logger.debug('computing incident data')
+        for row in df.itertuples():
+            if row.id_chamado not in chamados:
+                chamados[ row.id_chamado ] = {
+                    'staging_file'  : self.staging_file,
+                    'chamado_pai'   : row.chamado_pai,
+                    'aberto'        : 'N' if pd.isna(row.data_resolucao_chamado) else 'S',
+                    'qtd_acoes'     : 1,
+                    'min_id_acao'   : int(row.id_acao),
+                    'max_id_acao'   : int(row.id_acao),
+                }
+            else:
+                chamado = chamados[ row.id_chamado ]
+                chamado[ 'qtd_acoes'   ] += 1
+                chamado[ 'min_id_acao' ] = min(int(row.id_acao), chamado[ 'min_id_acao' ])
+                chamado[ 'max_id_acao' ] = max(int(row.id_acao), chamado[ 'max_id_acao' ])
+        logger.debug('generating sql parameters')
+        params_set = []
+        for chamado, valores in chamados.items():
+            params_set.append((
+                valores[ 'staging_file' ],
+                chamado,
+                valores[ 'chamado_pai'  ],
+                valores[ 'aberto'       ],
+                valores[ 'qtd_acoes'    ],
+                valores[ 'min_id_acao'  ],
+                valores[ 'max_id_acao'  ],
+            ))
+        del chamados
+        logger.debug('inserting index data')
+        conn.executemany(SQL_FILE_INDEX_INSERT, params_set)
+        conn.commit()
+        conn.close()
+        
     def run(self):
         try:
             logger.info('começando a importação de planilha - versão %d.%d.%d', *self.VERSION)
-            #fullpath = self.preprocess_staging_file(self.staging_file)
-            df = self.read_staging_file()
+            fullpath = self.preprocess_staging_file(self.staging_file)
+            df = self.read_staging_file(fullpath)
             df = self.rename_columns(df)
             self.replace_tabs_enters(df)
             self.process_ids(df)
             self.strip_ms(df)
-            self.index_staging_file(df)
+            self.index_file(df)
             if self.open_acc is None:
                 df_open_acc = pd.DataFrame(columns=df.columns)
             else:
@@ -286,19 +289,18 @@ class App(object):
             df_open, df_closed = self.split_open_events(df)
             df_open_acc = self.update_open_acc(df_open_acc, df_open, df_closed)
             util.sort_rel_medicao(df_closed)
-            util.sort_rel_medicao(df_open_acc) # There was a bug here... df_open was sorted instead of df_open_acc
-            
-            path, filename_ext      = os.path.split(self.staging_file)
+            util.sort_rel_medicao(df_open)
+            path, filename_ext = os.path.split(fullpath)
             if filename_ext.endswith('.gz'):
-                filename, ext, gz   = filename_ext.split('.')
+                filename, ext, gz = filename_ext.split('.')
             else:
-                filename, ext       = filename_ext.split('.')
-            open_filename           = os.path.join(self.import_dir, filename + "-OPEN.db")
-            closed_filename         = os.path.join(self.import_dir, filename + "-CLOSED.db")
-            
+                filename, ext = filename_ext.split('.')
+            open_filename = os.path.join(self.import_dir, filename + "-OPEN.db")
+            closed_filename = os.path.join(self.import_dir, filename + "-CLOSED.db")
             self.save(df_open_acc, open_filename)
             self.save(df_closed, closed_filename)
-            self.index_mesas(df_open_acc, df_closed)
+            if filename_ext.endswith('.gz'):
+                util.compress(filename + '.' + ext)                
         except:
             logger.exception('an error has occurred')
             raise
@@ -306,8 +308,9 @@ class App(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--open_acc', type=str, help='open incident accumulator')
+    parser.add_argument('--latin1', action='store_true', default=False, help='use latin-1 encoding')
     parser.add_argument('staging_file', type=str, help='staging file')
     parser.add_argument('import_dir', type=str, help='import directory')
     args = parser.parse_args()
-    app = App(args.open_acc, args.staging_file, args.import_dir)
+    app = App(args.open_acc, args.latin1, args.staging_file, args.import_dir)
     app.run()

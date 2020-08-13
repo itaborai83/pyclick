@@ -23,7 +23,7 @@ logger = util.get_logger('csat')
 
 class App(object):
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     THRESHOLD_KPI = 4
     MENTOR_SURVEYS = "mentor.xlsx"
     CSAT_SPREADSHEET = "csat.xlsx"

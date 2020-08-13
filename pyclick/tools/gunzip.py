@@ -20,7 +20,7 @@ logger = util.get_logger('gunzip')
 
 class App(object):
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
     def __init__(self, filename):
         self.filename = filename

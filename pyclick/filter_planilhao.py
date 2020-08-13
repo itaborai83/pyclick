@@ -27,7 +27,7 @@ SQL_REL_MEDICAO_UPSERT  = util.get_query("IMPORT__REL_MEDICAO_UPSERT")
 
 class App(object):
         
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
     def __init__(self, dir_apuracao, dir_import, dir_work, dump_file, cutoff_date):
         assert dump_file.endswith('.db.gz')

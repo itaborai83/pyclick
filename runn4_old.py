@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 # please set the environment variable PYTHONUTF8=1
 import sys
+import os
 import os.path
 import argparse
 import logging
@@ -8,32 +9,31 @@ import datetime as dt
 
 import pyclick.util as util
 import pyclick.config as config
+import pyclick.n4sap.config as n4_config
 
 import pyclick.assyst.dump_schedules as dump_schedules
 import pyclick.assyst.dump_slas as dump_slas
 import pyclick.assyst.dump_surveys as dump_surveys
-import pyclick.consolida_planilhao as consolida_planilhao 
-import pyclick.tools.db2excel as db2excel
+import pyclick.consolida_planilhao_old as consolida_planilhao
+import pyclick.n4sap.kpis as kpis
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
-logger = util.get_logger('runuser')
+logger = util.get_logger('runn4')
 
-DIR_WORK        = r"DADOS\WORK2"
-DIR_IMPORT      = r"DADOS\IMPORT"
-VIEW_MEDICOES   = "VW_REL_MEDICAO"
+DIR_IMPORT_OLD = "DADOS/IMPORT_OLD"
+VIEW_MEDICOES = "VW_REL_MEDICAO"
 
 class App(object):
     
-    VERSION = (1, 0, 0)
+    VERSION = (0, 0, 0)
         
     def __init__(self, dir_apuracao, start, end):
         self.dir_apuracao = dir_apuracao
         self.start = start
         self.end = end
-        self.dir_import = DIR_IMPORT
-        self.dir_work = DIR_WORK
-
+        self.dir_import = DIR_IMPORT_OLD
+    
     def has_schedules(self):
         path = os.path.join(self.dir_apuracao, config.BUSINESS_HOURS_SPREADSHEET)
         return os.path.exists(path)
@@ -41,24 +41,21 @@ class App(object):
     def has_slas(self):
         path = os.path.join(self.dir_apuracao, config.OFFERINGS_SPREADSHEET)
         return os.path.exists(path)    
-        
+    
     def run(self):
         try:
-            logger.info('excel2db - versão %d.%d.%d', *self.VERSION)
-
+            logger.info('runn4 - versão %d.%d.%d', *self.VERSION)
             if not self.has_schedules():
                 dump_schedules.App(self.dir_apuracao).run()
             else:
-                logger.info('skiping schedules dump. It already exists. Delete it necessary')
+                logger.info('skiping schedules dump. It already exists. Delete it if necessary')
             if not self.has_slas():
                 dump_slas.App(self.dir_apuracao).run()
             else:
-                logger.info('skiping service offerings dump. It already exists. Delete it necessary')
-            dump_surveys.App(self.dir_apuracao, self.start, self.end).run()
-            consolida_planilhao.App(self.dir_work, self.dir_apuracao, self.dir_import, self.start, self.end, datafix=False, parallel=True).run()
-            db = os.path.join(self.dir_apuracao, config.CONSOLIDATED_DB)
-            excel = os.path.join(self.dir_apuracao, "export_{}-{}.xlsx".format(self.start, self.end))
-            db2excel.App(db, VIEW_MEDICOES, excel, "PyClick", overwrite=True).run()
+                logger.info('skiping service offerings dump. It already exists. Delete it if necessary')
+            dump_surveys.App(self.dir_apuracao, n4_config.START_CSAT_DT, self.end, delspotfire=True).run()
+            consolida_planilhao.App(self.dir_apuracao, self.dir_import, self.start, self.end, False).run()
+            kpis.App(self.dir_apuracao).run()
         except:
             logger.exception('an error has occurred')
             raise

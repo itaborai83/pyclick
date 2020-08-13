@@ -9,14 +9,11 @@ import logging
 import datetime as dt
 import pandas as pd
 import sqlite3
-import concurrent.futures
 
 import pyclick.ranges as ranges
 import pyclick.util as util
 import pyclick.config as config
 from pyclick.repo import Repo
-
-import pyclick.consolidator
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -39,18 +36,15 @@ class App(object):
     
     # FIXME: Needs a refactoring. Too much responsability being done here
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
-    def __init__(self, dir_work, dir_apuracao, dir_import, start_date, end_date, datafix, parallel):
-        self.dir_work           = dir_work
+    def __init__(self, dir_apuracao, dir_import, start_date, end_date, datafix):
         self.dir_apuracao       = dir_apuracao
         self.dir_import         = dir_import
         self.start_date         = start_date
         self.end_date           = util.prior_date(end_date)
         self.cutoff_date        = end_date
         self.datafix            = datafix
-        self.parallel           = parallel
-        self.csrv               = pyclick.consolidator.ConsolidatorSrv(dir_import, None, dir_apuracao, dir_work)
 
     def load_planilha_horarios(self):
         logger.info('carregando planilha de horários de mesas')
@@ -62,8 +56,7 @@ class App(object):
         
     def read_dump(self, dump_file):
         filename = os.path.join(self.dir_import, dump_file)
-        dump_file_without_gz = dump_file[ :-3 ]
-        decompressed_filename = os.path.join(self.dir_apuracao, "$WORK-" + dump_file_without_gz)
+        decompressed_filename = os.path.join(self.dir_apuracao, WORK_DB)
         logger.info('lendo arquivo %s', filename)
         util.decompress_to(filename, decompressed_filename)
         conn = sqlite3.connect(decompressed_filename)
@@ -345,6 +338,12 @@ class App(object):
             logger.error("falha na checagem da consolidação do relatório de medição")
             sys.exit(config.EXIT_CONSOLIDATION_ERROR)        
     
+    """
+    def drop_unactioned_events(self, conn):
+        logger.info('dropando incidentes que passaram pela mesa antes do período de apuração')
+        conn.executescript(SQL_DROP_UNACTIONED_EVTS)        
+        conn.commit()
+    """    
     def fill_durations(self, conn, horarios_mesas):
         logger.info('calculando duração de ações')
         # retrieving actions
@@ -409,27 +408,7 @@ class App(object):
     def vacuum(self, conn):
         logger.info("compactando a base de dados")
         conn.execute("VACUUM");
-    
-    def aggregate_planilhoes(self, mesas, ofertas_df):
-        logger.info('limpando diretório de trabalho')
-        self.csrv.clear_work()
-        #logger.info('indexando planilhões')
-        #self.csrv.index_planilhoes(self.start_date, self.end_date, self.cutoff_date, parallel=self.parallel)
-        #logger.info('agregando índice planilhões')
-        #self.csrv.aggregate_indexes(self.dir_import, self.start_date, self.end_date, mesas) # Nasty bug ... used end_date instead of cutoff_date
-        self.csrv.aggregate_indexes(self.dir_import, self.start_date, self.cutoff_date, mesas) # Nasty bug ... used end_date instead of cutoff_date
-        logger.info('filtrando planilhões com índice agregado')
-        self.csrv.filter_planilhoes(self.start_date, self.end_date, self.cutoff_date, parallel=self.parallel)
-        logger.info('agregando planilhao')
-        output_db = 'df.db' # stored in dir_work
-        self.csrv.aggregate_planilhoes(output_db)
-        output_db_gz = output_db + '.gz' # stored in dir_work
-        df = self.csrv.read_filtered_dump(output_db_gz)
-        self.csrv.clear_work()
-        df = self.add_dados_oferta(df, ofertas_df)
-        util.sort_rel_medicao(df)
-        return df
-    
+        
     def run(self):
         try:
             mesa_evt_mapping = {}
@@ -439,7 +418,56 @@ class App(object):
             df_pesquisas    = self.read_pesquisas()
             horarios_mesas  = self.load_planilha_horarios()
             
-            df = self.aggregate_planilhoes(mesas, df_ofertas)
+            closed_dumps, open_dump = self.get_dump_files()
+            df_open = self.read_dump(open_dump)
+            df_open = self.apply_cutoff_date_open(df_open)
+            df_open = self.add_dados_oferta(df_open, df_ofertas)
+            self.update_event_mapping(mesa_evt_mapping, df_open)
+            
+            #dfs_closed = [ ]
+            logger.info('iniciando loop de parsing pela primeira vez') # to save memory
+            for closed_dump in closed_dumps:
+                logger.info('processsando %s', closed_dump)
+                df = self.read_dump(closed_dump)
+                df = self.apply_cutoff_date_closed(df)
+                df = self.add_dados_oferta(df, df_ofertas)
+                self.update_event_mapping(mesa_evt_mapping, df)
+                #dfs_closed.append(df)
+
+            logger.info('filtrando incidentes com base no mapeamento de mesas')
+            all_events = set()
+            for mesa, events in sorted(mesa_evt_mapping.items()):
+                if mesa in mesas:
+                    logger.info('particionando mesa %s com %d eventos', mesa, len(events))
+                    all_events.update(events)
+            
+            dfs_closed = [ ]
+            logger.info('iniciando loop de parsing pela segunda vez') # to save memory
+            for closed_dump in closed_dumps:
+                logger.info('processsando %s', closed_dump)
+                df = self.read_dump(closed_dump)
+                df = self.apply_cutoff_date_closed(df)
+                df = self.add_dados_oferta(df, df_ofertas)
+                df = df[ df.id_chamado.isin(all_events) ].copy()
+                dfs_closed.append(df)
+            
+            # to speed up duplicated action removal
+            df_open = df_open[ df_open.id_chamado.isin(all_events) ].copy()
+            df_open, dfs_closed = self.filter_incidents(all_events, df_open, dfs_closed)
+            
+            logger.info('concatenando planilhão')
+            df_planilhao = self.concat_planilhas(df_open, dfs_closed)
+            del dfs_closed # release memory
+            del df_open # release memory
+            
+            logger.info('ordenando planilhão')
+            util.sort_rel_medicao(df_planilhao)
+                        
+            logger.info("consolidando planilhão com %d eventos", len(all_events))
+            df = df_planilhao[ df_planilhao.id_chamado.isin(all_events) ] # not necessary
+            logger.info("consolidando planilhão com %d linhas", len(df))
+            
+            #self.save_consolidado(df, horarios_mesas)
             conn = self.get_connection()
             self.write_mesas(conn, mesas)
             self.write_pesquisas(conn, df_pesquisas)
@@ -451,6 +479,7 @@ class App(object):
             self.migrate_tables(conn)
             self.process_after_load_sql(conn)
             self.sanity_check(conn)
+            #self.drop_unactioned_events(conn)
             self.write_business_hours(conn, mesas, horarios_mesas)
             self.fill_pendencias(conn)
             self.fill_durations(conn, horarios_mesas)
@@ -464,14 +493,14 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('dir_work', type=str, help='diretório de trabalho')
     parser.add_argument('dir_apuracao', type=str, help='diretório apuração')
     parser.add_argument('dir_import', type=str, help='diretório de importação')
     parser.add_argument('start_date', type=str, help='data inicio apuração')
     parser.add_argument('end_date', type=str, help='data fim apuração')
     parser.add_argument('--datafix', action='store_true', default=False, help='interrompe o processo de carga para manipular o consolidado')
-    parser.add_argument('--parallel', action='store_true', default=False, help='habilita processamento paralelo')
     
     args = parser.parse_args()
-    app = App(args.dir_work, args.dir_apuracao, args.dir_import, args.start_date, args.end_date, args.datafix, args.parallel)
+    app = App(args.dir_apuracao, args.dir_import, args.start_date, args.end_date, args.datafix)
     app.run()
+    
+    

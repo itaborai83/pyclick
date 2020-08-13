@@ -28,7 +28,7 @@ SQL_REL_MEDICAO_UPSERT  = util.get_query("IMPORT__REL_MEDICAO_UPSERT")
 
 class App(object):
         
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
     def __init__(self, dir_work, output_db):
         self.dir_work = dir_work

@@ -15,7 +15,7 @@ SQL_SCHEDULES_INFO = util.get_query("ASSYST__FUNCIONAMENTO_MESAS")
 
 class App(object):
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
     def __init__(self, dir_apuracao):
         self.dir_apuracao = dir_apuracao

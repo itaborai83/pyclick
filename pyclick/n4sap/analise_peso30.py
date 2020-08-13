@@ -26,7 +26,7 @@ SQL_ANALISE_PESO30 = util.get_query('N4SAP__ANALISE_PESO30')
 
 class App():
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     CUTTOF_DURACOES_H = 10 * 9
     
     def __init__(self, dir_apuracao, output):

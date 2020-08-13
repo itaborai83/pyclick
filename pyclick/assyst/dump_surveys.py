@@ -16,7 +16,7 @@ SQL_SURVEYS_UNANSWERED  = util.get_query("ASSYST__PESQ_SATISFACAO_NAO_RESP")
 
 class App(object):
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
     ITEM_B_SPOTFIRE = 'QACT - GOVERNANCA SPOTFIRE'
     

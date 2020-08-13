@@ -18,7 +18,7 @@ SQL_DAILY_DUMP = util.get_query("ASSYST__QUERY_PLANILHAOv2")
 
 class App(object):
     
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
     def __init__(self, dir_staging, date, compress):
         self.dir_staging    = dir_staging

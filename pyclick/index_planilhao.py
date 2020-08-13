@@ -25,7 +25,7 @@ SQL_REL_MEDICAO_SELECT = util.get_query("CONSOLIDA__REL_MEDICAO_SELECT")
 
 class App(object):
         
-    VERSION = (0, 0, 0)
+    VERSION = (1, 0, 0)
     
     def __init__(self, dir_work, dir_import, dump_file, cutoff_date):
         assert dump_file.endswith('.db.gz')
