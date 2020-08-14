@@ -162,6 +162,7 @@ class App(object):
                 data[ f"{periodo} Qtd" ].append(qtd)
         return pd.DataFrame(data)
     
+    """
     def generate_controle(self, pesquisas_df, min_surveys, by_tecnico=False):
         logger.info("generating control table")
         data = {}
@@ -227,6 +228,154 @@ class App(object):
             result[ 'qtd' ].append(qtd)
             result[ 'avaliacoes_ruins'  ].append(avaliacoes_ruins)
             result[ 'avaliacoes_boas'   ].append(avaliacoes_boas)
+        result_df = pd.DataFrame(result)
+        result_df.sort_values(['qtd', 'avaliacoes_ruins', 'avaliacoes_boas'], ascending=False, inplace=True, ignore_index=True)
+        return result_df
+    """
+    
+    def _date_to_period(self, dt):
+        if pd.isna(dt):
+            return "XXXXXX"
+        for periodo, begin_end in self.RANGES.items():
+            begin, end = begin_end
+            survey_date = util.unparse_date(dt) + " 00:00:00"
+            if begin <= survey_date <= end:
+                return periodo
+        logger.warning("invalid date %s", util.unparse_date(dt))
+        print(begin, util.unparse_date(dt), end)
+        #assert 1 == 2 # TODO: handle out of range dates
+        return "XXXXXX"
+        
+    def generate_controle(self, pesquisas_df, min_surveys, by_tecnico=False):
+        logger.info("generating monthly control table")
+        data = {}
+        for row in pesquisas_df.itertuples():
+            mesa          = row.mesa_acao
+            chave_usuario = row.chave_usuario
+            nome_usuario  = row.nome_usuario
+            if by_tecnico:
+                chave_tecnico = row.chave_tecnico
+                nome_tecnico  = row.nome_tecnico
+                key = (mesa, chave_usuario, nome_usuario, chave_tecnico, nome_tecnico)
+            else:
+                key = (mesa, chave_usuario, nome_usuario)
+            qtd = 1
+            if pd.isna(row.data_resposta):
+                ruim = 0
+                boa = 0
+            else:
+                ruim = 1 if row.avaliacao < self.THRESHOLD_KPI else 0
+                boa = 1 if row.avaliacao >= self.THRESHOLD_KPI else 0
+            if key not in data:
+                data[ key ] = { 
+                    'qtd'               : 0,       
+                    'avaliacoes_ruins'  : 0,
+                    'avaliacoes_boas'   : 0,
+                    'resp_janeiro'      : 0,
+                    'resp_fevereiro'    : 0,
+                    'resp_março'        : 0,
+                    'resp_abril'        : 0,
+                    'resp_maio'         : 0,
+                    'resp_junho'        : 0,
+                    'resp_julho'        : 0,
+                    'resp_agosto'       : 0,
+                    'resp_setembro'     : 0,
+                    'resp_outubro'      : 0,
+                    'resp_novembro'     : 0,
+                    'resp_dezembro'     : 0,
+                }
+            data[ key ][ 'qtd'              ] += 1
+            data[ key ][ 'avaliacoes_ruins' ] += ruim
+            data[ key ][ 'avaliacoes_boas'  ] += boa
+            data[ key ][ 'resp_janeiro'     ] += 1 if self._date_to_period(row.data_resposta) == "JAN"  else 0
+            data[ key ][ 'resp_fevereiro'   ] += 1 if self._date_to_period(row.data_resposta) == "FEV"  else 0
+            data[ key ][ 'resp_março'       ] += 1 if self._date_to_period(row.data_resposta) == "MAR"  else 0
+            data[ key ][ 'resp_abril'       ] += 1 if self._date_to_period(row.data_resposta) == "ABR"  else 0
+            data[ key ][ 'resp_maio'        ] += 1 if self._date_to_period(row.data_resposta) == "MAIO" else 0
+            data[ key ][ 'resp_junho'       ] += 1 if self._date_to_period(row.data_resposta) == "JUN"  else 0
+            data[ key ][ 'resp_julho'       ] += 1 if self._date_to_period(row.data_resposta) == "JUL"  else 0
+            data[ key ][ 'resp_agosto'      ] += 1 if self._date_to_period(row.data_resposta) == "AGO"  else 0
+            data[ key ][ 'resp_setembro'    ] += 1 if self._date_to_period(row.data_resposta) == "SET"  else 0
+            data[ key ][ 'resp_outubro'     ] += 1 if self._date_to_period(row.data_resposta) == "OUT"  else 0
+            data[ key ][ 'resp_novembro'    ] += 1 if self._date_to_period(row.data_resposta) == "NOV"  else 0
+            data[ key ][ 'resp_dezembro'    ] += 1 if self._date_to_period(row.data_resposta) == "DEZ"  else 0
+        
+        if by_tecnico:
+            result = { 
+                'mesa'              : [], 
+                'chave_usuario'     : [], 
+                'nome_usuario'      : [], 
+                'chave_tecnico'     : [], 
+                'nome_tecnico'      : [], 
+                'qtd'               : [], 
+                'avaliacoes_ruins'  : [], 
+                'avaliacoes_boas'   : [],
+                'resp_janeiro'      : [],
+                'resp_fevereiro'    : [],
+                'resp_março'        : [],
+                'resp_abril'        : [],
+                'resp_maio'         : [],
+                'resp_junho'        : [],
+                'resp_julho'        : [],
+                'resp_agosto'       : [],
+                'resp_setembro'     : [],
+                'resp_outubro'      : [],
+                'resp_novembro'     : [],
+                'resp_dezembro'     : [],
+            }
+        else:
+            result = { 
+                'mesa'              : [], 
+                'chave_usuario'     : [], 
+                'nome_usuario'      : [], 
+                'qtd'               : [], 
+                'avaliacoes_ruins'  : [], 
+                'avaliacoes_boas'   : [],
+                'resp_janeiro'      : [],
+                'resp_fevereiro'    : [],
+                'resp_março'        : [],
+                'resp_abril'        : [],
+                'resp_maio'         : [],
+                'resp_junho'        : [],
+                'resp_julho'        : [],
+                'resp_agosto'       : [],
+                'resp_setembro'     : [],
+                'resp_outubro'      : [],
+                'resp_novembro'     : [],
+                'resp_dezembro'     : [],
+                
+            }
+        for key, value in data.items():
+            if value[ 'qtd' ] < min_surveys:
+                continue
+            if by_tecnico:
+                (mesa, chave_usuario, nome_usuario, chave_tecnico, nome_tecnico) = key
+            else:
+                (mesa, chave_usuario, nome_usuario) = key
+            result[ 'mesa'              ].append(mesa)
+            result[ 'chave_usuario'     ].append(chave_usuario)
+            result[ 'nome_usuario'      ].append(nome_usuario)
+            if by_tecnico:
+                result[ 'chave_tecnico' ].append(chave_tecnico)
+                result[ 'nome_tecnico'  ].append(nome_tecnico)
+            result[ 'qtd'               ].append(value[ 'qtd'               ])
+            result[ 'avaliacoes_ruins'  ].append(value[ 'avaliacoes_ruins'  ])
+            result[ 'avaliacoes_boas'   ].append(value[ 'avaliacoes_boas'   ])
+            result[ 'resp_janeiro'      ].append(value[ 'resp_janeiro'      ])
+            result[ 'resp_fevereiro'    ].append(value[ 'resp_fevereiro'    ])
+            result[ 'resp_março'        ].append(value[ 'resp_março'        ])
+            result[ 'resp_abril'        ].append(value[ 'resp_abril'        ])
+            result[ 'resp_maio'         ].append(value[ 'resp_maio'         ])
+            result[ 'resp_junho'        ].append(value[ 'resp_junho'        ])
+            result[ 'resp_julho'        ].append(value[ 'resp_julho'        ])
+            result[ 'resp_agosto'       ].append(value[ 'resp_agosto'       ])
+            result[ 'resp_setembro'     ].append(value[ 'resp_setembro'     ])
+            result[ 'resp_outubro'      ].append(value[ 'resp_outubro'      ])
+            result[ 'resp_novembro'     ].append(value[ 'resp_novembro'     ])
+            result[ 'resp_dezembro'     ].append(value[ 'resp_dezembro'     ])
+            
+            
+            
         result_df = pd.DataFrame(result)
         result_df.sort_values(['qtd', 'avaliacoes_ruins', 'avaliacoes_boas'], ascending=False, inplace=True, ignore_index=True)
         return result_df
