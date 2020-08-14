@@ -10,8 +10,8 @@ class Prc(models.N4SapKpi):
     PRAZO_M     = 135 * 60
     SLA         = 25.0
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, incsrv):
+        super().__init__(incsrv=incsrv)
         self.reset()
         
     def reset(self):

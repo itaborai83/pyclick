@@ -9,8 +9,8 @@ class Peso30(models.N4SapKpi):
     PRAZO_ORIENTAR_M = 40 * 60
     PRAZO_REALIZAR_M = 36 * 60
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, incsrv):
+        super().__init__(incsrv=incsrv)
         self.reset()
         
     def reset(self):

@@ -72,6 +72,100 @@ class TestIncidentService(unittest.TestCase):
         self.incserv.unset_override_categoria(self.inc_orientar.id_chamado)
         categoria = self.incserv.categorizar(self.inc_orientar)
         self.assertEqual('ORIENTAR', categoria)
+
+    def test_it_overrides_offering(self):
+        self.assertEqual(self.inc_tarefa.oferta, 'HR / PY - Realização de Memória de Cálculo')
+        self.assertEqual(self.inc_tarefa.prazo, 2700)
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-CORPORATIVO')
+        self.assertEqual(sla, 45*60)
+        
+        # oferring override with standard SLA
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA', 180*60)
+        self.incserv.set_override_oferta(self.inc_tarefa.id_chamado, 'TESTE OVERRIDE OFERTA')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-CORPORATIVO')
+        self.assertEqual(sla, 180*60)
+
+        # oferring override with non standard SLA
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA II', 180*60 + 1) # non standard sla 
+        self.incserv.set_override_oferta(self.inc_tarefa.id_chamado, 'TESTE OVERRIDE OFERTA II')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-CORPORATIVO')
+        self.assertEqual(sla, 45*60)
+
+        # oferring override with standard SLA as PESO 35
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA III', 180*60)
+        self.incserv.set_override_oferta(self.inc_tarefa.id_chamado, 'TESTE OVERRIDE OFERTA III')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
+        self.assertEqual(sla, 9*60)
+
+        # oferring override with non standard SLA as PESO 35
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA IV', 180*60+1)
+        self.incserv.set_override_oferta(self.inc_tarefa.id_chamado, 'TESTE OVERRIDE OFERTA IV')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
+        self.assertEqual(sla, 9*60)
+
+        # oferring override with standard SLA as PESO 30
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA V', 180*60)
+        self.incserv.set_override_oferta(self.inc_tarefa.id_chamado, 'TESTE OVERRIDE OFERTA V')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
+        self.assertEqual(sla, 36*60)
+
+        # oferring override with non standard SLA as PESO 30
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA VI', 180*60+1)
+        self.incserv.set_override_oferta(self.inc_tarefa.id_chamado, 'TESTE OVERRIDE OFERTA VI')
+        sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
+        self.assertEqual(sla, 36*60)
+        
+        # incident remains unchanged despite the overrides
+        self.assertEqual(self.inc_tarefa.oferta, 'HR / PY - Realização de Memória de Cálculo')
+        self.assertEqual(self.inc_tarefa.prazo, 2700)
+
+    def test_it_overrides_offering_and_categorie(self):
+        self.assertEqual(self.inc_corrigir.oferta, 'Suporte ao serviço de SAP')
+        self.assertEqual(self.inc_corrigir.prazo, 540)
+        sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-CORPORATIVO')
+        self.assertEqual(sla, 135*60)
+        
+        self.incserv.set_override_categoria(self.inc_corrigir.id_chamado, 'ATENDER - TAREFA')
+        
+        # oferring override with standard SLA
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA', 180*60)
+        self.incserv.set_override_oferta(self.inc_corrigir.id_chamado, 'TESTE OVERRIDE OFERTA')
+        sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-CORPORATIVO')
+        self.assertEqual(sla, 180*60)
+
+        # oferring override with non standard SLA
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA II', 180*60 + 1) # non standard sla 
+        self.incserv.set_override_oferta(self.inc_corrigir.id_chamado, 'TESTE OVERRIDE OFERTA II')
+        sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-CORPORATIVO')
+        self.assertEqual(sla, 45*60)
+
+        # oferring override with standard SLA as PESO 35
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA III', 180*60)
+        self.incserv.set_override_oferta(self.inc_corrigir.id_chamado, 'TESTE OVERRIDE OFERTA III')
+        sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
+        self.assertEqual(sla, 9*60)
+
+        # oferring override with non standard SLA as PESO 35
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA IV', 180*60+1)
+        self.incserv.set_override_oferta(self.inc_corrigir.id_chamado, 'TESTE OVERRIDE OFERTA IV')
+        sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-PRIORIDADE')
+        self.assertEqual(sla, 9*60)
+
+        # oferring override with standard SLA as PESO 30
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA V', 180*60)
+        self.incserv.set_override_oferta(self.inc_corrigir.id_chamado, 'TESTE OVERRIDE OFERTA V')
+        sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
+        self.assertEqual(sla, 36*60)
+
+        # oferring override with non standard SLA as PESO 30
+        self.incserv.add_oferta_catalogo('TESTE OVERRIDE OFERTA VI', 180*60+1)
+        self.incserv.set_override_oferta(self.inc_corrigir.id_chamado, 'TESTE OVERRIDE OFERTA VI')
+        sla = self.incserv.calcular_prazo(self.inc_corrigir, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
+        self.assertEqual(sla, 36*60)
+        
+        # incident remains unchanged despite the overrides
+        self.assertEqual(self.inc_corrigir.oferta, 'Suporte ao serviço de SAP')
+        self.assertEqual(self.inc_corrigir.prazo, 540)
         
     def test_it_computes_inc_duration(self):
         acao1 = Acao(id_acao=1, acao_nome='Atribuição interna', pendencia='N', mesa_atual='MESA-0', data_acao='2020-01-01 09:30:00', data_fim_acao='2020-01-01 10:00:00', duracao_m=30)
@@ -189,3 +283,35 @@ class TestIncidentService(unittest.TestCase):
         self.assertEqual(45*60, sla)
         sla = self.incserv.calcular_prazo(self.inc_tarefa, mesa_atual='N4-SAP-SUSTENTACAO-ESCALADOS', enable_peso30=True)
         self.assertEqual(36*60, sla)
+    
+    def test_it_returns_a_data_frame_of_purged_incidents(self):
+        self.incserv.add_expurgo('123')
+        self.incserv.add_expurgo('234')
+        self.incserv.add_expurgo('345')
+        expurgos_df = self.incserv.get_expurgos()
+        expected = { 'id_chamado': [ '123', '234', '345' ]}
+        self.assertEqual(expurgos_df.to_dict(orient="list"), expected)
+
+    def test_it_returns_a_data_frame_of_overriden_categories(self):
+        self.incserv.set_override_categoria('123', 'ORIENTAR')
+        self.incserv.set_override_categoria('234', 'CORRIGIR')
+        self.incserv.set_override_categoria('345', 'ATENDER - TAREFA')
+        self.incserv.set_override_categoria('456', 'ATENDER')
+        categorias_df = self.incserv.get_overrides_categoria()
+        expected = { 
+            'id_chamado' : [ '123', '234', '345', '456' ],
+            'categoria'  : [ 'ORIENTAR', 'CORRIGIR', 'ATENDER - TAREFA', 'ATENDER']
+        }
+        self.assertEqual(categorias_df.to_dict(orient="list"), expected)
+    
+    def test_it_returns_a_data_frame_of_overriden_offerings(self):
+        self.incserv.set_override_oferta('123', 'OFERTA I')
+        self.incserv.set_override_oferta('234', 'OFERTA II')
+        self.incserv.set_override_oferta('345', 'OFERTA III')
+        self.incserv.set_override_oferta('456', 'OFERTA IV')
+        ofertas_df = self.incserv.get_overrides_oferta()
+        expected = { 
+            'id_chamado' : [ '123', '234', '345', '456' ],
+            'oferta'     : [ 'OFERTA I', 'OFERTA II', 'OFERTA III', 'OFERTA IV']
+        }
+        self.assertEqual(ofertas_df.to_dict(orient="list"), expected)

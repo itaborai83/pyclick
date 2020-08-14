@@ -7,8 +7,8 @@ class Csat(models.N4SapKpi):
     SLA         = 90.0
     NOTA_CORTE  = 4
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, incsrv):
+        super().__init__(incsrv=incsrv)
         self.reset()
         
     def reset(self):
@@ -95,8 +95,8 @@ class CsatPeriodo(Csat):
     SLA         = 90.0
     NOTA_CORTE  = 4
     
-    def __init__(self):    
-        super().__init__()
+    def __init__(self, incsrv):    
+        super().__init__(incsrv=incsrv)
             
     def evaluate(self, click, start_dt, end_dt, mesa_filter=None):
         for pesq in click.get_pesquisas_mesas( self.MESAS_CONTRATO ):

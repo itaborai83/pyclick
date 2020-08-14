@@ -7,8 +7,8 @@ class Prp(models.N4SapKpi):
     PRAZO_M     = 9 * 60
     SLA         = 10.0
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, incsrv):
+        super().__init__(incsrv=incsrv)
         self.reset()
         
     def reset(self):
@@ -113,8 +113,8 @@ class Prp(models.N4SapKpi):
             
 class PrpV2(Prp):
         
-    def __init__(self):
-        super().__init__()
+    def __init__(self, incsrv):
+        super().__init__(incsrv=incsrv)
             
     def update_details(self, inc, duration_m, breached):
         assert not inc.id_chamado.startswith('S')

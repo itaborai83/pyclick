@@ -1,13 +1,15 @@
 import unittest
 from pyclick.models import *
+from pyclick.n4sap.models import *
 from pyclick.n4sap.prp import Prp
 
 @unittest.skip
 class TestPrp(unittest.TestCase):
     
     def setUp(self):
-        self.click = Click()
-        self.prp = Prp()
+        self.incsrv = IncidentService()
+        self.click = Click(self.incsrv)
+        self.prp = Prp(self.incsrv)
         self.start_dt = '2020-04-26 00:00:00'
         self.end_dt = '2020-05-26 00:00:00'        
         self.closed_inc_evts = Event.parse_events(r"""

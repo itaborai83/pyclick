@@ -14,7 +14,7 @@ import pyclick.util as util
 import pyclick.models as models
 import pyclick.n4sap.repo as repo
 import pyclick.assyst.dump_surveys as dump_surveys
-import pyclick.n4sap.kpis2 as kpis
+import pyclick.n4sap.kpis
 from pyclick.n4sap.csat import Csat, CsatPeriodo
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"

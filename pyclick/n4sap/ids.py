@@ -7,8 +7,8 @@ class Ids(models.N4SapKpi):
     KPI_NAME    = "IDS"
     SLA         = 170.0
     
-    def __init__(self):
-        super().__init__()
+    def __init__(self, incsrv):
+        super().__init__(incsrv=incsrv)
         self.reset()
         
     def reset(self):

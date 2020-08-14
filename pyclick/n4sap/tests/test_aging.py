@@ -1,12 +1,14 @@
 import unittest
 from pyclick.models import *
+from pyclick.n4sap.models import *
 from pyclick.n4sap.aging import Aging
 
 class TestAging(unittest.TestCase):
     
     def setUp(self):
-        self.click = Click()
-        self.aging = Aging(60, 90)
+        self.incsrv = IncidentService()
+        self.click = ClickN4(self.incsrv)
+        self.aging = Aging(self.incsrv, 60, 90)
         self.start_dt = '2020-04-26 00:00:00'
         self.end_dt = '2020-05-26 00:00:00'        
         

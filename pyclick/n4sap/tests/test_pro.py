@@ -1,14 +1,16 @@
 import unittest
 from pyclick.models import *
+from pyclick.n4sap.models import *
 from pyclick.n4sap.pro import Pro
 
 class TestPro(unittest.TestCase):
     
     def setUp(self):
-        self.click = Click()
+        self.incsrv = IncidentService()
+        self.click = ClickN4(self.incsrv)
+        self.pro = Pro(self.incsrv)
         self.start_dt = '2020-04-26 00:00:00'
         self.end_dt = '2020-05-26 00:00:00'
-        self.pro = Pro()
         self.closed_inc_evts = Event.parse_events(r"""
             447752		ORIENTAR	Dúvida sobre o serviço	99960	8117232	Atribuição interna	N	N1-SD2_EMAIL	2020-04-28 23:32:02	2020-04-28 23:32:02	0
             447752		ORIENTAR	Dúvida sobre o serviço	99960	8117233	Atribuir ao Fornecedor	N	N1-SD2_EMAIL	2020-04-28 23:32:02	2020-04-28 23:39:05	7

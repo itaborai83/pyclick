@@ -154,7 +154,12 @@ class App(object):
         logger.info('salvando pesquisas de satisfação')
         df_pesquisas.to_sql(config.SURVEY_TABLE, conn, index=False, if_exists="replace")
         conn.commit()
-        
+    
+    def write_ofertas(self, conn, df_ofertas):
+        logger.info('salvando ofertas')
+        df_ofertas.to_sql(config.OFFERINGS_TABLE, conn, index=False, if_exists="replace")
+        conn.commit()
+    
     def read_ofertas(self):
         logger.info('recuperando a listagem de ofertas de serviços') # Assistente de Relatórios > Catálogo de Serviços > Criar Relatório (Catálogo Completo e Prazos)
         currdir = os.getcwd()
@@ -439,6 +444,7 @@ class App(object):
             conn = self.get_connection()
             self.write_mesas(conn, mesas)
             self.write_pesquisas(conn, df_pesquisas)
+            self.write_ofertas(conn, df_ofertas)
             self.process_begin_sql(conn)
             self.fill_table(conn, df)
             if self.datafix:

@@ -524,7 +524,7 @@ class Click(object):
             self.children_of[ evt.chamado_pai ].add(evt.id_chamado)
     
     def update(self, event):
-        if event.id_chamado in self.expurgos:
+        if self.is_purged(event.id_chamado):
             return
             
         if event.mesa_atual not in self.mesas:
@@ -590,6 +590,9 @@ class Click(object):
     def add_expurgo(self, id_chamado):
         self.expurgos.add(id_chamado)
     
+    def is_purged(self, id_chamado):
+        return id_chamado in self.expurgos
+        
     def get_pesquisas_mesas(self, mesas):
         return list([
             pesq for pesq in self.pesquisas if pesq.mesa in mesas

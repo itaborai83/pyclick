@@ -6,8 +6,8 @@ class StatusKpi(models.N4SapKpi):
     KPI_NAME    = None
     SLA         = "N/A"
     
-    def __init__(self, statuses):
-        super().__init__()
+    def __init__(self, incsrv, statuses):
+        super().__init__(incsrv=incsrv)
         self.statuses = statuses
         self.reset()
         
@@ -108,8 +108,8 @@ class Estoque(StatusKpi):
     KPI_NAME    = "ESTOQUE"
     SLA         = "N/A"
     
-    def __init__(self):
-        super().__init__(statuses=[ 'ABERTO' ])
+    def __init__(self, incsrv):
+        super().__init__(incsrv=incsrv, statuses=[ 'ABERTO' ])
         self.reset()
         
     def get_description(self):
@@ -124,8 +124,8 @@ class Cancelados(StatusKpi):
     KPI_NAME    = "CANCELADOS"
     SLA         = "N/A"
     
-    def __init__(self):
-        super().__init__(statuses=[ 'CANCELADO' ])
+    def __init__(self, incsrv):
+        super().__init__(incsrv=incsrv, statuses=[ 'CANCELADO' ])
         self.reset()
                     
     def get_description(self):
@@ -140,8 +140,8 @@ class Encerrados(StatusKpi):
     KPI_NAME    = "ENCERRADOS"
     SLA         = "N/A"
     
-    def __init__(self):
-        super().__init__(statuses=[ 'RESOLVIDO', 'ENCERRADO' ])
+    def __init__(self, incsrv):
+        super().__init__(incsrv=incsrv, statuses=[ 'RESOLVIDO', 'ENCERRADO' ])
         self.reset()
                     
     def get_description(self):

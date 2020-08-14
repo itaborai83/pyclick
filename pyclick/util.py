@@ -98,6 +98,21 @@ def read_categorias(dir_apuracao):
             assert categoria
             result[ id_chamado ] = categoria
         return result
+
+def read_ofertas(dir_apuracao):
+    path = os.path.join(dir_apuracao, config.OFFERINGS_FILE)
+    result = {}
+    if not os.path.exists(path):
+        return result
+    with open(path) as fh:
+        for line in fh:
+            line = line.strip()
+            if line.startswith("#"):
+                continue
+            id_chamado, oferta = line.split("\t")
+            assert oferta
+            result[ id_chamado ] = oferta
+        return result
         
 def parse_date(txt):
     if pd.isna(txt) or txt is None or txt == "":

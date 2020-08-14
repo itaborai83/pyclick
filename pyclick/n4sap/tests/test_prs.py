@@ -6,8 +6,9 @@ from pyclick.n4sap.prs import Prs
 class TestPrs(unittest.TestCase):
     
     def setUp(self):
-        self.click = Click()
-        self.prs = Prs()
+        self.incsrv = IncidentService()
+        self.click = ClickN4(self.incsrv)
+        self.prs = Prs(self.incsrv)
         self.start_dt = '2020-04-26 00:00:00'
         self.end_dt = '2020-05-26 00:00:00'
         self.closed_inc_evts = Event.parse_events(r"""

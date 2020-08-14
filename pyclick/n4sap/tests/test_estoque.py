@@ -1,15 +1,16 @@
 import unittest
 from pyclick.models import *
+from pyclick.n4sap.models import *
 from pyclick.n4sap.status import Estoque
 
 class TestEstoque(unittest.TestCase):
     
     def setUp(self):
-        self.click = Click()
-        self.estoque = Estoque()
+        self.incsrv = IncidentService()
+        self.click = ClickN4(self.incsrv)
+        self.estoque = Estoque(self.incsrv)
         self.start_dt = '2020-04-26 00:00:00'
         self.end_dt = '2020-05-26 00:00:00'        
-        
         
     def tearDown(self):
         pass

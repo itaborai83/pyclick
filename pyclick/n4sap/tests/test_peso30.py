@@ -1,12 +1,14 @@
 import unittest
 from pyclick.models import *
+from pyclick.n4sap.models import *
 from pyclick.n4sap.peso30 import Peso30
 
 class TestPeso30(unittest.TestCase):
     
     def setUp(self):
-        self.click = Click()
-        self.peso30 = Peso30()
+        self.incsrv = IncidentService()
+        self.click = ClickN4(self.incsrv)
+        self.peso30 = Peso30(self.incsrv)
         self.start_dt = '2020-04-26 00:00:00'
         self.end_dt = '2020-05-26 00:00:00'        
                 

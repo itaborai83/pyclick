@@ -7,8 +7,8 @@ class Aging(models.N4SapKpi):
     KPI_NAME    = None # changed within instance
     SLA         = "N/A"
     
-    def __init__(self, dias_low, dias_high):
-        super().__init__()
+    def __init__(self, incsrv, dias_low, dias_high):
+        super().__init__(incsrv=incsrv)
         assert dias_low < dias_high
         self.dias_low = dias_low
         self.dias_high = dias_high

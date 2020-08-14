@@ -1,3 +1,6 @@
+import os
+import pandas as pd
+import pyclick.config as config
 import pyclick.util as util
 import pyclick.models as models
 
@@ -49,7 +52,8 @@ class N4SapKpi(models.Kpi):
         True    : 'S'
     ,   False   : 'N'
     ,   None    : None
-    }  
+    }
+    
     def __init__(self, incsrv=None, logger=None):
         if incsrv is None:
             incsrv = IncidentService()
@@ -59,6 +63,21 @@ class N4SapKpi(models.Kpi):
         self.incsrv = incsrv
         self.logger = logger
     
+    def add_expurgo(self, id_chamado):
+        self.incsrv.add_expurgo(id_chamado)
+    
+    def is_purged(self, id_chamado):
+        return self.incsrv.is_purged(id_chamado)
+
+    def add_oferta_catalogo(self, oferta, prazo_oferta_m):
+        self.incsrv.add_oferta_catalogo(oferta, prazo_oferta_m)
+        
+    def set_override_categoria(self, id_chamado, categoria):
+        self.incsrv.set_override_categoria(id_chamado, categoria)
+    
+    def unset_override_categoria(self, id_chamado):
+        self.incsrv.unset_override_categoria(id_chamado)
+        
     def set_override_categorias(self, categorias):
         for id_chamado, categoria in categorias.items():
             self.set_override_categoria(id_chamado, categoria)
@@ -150,15 +169,33 @@ class IncidentService(object):
     ]
     
     def __init__(self, strict_orientar=False):
+        self.ofertas_catalogo = {}
         self.override_categorias = {}
+        self.override_ofertas = {}
+        self.expurgos = set()
         self.strict_orientar = strict_orientar
     
+    def add_expurgo(self, id_chamado):
+        self.expurgos.add(id_chamado)
+    
+    def is_purged(self, id_chamado):
+        return id_chamado in self.expurgos
+        
+    def add_oferta_catalogo(self, oferta, prazo_oferta_m):
+        self.ofertas_catalogo[ oferta ] = prazo_oferta_m
+        
     def set_override_categoria(self, id_chamado, categoria):
         self.override_categorias[ id_chamado ] = categoria
     
     def unset_override_categoria(self, id_chamado):
-        del self.override_categorias[ id_chamado ]        
+        del self.override_categorias[ id_chamado ]
+
+    def set_override_oferta(self, id_chamado, oferta):
+        self.override_ofertas[ id_chamado ] = oferta
     
+    def unset_override_oferta(self, id_chamado):
+        del self.override_ofertas[ id_chamado ]        
+        
     def categorizar(self, inc):
         if inc.id_chamado in self.override_categorias:
             return self.override_categorias[ inc.id_chamado ]
@@ -181,8 +218,10 @@ class IncidentService(object):
         assert mesa_atual in self.MESAS_CONTRATO
         categoria = self.categorizar(inc)
         assert categoria is not None
+        
         if mesa_atual == self.MESA_PRIORIDADE:
             return self.SLA_PESO35
+        
         elif mesa_atual == self.MESA_ESCALADOS and enable_peso30:
             if categoria in ('ATENDER', 'ATENDER - TAREFA'):
                 return self.SLA_PESO30_ATENDER
@@ -191,12 +230,18 @@ class IncidentService(object):
             elif categoria == 'ORIENTAR':
                 return self.SLA_PESO30_ORIENTAR
             assert 1 == 2 # should not happen
+            
         elif categoria in ('ATENDER', 'ATENDER - TAREFA'):
-            return inc.prazo if inc.prazo in self.SLAS_ATENDER else self.SLA_ATENDER_DEFAULT
+            oferta = self.override_ofertas.get(inc.id_chamado, inc.oferta)
+            prazo = self.ofertas_catalogo.get(oferta, inc.prazo)
+            return prazo if prazo in self.SLAS_ATENDER else self.SLA_ATENDER_DEFAULT
+            
         elif categoria == 'CORRIGIR':
             return 135 * 60
+            
         elif categoria == 'ORIENTAR':
             return 27 * 60
+            
         assert 1 == 2 # should not happen
     
     def calc_duration_mesas(self, inc, mesas):
@@ -207,3 +252,19 @@ class IncidentService(object):
         assert mesas is not None and len(mesas) > 0
         return inc.calc_pendencia_mesas(mesas)
     
+    def get_expurgos(self):
+        return pd.DataFrame({ 
+            'id_chamado' : list(sorted(self.expurgos))
+        })
+    
+    def get_overrides_categoria(self):
+        return pd.DataFrame({ 
+            'id_chamado' : list(self.override_categorias.keys()),
+            'categoria'  : list(self.override_categorias.values())
+        })
+    
+    def get_overrides_oferta(self):
+        return pd.DataFrame({ 
+            'id_chamado' : list(self.override_ofertas.keys()),
+            'oferta'     : list(self.override_ofertas.values())
+        })        

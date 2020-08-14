@@ -15,6 +15,7 @@ class Repo(object):
     
     def rollback(self):
         self.conn.rollback()
+    
     def load_events(self):
         c = self.conn.cursor()
         c.execute(SQL_LISTA_EVENTOS)
@@ -53,6 +54,10 @@ class Repo(object):
         params_set =  []
         for row in df.itertuples():
             args = 'S' if row.PENDENCIA else 'N', row.ID_CHAMADO, row.ID_ACAO
-            params_set.append(args)
-            
+            params_set.append(args)            
         self.conn.executemany(sql, params_set)
+    
+    def read_ofertas(self):
+        sql = "SELECT OFERTA, PRAZO FROM OFERTAS ORDER BY OFERTA"
+        df = pd.read_sql(sql, self.conn)
+        return df
