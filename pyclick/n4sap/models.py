@@ -20,7 +20,13 @@ class ClickN4(models.Click):
             self.expurgos_orientar.add(event.id_chamado)
             return
         super().update(event)
-            
+
+    def add_expurgo(self, id_chamado):
+        self.incsrv.add_expurgo(id_chamado)
+    
+    def is_purged(self, id_chamado):
+        return self.incsrv.is_purged(id_chamado)
+        
 class N4SapKpi(models.Kpi):
     
     KPI_NAME                = None

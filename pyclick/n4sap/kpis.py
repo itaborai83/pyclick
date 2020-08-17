@@ -81,7 +81,7 @@ class App(object):
         self.process_expurgos(incsrv)
         self.process_recategorizacoes(incsrv)
         self.process_ofertas(r, incsrv)
-        
+
         click = n4_models.ClickN4(incsrv=incsrv, strict_orientar=self.strict_orientar)
         
         for i, evt in enumerate(evts):

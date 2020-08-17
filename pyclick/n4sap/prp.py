@@ -114,6 +114,7 @@ class Prp(models.N4SapKpi):
 class PrpV2(Prp):
         
     def __init__(self, incsrv):
+        assert incsrv is not None
         super().__init__(incsrv=incsrv)
             
     def update_details(self, inc, duration_m, breached):
@@ -131,13 +132,14 @@ class PrpV2(Prp):
         if mesa is None:
             return
         for inc in mesa.get_seen_incidentes():
-            if inc.id_chamado.startswith("S"):
+            categoria = self.categorizar(inc)
+            if categoria == 'ATENDER':
                 continue
             if not self.has_assignment_within_period(inc, start_dt, end_dt):
                 continue
             prazo = self.calcular_prazo(inc, self.MESA_PRIORIDADE)
             assert prazo == self.PRAZO_M
-            duration_m = click.calc_duration_mesas(inc.id_chamado, [ self.MESA_PRIORIDADE ])
+            duration_m = self.calc_duration_mesas(inc, [ self.MESA_PRIORIDADE ])
             breached = duration_m > prazo
             if inc.status == 'ABERTO' and not breached:
                 continue
