@@ -43,7 +43,7 @@ class DelayedExecution():
             stdout = stdout,
             stderr = subprocess.STDOUT,
             stdin = subprocess.DEVNULL,
-            shell = False,
+            shell = True,
             cwd = os.getcwd(),
             env = os.environ,
             creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
