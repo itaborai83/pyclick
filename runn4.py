@@ -29,11 +29,12 @@ class App(object):
     
     VERSION = (1, 0, 0)
         
-    def __init__(self, dir_apuracao, start, end):
+    def __init__(self, dir_apuracao, start, end, kpis):
         self.dir_apuracao = dir_apuracao
         self.start = start
         self.end = end
         self.dir_import = DIR_IMPORT
+        self.kpis = kpis
     
     def has_schedules(self):
         path = os.path.join(self.dir_apuracao, config.BUSINESS_HOURS_SPREADSHEET)
@@ -55,7 +56,9 @@ class App(object):
             else:
                 logger.info('skiping service offerings dump. It already exists. Delete it if necessary')
             dump_surveys.App(self.dir_apuracao, n4_config.START_CSAT_DT, self.end, delspotfire=True).run()
-            consolida_planilhao.App(DIR_WORK, self.dir_apuracao, self.dir_import, self.start, self.end, datafix=False, parallel=True).run()
+            if not self.kpis:
+                # do not run consolidation when only interested in recalculating the kpis
+                consolida_planilhao.App(DIR_WORK, self.dir_apuracao, self.dir_import, self.start, self.end, datafix=False, parallel=True).run()
             kpis.App(self.dir_apuracao).run()
         except:
             logger.exception('an error has occurred')
@@ -63,9 +66,10 @@ class App(object):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--kpis', action='store_true', default=False, help='somente apuração de indicadores')
     parser.add_argument('dir_apuracao', type=str, help='diretório apuração')
     parser.add_argument('start', type=str, help='start date')
     parser.add_argument('end', type=str, help='end date')
     args = parser.parse_args()
-    app = App(args.dir_apuracao, args.start, args.end)
+    app = App(args.dir_apuracao, args.start, args.end, args.kpis)
     app.run()
