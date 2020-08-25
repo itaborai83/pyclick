@@ -93,7 +93,7 @@ class Ids(models.N4SapKpi):
                 categoria = self.categorizar(inc)
                 prazo_m = self.calcular_prazo(inc, mesa_name)
                 duration_m = self.calc_duration_mesas(inc, self.MESAS_CONTRATO)
-                if duration_m < prazo_m:
+                if duration_m <= prazo_m:
                     continue
                 ids = math.ceil(duration_m / (180.0 * 60))
                 self.numerator   += ids
