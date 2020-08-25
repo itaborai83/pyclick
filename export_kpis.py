@@ -295,11 +295,11 @@ class App(object):
         "CSAT_GERENCIA_DESENV"
     ]
 
-    def __init__(self, dir_n4, dir_csat, fb_conf, nocloud):
+    def __init__(self, dir_n4, dir_csat, cred_json):
         self.dir_n4 = dir_n4
         self.dir_csat = dir_csat
-        self.fb_conf = fb_conf
-        self.nocloud = nocloud
+        self.cred_json = cred_json
+        self.nocloud = not cred_json
     
     def import_firebase(self, cred, collection, key, value):
         if self.nocloud:
@@ -551,8 +551,11 @@ class App(object):
     def run(self):
         try:
             logger.info('export_firebase - versão %d.%d.%d', *self.VERSION)
-            cred = credentials.Certificate(self.fb_conf)
-            firebase_admin.initialize_app(cred)
+            if not self.nocloud:
+                cred = credentials.Certificate(self.cred_json)
+                firebase_admin.initialize_app(cred)
+            else:
+                cred = None
             dirs_apuracoes = self.get_dirs_apuracoes()
             quadro = self.generate_table()
             quadro_acc = self.generate_table()
@@ -582,11 +585,10 @@ class App(object):
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--nocloud', action="store_true", help='skip cloud sync')
+    parser.add_argument('--cred', type=str, help='arquivo de credenciais para carga no Firestore')
     parser.add_argument('dir_n4', type=str, help='diretório n4')
     parser.add_argument('dir_csat', type=str, help='diretório CSAT')
-    parser.add_argument('cred_json', type=str, help='json credential file for firebase')
     args = parser.parse_args()
-    app = App(args.dir_n4, args.dir_csat, args.cred_json, args.nocloud)
+    app = App(args.dir_n4, args.dir_csat, args.cred)
     app.run()
     
