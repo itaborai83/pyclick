@@ -53,11 +53,11 @@ class IndexerSrv(object):
         logger.info('writing index file %s', path)
         df.to_csv(path, sep='\t', index=False)
             
-    def read_indexes_mesas(self, dir, start_date, end_date):
-        assert start_date <= end_date
-        result_df = self.read_index_mesas(dir, end_date, is_open=True)
+    def read_indexes_mesas(self, dir, start_date, cutoff_date):
+        assert start_date <= cutoff_date
+        result_df = self.read_index_mesas(dir, cutoff_date, is_open=True)
         date = start_date
-        while date <= end_date:
+        while date <= cutoff_date:
             closed_index_df = self.read_index_mesas(dir, date, is_open=False)
             result_df = pd.concat( [ result_df, closed_index_df ], ignore_index=True )
             date = util.next_date(date)

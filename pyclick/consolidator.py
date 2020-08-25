@@ -145,7 +145,8 @@ class ConsolidatorSrv(object):
                 os.unlink(f)
         finally:
             os.chdir(currdir)
-    def get_dump_files(self, start_date, end_date, cutoff_date):
+    
+    def get_dump_files(self, start_date, cutoff_date):
         currdir = os.getcwd()
         os.chdir(self.dir_import)
         try:
@@ -154,19 +155,19 @@ class ConsolidatorSrv(object):
             closed_end_file = config.IMPORT_CLOSED_MASK.format(cutoff_date)
             all_closed_files = sorted(glob.iglob(config.IMPORT_CLOSED_GLOB))
             closed_files = list([ f for f in all_closed_files if closed_start_file <= f <= closed_end_file ])
-            open_file = config.IMPORT_OPEN_MASK.format(end_date)
+            open_file = config.IMPORT_OPEN_MASK.format(cutoff_date)
             return closed_files, open_file
         finally:
             os.chdir(currdir)
         
-    def aggregate_indexes(self, dir_import, start_date, end_date, mesas):
+    def aggregate_indexes(self, dir_import, start_date, cutoff_date, mesas):
         mesas_set = set(mesas)
-        index_df = self.indexer.read_indexes_mesas(dir_import, start_date, end_date)
+        index_df = self.indexer.read_indexes_mesas(dir_import, start_date, cutoff_date)
         index_df = index_df[ index_df[ "mesa"].isin(mesas_set) ].copy()
         self.indexer.write_aggregate_index_mesas(self.dir_work, index_df)
 
-    def filter_planilhoes(self, start_date, end_date, cutoff_date, parallel=True):
-        closed_dumps, open_dump = self.get_dump_files(start_date, end_date, cutoff_date)        
+    def filter_planilhoes(self, start_date, cutoff_date, parallel=True):
+        closed_dumps, open_dump = self.get_dump_files(start_date, cutoff_date)        
         dumps = [ open_dump ] + closed_dumps
         qty_dumps = len(dumps)
         params_set = zip(

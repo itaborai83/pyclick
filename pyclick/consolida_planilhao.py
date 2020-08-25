@@ -420,7 +420,7 @@ class App(object):
         self.csrv.clear_work()
         self.csrv.aggregate_indexes(self.dir_import, self.start_date, self.cutoff_date, mesas) # Nasty bug ... used end_date instead of cutoff_date
         logger.info('filtrando planilhões com índice agregado')
-        self.csrv.filter_planilhoes(self.start_date, self.end_date, self.cutoff_date, parallel=self.parallel)
+        self.csrv.filter_planilhoes(self.start_date, self.cutoff_date, parallel=self.parallel)
         logger.info('agregando planilhao')
         output_db = 'df.db' # stored in dir_work
         self.csrv.aggregate_planilhoes(output_db)
