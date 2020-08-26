@@ -32,6 +32,7 @@ SQL_UPDATE_USER_STATUS      = util.get_query("CONSOLIDA__UPDATE_ACAO_USER_STATUS
 SQL_CARGA_REL_MEDICAO       = util.get_query("CONSOLIDA__CARGA_REL_MEDICAO")
 SQL_CHECK_IMPORTACAO        = util.get_query("CONSOLIDA__SQL_CHECK_IMPORTACAO")
 SQL_LISTA_ACOES             = util.get_query("CONSOLIDA__LISTA_ACOES") 
+SQL_FIX_ATRIB_APOS_RESOLVER = util.get_query("CONSOLIDA__FIX_ID_ACAO_ATRIB_APOS_RESOLVER")
 
 WORK_DB = "__work.db"
 
@@ -276,6 +277,19 @@ class App(object):
         finally:
             os.chdir(currdir)    
     
+    def fix_atrib_apos_resolver(self, conn):
+        rows = conn.execute(SQL_FIX_ATRIB_APOS_RESOLVER).fetchall()
+        param_sets = []
+        for row in rows:
+            print(row)
+            id_chamado, id_acao_a, id_acao_b = row
+            param_sets.append( (-id_acao_b, id_chamado, id_acao_a) )
+            param_sets.append( (-id_acao_a, id_chamado, id_acao_b) )
+        sql = 'update rel_medicao set id_acao = ? where id_chamado = ? and id_acao = ?'
+        conn.executemany(sql, param_sets)
+        sql = 'update rel_medicao set id_acao = abs(id_acao) where id_acao < 0'
+        conn.executescript(sql)
+        
     def fill_table(self, conn, df):
         logger.info('preenchendo tabela REL_MEDICAO')
         conn.executescript(SQL_REL_MEDICAO_DDL)
@@ -283,6 +297,9 @@ class App(object):
         #df.to_sql(config.INCIDENT_TABLE, conn, index=False, if_exists="replace")
         conn.executemany(SQL_REL_MEDICAO_UPSERT, param_sets)
         conn.commit()
+        logger.info('Chaveando ações co-ocorrentes Resolver x Atribuição Interna')
+        self.fix_atrib_apos_resolver(conn)
+        self.fix_atrib_apos_resolver(conn)
         logger.info('preenchend campo MESA_ATUAL da tabela REL_MEDICAO')
         conn.executescript(SQL_UPDATE_MESA_ATUAL)
         logger.info('preenchend campo USER_STATUS da tabela REL_MEDICAO')
