@@ -110,31 +110,31 @@ entradas_n4 as (
 --
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
-select  a.id_chamado                                                        as incident_id
-,       a.chamado_pai                                                       as parent_id
-,       c.mesa_atual                                                        as group_
+select  a.id_chamado                                                           as incident_id
+,       a.chamado_pai                                                          as parent_id
+,       c.mesa_atual                                                           as group_
 ,       case    when a.id_chamado like 'T%'
                 then 'ATENDER'
                 when categoria like '%CORRIGIR%'
                 then 'CORRIGIR'
                 else 'ORIENTAR'
-        end                                                                 as category
+        end                                                                    as category
 ,       case    when c.PENDENCIA = 'S' then 'Y' 
                 when c.PENDENCIA = 'N' then 'N'
                 else '???'
-        end                                                                 as pending
-,       data_abertura_chamado                                               as created_at
-,       c.ultima_acao_nome                                                  as last_action
-,       c.data_inicio_acao                                                  as last_action_date
-,       d.designado                                                         as handler_name
-,       b.usuario_afetado                                                   as client
-,       b.nome_do_usuario_afetado                                           as client_name
-,       b.departamento_cliente                                              as orgunit
-,       e.duration_m                                                        as duration_m
-,       e.pending_m                                                         as pending_m
-,       floor(julianday('now') - julianday(a.data_abertura_chamado))        as aging
-,       floor(julianday('now') - julianday(f.data_entrada_n4))              as aging_n4
-,       floor(julianday('now') - julianday(a.data_ultima_acao))             as aging_last_action
+        end                                                                    as pending
+,       data_abertura_chamado                                                  as created_at
+,       c.ultima_acao_nome                                                     as last_action
+,       c.data_inicio_acao                                                     as last_action_date
+,       d.designado                                                            as handler_name
+,       b.usuario_afetado                                                      as client
+,       b.nome_do_usuario_afetado                                              as client_name
+,       b.departamento_cliente                                                 as orgunit
+,       e.duration_m                                                           as duration_m
+,       e.pending_m                                                            as pending_m
+,       cast(julianday('now') - julianday(a.data_abertura_chamado) as integer) as aging
+,       cast(julianday('now') - julianday(f.data_entrada_n4) as integer)       as aging_n4
+,       cast(julianday('now') - julianday(a.data_ultima_acao) as integer)      as aging_last_action
 from    incidentes_abertos as a
         --
         inner join incidente_solicitantes as b

@@ -4,6 +4,7 @@ import pyclick.util as util
 import pyclick.models as models
 import pyclick.repo as repo
 
+SQL_DASHBOARD_AGING = util.get_query('PORTAL__DASHBOARD_AGING')
 
 class RepoN4(repo.Repo):
 
@@ -21,16 +22,16 @@ class RepoN4(repo.Repo):
     def get_surveys(self):
         sql = """
             SELECT 	ID_PESQUISA
-            ,		ID_CHAMADO
-            ,		MESA_ACAO 		AS 'mesa'
-            ,		NOME_TECNICO 	AS 'tecnico'
-            ,		NOME_USUARIO 	AS 'usuario'
-            ,		DATA_RESPOSTA
-            ,		AVALIACAO
-            ,		MOTIVO
-            ,		COMENTARIO
-            FROM 	PESQUISAS
-            ORDER	BY ID_PESQUISA
+            ,       ID_CHAMADO
+            ,       MESA_ACAO       AS 'mesa'
+            ,       NOME_TECNICO    AS 'tecnico'
+            ,       NOME_USUARIO    AS 'usuario'
+            ,       DATA_RESPOSTA
+            ,       AVALIACAO
+            ,       MOTIVO
+            ,       COMENTARIO
+            FROM    PESQUISAS
+            ORDER   BY ID_PESQUISA
         """
         return pd.read_sql(sql, self.conn)
         
@@ -41,4 +42,6 @@ class RepoN4(repo.Repo):
         end_dt = self.conn.execute(sql).fetchone()[ 0 ]
         return start_dt, end_dt
     
+    def get_aging_dashboard_data(self):
+        return pd.read_sql(SQL_DASHBOARD_AGING, self.conn)
         
