@@ -73,7 +73,7 @@ class Prp(models.N4SapKpi):
         else:
             msg = f"{self.numerator} violações / {self.denominator} incidentes"
         return msg
-
+    
     def has_assignment_within_period(self, inc, start_dt, end_dt):
         for atrib in inc.get_atribuicoes_mesas([ self.MESA_PRIORIDADE ]):
             if atrib.intersects_with(start_dt, end_dt):
@@ -142,7 +142,8 @@ class PrpV2(Prp):
             duration_m = self.calc_duration_mesas(inc, [ self.MESA_PRIORIDADE ])
             breached = duration_m > prazo
             if inc.status == 'ABERTO' and not breached:
-                continue
+                if inc.mesa_atual in self.MESAS_CONTRATO:
+                    continue
             self.numerator   += (1 if breached else 0)
             self.denominator += 1
             self.update_details(inc, duration_m, breached)
