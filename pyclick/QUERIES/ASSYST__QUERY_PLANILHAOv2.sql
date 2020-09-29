@@ -409,7 +409,11 @@ REPORT AS (
 			AND	(INCIDENT.status_enum <> 1  
 			-- REMOVER DA LISTAGEM INCIDENTES RESOLVIDOS NA DATA
 			OR ACT_REG.ACT_TYPE_ID NOT IN (											 
-					4,	-- RESOLVER
+					-- Removido Resolver pois a Cinthia reportou no dia 28/09/2020 um caso em que o incidente
+					-- foi reaberto e que constava como aberto no final do período de medição 2020-09.
+					-- A geração do planilhao diário não trouxe a ação de Resolver
+					-- causando a adição indevida de 10 horas no incidente 1109175 no dia 2020-08-26
+					--4,	-- RESOLVER
 					5,	-- ENCERRAR
 					14,	-- RESOLVER FORNECEDOR - EXECUTAR ANTES DO "RESOLVER"!
 					18,	-- CANCELADO
