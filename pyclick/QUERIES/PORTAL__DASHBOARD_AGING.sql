@@ -1,11 +1,23 @@
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
 --
+-- Data Fim
+--
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+WITH data_fim as (
+    select  min(cast(julianday(valor) as integer), cast(julianday('now') as integer) ) as valor
+    from    PARAMS p 
+    where   param = 'HORA_FIM_APURACAO'
+),
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+--
 -- Incidentes Abertos
 --
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
-WITH incidentes_abertos as (
+incidentes_abertos as (
     select  a.*
     ,       b.mesa_atual
     ,       b.data_inicio_acao as data_ultima_acao
@@ -110,31 +122,29 @@ entradas_n4 as (
 --
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
-select  a.id_chamado                                                           as incident_id
-,       a.chamado_pai                                                          as parent_id
-,       c.mesa_atual                                                           as group_
-,       case    when a.id_chamado like 'T%'
-                then 'ATENDER'
-                when categoria like '%CORRIGIR%'
-                then 'CORRIGIR'
-                else 'ORIENTAR'
-        end                                                                    as category
+select  a.id_chamado                                                                                    as incident_id
+,       a.chamado_pai                                                                                   as parent_id
+,       c.mesa_atual                                                                                    as group_
+,       case    when a.id_chamado like 'T%'         then 'ATENDER'
+                when categoria    like '%CORRIGIR%' then 'CORRIGIR'
+                                                    else 'ORIENTAR'
+        end                                                                                             as category
 ,       case    when c.PENDENCIA = 'S' then 'Y' 
                 when c.PENDENCIA = 'N' then 'N'
                 else '???'
-        end                                                                    as pending
-,       data_abertura_chamado                                                  as created_at
-,       c.ultima_acao_nome                                                     as last_action
-,       c.data_inicio_acao                                                     as last_action_date
-,       d.designado                                                            as handler_name
-,       b.usuario_afetado                                                      as client
-,       b.nome_do_usuario_afetado                                              as client_name
-,       b.departamento_cliente                                                 as orgunit
-,       e.duration_m                                                           as duration_m
-,       e.pending_m                                                            as pending_m
-,       cast(julianday('now') - julianday(a.data_abertura_chamado) as integer) as aging
-,       cast(julianday('now') - julianday(f.data_entrada_n4) as integer)       as aging_n4
-,       cast(julianday('now') - julianday(a.data_ultima_acao) as integer)      as aging_last_action
+        end                                                                                             as pending
+,       data_abertura_chamado                                                                           as created_at
+,       c.ultima_acao_nome                                                                              as last_action
+,       c.data_inicio_acao                                                                              as last_action_date
+,       d.designado                                                                                     as handler_name
+,       b.usuario_afetado                                                                               as client
+,       b.nome_do_usuario_afetado                                                                       as client_name
+,       b.departamento_cliente                                                                          as orgunit
+,       e.duration_m                                                                                    as duration_m
+,       e.pending_m                                                                                     as pending_m
+,       cast(julianday( (select valor from data_fim) ) - julianday(a.data_abertura_chamado) as integer) as aging
+,       cast(julianday( (select valor from data_fim) ) - julianday(f.data_entrada_n4)       as integer) as aging_n4
+,       cast(julianday( (select valor from data_fim) ) - julianday(a.data_ultima_acao)      as integer) as aging_last_action
 from    incidentes_abertos as a
         --
         inner join incidente_solicitantes as b
