@@ -90,7 +90,7 @@ class Peso30(models.N4SapKpi):
             pendencia_m = self.calc_pendencia_mesas(inc, [ self.MESA_ESCALADOS ])
             breached = (duration_m + pendencia_m) > prazo_m
             if inc.status == 'ABERTO' and not breached:
-                if inc.mesa_atual in self.MESAS_CONTRATO:
+                if inc.mesa_atual == self.MESA_ESCALADOS:
                     continue
             self.denominator += 1
             self.numerator += 1 if breached else 0            

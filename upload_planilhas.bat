@@ -12,7 +12,9 @@ rem copy DADOS\N4\2020-07\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_
 rem if %errorlevel% neq 0 exit /b %errorlevel%
 rem copy DADOS\N4\2020-08\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-08\"
 rem if %errorlevel% neq 0 exit /b %errorlevel%
-copy DADOS\N4\2020-09\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09\"
+rem copy DADOS\N4\2020-09\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09\"
+rem if %errorlevel% neq 0 exit /b %errorlevel%
+copy DADOS\N4\2020-10\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-10\"
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 rem copy DADOS\N4\2020-02-ACC\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-02-ACC\"
@@ -29,8 +31,11 @@ rem copy DADOS\N4\2020-07-ACC\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\
 rem if %errorlevel% neq 0 exit /b %errorlevel%
 rem copy DADOS\N4\2020-08-ACC\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-08-ACC\"
 rem if %errorlevel% neq 0 exit /b %errorlevel%
-copy DADOS\N4\2020-09-ACC\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09-ACC\"
+rem copy DADOS\N4\2020-09-ACC\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09-ACC\"
+rem if %errorlevel% neq 0 exit /b %errorlevel%
+copy DADOS\N4\2020-10-ACC\__indicadores.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-10-ACC\"
 if %errorlevel% neq 0 exit /b %errorlevel%
+
 
 rem move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-02\__indicadores.xlsx" "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-02\indicadores.xlsx"
 rem if %errorlevel% neq 0 exit /b %errorlevel%
@@ -46,8 +51,11 @@ rem move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia E
 rem if %errorlevel% neq 0 exit /b %errorlevel%
 rem move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-08\__indicadores.xlsx" "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-08\indicadores.xlsx"
 rem if %errorlevel% neq 0 exit /b %errorlevel%
-move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09\__indicadores.xlsx" "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09\indicadores.xlsx"
+rem move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09\__indicadores.xlsx" "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09\indicadores.xlsx"
+rem if %errorlevel% neq 0 exit /b %errorlevel%
+move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-10\__indicadores.xlsx" "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-10\indicadores.xlsx"
 if %errorlevel% neq 0 exit /b %errorlevel%
+
 
 rem move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-02-ACC\__indicadores.xlsx" "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-02-ACC\indicadores.xlsx"
 rem if %errorlevel% neq 0 exit /b %errorlevel%
@@ -63,7 +71,9 @@ rem move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia E
 rem if %errorlevel% neq 0 exit /b %errorlevel%
 rem move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-08-ACC\__indicadores.xlsx" "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-08-ACC\indicadores.xlsx"
 rem if %errorlevel% neq 0 exit /b %errorlevel%
-move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09-ACC\__indicadores.xlsx" "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09-ACC\indicadores.xlsx"
+rem move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09-ACC\__indicadores.xlsx" "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-09-ACC\indicadores.xlsx"
+rem if %errorlevel% neq 0 exit /b %errorlevel%
+move "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-10-ACC\__indicadores.xlsx" "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\2020-10-ACC\indicadores.xlsx"
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 copy C:\Users\u4ul\analises\click\pyclick\DADOS\N4\quadro_acompanhamento.xlsx "\\petrobras.biz\Petrobras\TIC\TIC_CORP_DS-SIG_SUST\NP-2\Inteligencia Estat Monit\INDICADORES\quadro_acompanhamento.xlsx"

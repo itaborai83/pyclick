@@ -142,7 +142,7 @@ class PrpV2(Prp):
             duration_m = self.calc_duration_mesas(inc, [ self.MESA_PRIORIDADE ])
             breached = duration_m > prazo
             if inc.status == 'ABERTO' and not breached:
-                if inc.mesa_atual in self.MESAS_CONTRATO:
+                if inc.mesa_atual == self.MESA_PRIORIDADE:
                     continue
             self.numerator   += (1 if breached else 0)
             self.denominator += 1

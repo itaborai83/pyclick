@@ -299,7 +299,7 @@ class App(object):
         conn.commit()
         logger.info('Chaveando ações co-ocorrentes Resolver x Atribuição Interna')
         self.fix_atrib_apos_resolver(conn)
-        self.fix_atrib_apos_resolver(conn)
+        #self.fix_atrib_apos_resolver(conn)
         logger.info('preenchend campo MESA_ATUAL da tabela REL_MEDICAO')
         conn.executescript(SQL_UPDATE_MESA_ATUAL)
         logger.info('preenchend campo USER_STATUS da tabela REL_MEDICAO')
