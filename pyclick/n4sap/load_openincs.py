@@ -71,7 +71,7 @@ class App(object):
         logger.info('logging on to %s with user %s', self.portal, self.user)
         url = f'{self.portal}/security/logonUser'
         payload = { 'user': self.user, 'password': self.password }
-        r = requests.post(url, json=payload)
+        r = requests.post(url, json=payload, verify=False)
         response_payload = r.json()
         if not response_payload[ 'result' ]:
             logger.error('could not connect to the portal')
@@ -87,7 +87,7 @@ class App(object):
         logger.info('loading open incidents to %s', self.portal)
         url = f'{self.portal}/measurement/loadOpenIncidents'
         headers = {'X-N4SAP-SECURITY-TOKEN': token}
-        r = requests.post(url, headers=headers, json=payload)
+        r = requests.post(url, headers=headers, json=payload, verify=False)
         response_payload = r.json()
         if not response_payload[ 'result' ]:
             logger.error('could load incidents from the portal')
@@ -109,7 +109,7 @@ class App(object):
         url = f'{self.portal}/security/logoffUser'
         payload = { 'token': token }
         headers = {'X-N4SAP-SECURITY-TOKEN': token}
-        r = requests.post(url, headers=headers, json=payload)
+        r = requests.post(url, headers=headers, json=payload, verify=False)
         response_payload = r.json()
         if not response_payload[ 'result' ]:
             logger.error('could logoff from the portal')
