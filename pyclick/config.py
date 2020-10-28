@@ -191,7 +191,8 @@ START_CLOCK_ACTIONS = set([
     'Pendência Sanada - Aprovação', 
     'Retorno do usuário', 
     'Reabrir', 
-    'Reaberto pelo Fornecedor'
+    'Reaberto pelo Fornecedor',
+    'Pendência Sanada - Fornecedor/TIC' # adicionado com base no incidente 1474435 apontado pela Cinthia
 ])
 
 STOP_CLOCK_ACTIONS = set([
