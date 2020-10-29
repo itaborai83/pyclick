@@ -97,7 +97,9 @@ ACTION_TYPES AS (
 		148, /* PENDENCIA SANADA FERIADO LOCAL    */ 149, /* PENDENCIA FERIADO LOCAL        */	
 		150, /* PENDENCIA SANADA - FORNECEDOR/TIC */ 151, /* CANCELAR                       */	
 		152, /* RETORNO DO USUARIO                */ 153, /* AGUARDANDO CLIENTE - APROVACAO */	
-		154, /* AGUARDANDO CLIENTE - FORNECEDOR   */ 155  /* PENDENCIA SANADA - APROVACAO   */
+		154, /* AGUARDANDO CLIENTE - FORNECEDOR   */ 155, /* PENDENCIA SANADA - APROVACAO   */
+		42,	 /* Adicionar Informação (Pública) */ /* adicionado para fins de cálculo de última ação */
+		102	 /* Adicionar Informação (Técnica) */ /* adicionado para fins de cálculo de última ação */
 	)
 ),
 ACTIONS AS (

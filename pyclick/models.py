@@ -32,7 +32,9 @@ STATUS_MAPPING = {
     'Resolver Fornecedor - Executar antes do "Resolver"!'   : 'RESOLVIDO',
     'Iniciar Relógio'                                       : 'ABERTO',
     'Parar Relógio'                                         : 'ABERTO',
-    'Atendimento Programado'                                : 'ABERTO'
+    'Atendimento Programado'                                : 'ABERTO',
+    'Adicionar Informação (Técnica)'                        : 'ABERTO',
+    'Adicionar Informação (Pública)'                        : 'ABERTO',
 }
 
 class Event(object):
