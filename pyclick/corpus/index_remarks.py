@@ -12,145 +12,121 @@ import pyclick.assyst.config as click_config
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
-logger = util.get_logger('dump_remarks')
+logger = util.get_logger('index_remarks')
 
-SQL_CREATE_DETAILS_TABLE = """
-CREATE TABLE IF NOT EXISTS INCIDENTE_DETALHES(
+SQL_DDL = """
+CREATE TABLE IF NOT EXISTS INCIDENTE_TERMOS(
     ID_CHAMADO  TEXT NOT NULL,
-    DESCRICAO   TEXT NULL,
-    RESOLUCAO   TEXT NULL,
-    CONSTRAINT INCIDENTE_DETALHES_PK PRIMARY KEY(ID_CHAMADO)
-)
+    TERMO       TEXT NOT NULL,
+    FREQ		INTEGER NOT NULL,
+    CONSTRAINT INCIDENTE_TERMOS_PK PRIMARY KEY(ID_CHAMADO, TERMO)
+);
 """
 
-SQL_CREATE_REMARKS_TABLE = """
-CREATE TABLE IF NOT EXISTS INCIDENTE_TEXTOS(
-    ID_CHAMADO  TEXT NOT NULL,
-    ID_ACAO     INTEGER NOT NULL,
-    TEXTO       TEXT NULL,
-    CONSTRAINT INCIDENTE_TEXTOS_PK PRIMARY KEY(ID_CHAMADO, ID_ACAO)
-)
+SQL_FETCH_TEXTS = """
+    WITH TEXTOS AS (
+        SELECT	A.ID_CHAMADO
+        ,		0 AS ID_ACAO
+        ,		A.DESCRICAO AS TEXTO
+        FROM	INCIDENTE_DETALHES AS A
+        UNION	ALL
+        SELECT	ID_CHAMADO
+        ,		ID_ACAO
+        ,		TEXTO
+        FROM	INCIDENTE_TEXTOS IT 
+        ORDER	BY 1, 2
+    )
+    SELECT	ID_CHAMADO
+    ,		GROUP_CONCAT(TEXTO, ' ') AS TEXTO
+    FROM	TEXTOS
+    GROUP	BY ID_CHAMADO
+    ORDER	BY ID_CHAMADO
 """
-
-SQL_FETCH_ACTION_IDS = """
-SELECT	A.ID_CHAMADO
-,		A.ID_ACAO
-FROM	INCIDENTE_ACOES AS A
-ORDER	BY A.ID_ACAO        
-"""
-
-SQL_FETCH_DETAIL_IDS = """
-SELECT	A.ID_CHAMADO
-,		MIN(A.ID_ACAO) AS MIN_ID_ACAO
-,		MAX(CASE    WHEN A.ULTIMA_ACAO_NOME in ('Resolver', 'Cancelar')
-                    THEN A.ID_ACAO 
-                    ELSE NULL 
-        END) AS MAX_ID_RESOLUCAO
-FROM	INCIDENTE_ACOES AS A
-GROUP	BY A.ID_CHAMADO
-ORDER	BY A.ID_ACAO
-"""
-
-SQL_FETCH_REMARKS = """
-SELECT	A.ACT_REG_ID AS ID_ACAO
-,		LOWER(TRANSLATE(A.REMARKS, ''''+'"'+CHAR(9)+CHAR(10)+CHAR(11)+CHAR(12)+CHAR(13), '       ')) AS REMARKS
-FROM	VW_ACT_REG AS A
-WHERE	A.REMARKS IS NOT NULL 
-AND		A.REMARKS <> ''
-AND		A.ACT_REG_ID IN ({ACTION_IDS})
-ORDER	BY A.ACT_REG_ID
-"""
-
-SQL_FETCH_DETAILS = """
-SELECT	DISTINCT A.ACT_REG_ID AS ID_ACAO
-,		LOWER(TRANSLATE(B.REMARKS, ''''+'"'+CHAR(9)+CHAR(10)+CHAR(11)+CHAR(12)+CHAR(13), '       ')) AS REMARKS
-FROM	VW_ACT_REG AS A
-		--
-		INNER JOIN INC_DATA AS B
-		ON	A.INCIDENT_ID = B.INCIDENT_ID 
-		--
-WHERE	B.REMARKS IS NOT NULL 
-AND		B.REMARKS <> ''
-AND		A.ACT_REG_ID IN ({ACTION_IDS})
-ORDER	BY A.ACT_REG_ID
-"""
-
-STRIP_CHARS = set([
-    '@', "'", '"', '!', '#', '$', '£', '%', '¢', '¨', '¬', '&', '*', '(', ')',
-    '=', '+', '§', '|', '\\', ',', '<', '.', '>', ';', ':', '/', '?',
-    '°', '~', '^', ']', '}', 'º', '´', '`', '[', '{', 'ª', '\n', '\t', '\0', 
-    '\x8A', '\x8D', '\x87', '\x82', '\x83', '\x93', '\x90', '\x81'
-])
-
-SKIP_TEXTS = set([
-    """
-    'favor verificar',
-    'fechamento automatico apos 2 dias',
-    'relogio de fornecedor pausado apos o relogio de ans ser pausado',
-    'relogio de fornecedor iniciado apos o relogio de ans ser iniciado',
-    'assigned via workmanager',
-    'requisicao de servico completada',
-    'pendente aguardando aprovacao',
-    'withdrawn',
-    'retomar relogio apos aprovacao',
-    'em analise',
-    'incidente cancelado pelo analista',
-    'relogio de sla iniciado apos retorno do usuario',
-    'retorno do usuario',
-    'designado',
-    'verificar',
-    'n4',
-    'favor verificar grata',
-    'sap n4',
-    'aguardando retorno',
-    'favor verificar grato',
-    'inicio sap sust',
-    'tarefa de mudanca value changed from empty to false'
-    'prazo de atendimento e de 32 horas uteis favor verificar',
-    'inicio n4 sust',
-    'por favor verificar',
-    'tentativa de contato sem sucesso',
-    'aguardando retorno do usuario',
-    'verificando',
-    'gentileza verificar',
-    'favor atender',
-    'designando atraves do web service',
-    '',
-    'nao houve retorno da usuaria',
-    'aguardando retorno da usuaria',
-    'o prazo de atendimento e de ate 32 horas uteis favor verificar',
-    'nao houve retorno do usuario'
-    """
-])
-
 
 class App(object):
     
-    VERSION = (1, 0, 0)
-    BATCH_SIZE = 5000
+    VERSION             = (1, 0, 0)
+    MIN_TERM_FREQ       = 10
+    MAX_TERM_PCT_FREQ   = 0.20
     
-    def __init__(self, dir_apuracao):
+    def __init__(self, dir_apuracao, stop_words):
         self.dir_apuracao = dir_apuracao
+        self.stop_words = stop_words
     
-    def connect_db_assyst(self):
-        logger.info('connecting to assyst db')
-        return click_config.SQLALCHEMY_ENGINE.connect()    
-
-    def connect_db_apuracao(self):
-        logger.info('connecting to apuracao db')
+    def connect_db(self):
+        logger.info('connecting to  db')
         result_db = os.path.join(self.dir_apuracao, config.CONSOLIDATED_DB)
         conn = sqlite3.connect(result_db)
-        conn.executescript(SQL_CREATE_REMARKS_TABLE)
-        conn.executescript(SQL_CREATE_DETAILS_TABLE)
+        conn.executescript(SQL_DDL)
         return conn
     
-    def fetch_action_ids(self, conn_apuracao):
-        logger.info('fetching action ids')
-        action_ids_df = pd.read_sql(SQL_FETCH_ACTION_IDS, conn_apuracao, index_col=None)
-        qty = len(action_ids_df)
-        logger.info(f'{qty} action ids fetched')
-        return action_ids_df
+    def fetch_texts(self, conn):
+        logger.info('fetching texts')
+        texts_df = pd.read_sql(SQL_FETCH_TEXTS, conn, index_col=None)
+        qty = len(texts_df)
+        logger.info(f'{qty} texts fetched')
+        return texts_df
     
+    def index_incident(self, id_chamado, text, acc_terms, stop_words):
+        terms = re.split(r'\s+', text)
+        chamado_terms = {}
+        for term in terms:
+            if term in stop_words:
+                continue
+            if term not in acc_terms:
+                acc_terms[ term ] = set()
+            if term not in chamado_terms:
+                chamado_terms[ term ] = 0
+            acc_terms[ term ].add(id_chamado)
+            chamado_terms[ term ] += 1
+        return chamado_terms
+    
+    def build_prune_set(self, acc_terms):
+        prune_set = set()
+        # prune infrequent terms
+        for term, chamados_set in acc_terms.items():
+            if len(chamados_set) < self.MIN_TERM_FREQ:
+                prune_set.add(term)
+        # prune too frequent terms
+        qty = len(acc_terms)
+        max_term_freq = round(qty * self.MAX_TERM_PCT_FREQ)
+        for term, chamados_set in acc_terms.items():
+            if len(chamados_set) > max_term_freq:
+                prune_set.add(term)
+        #logger.debug(prune_set)
+        return prune_set
+        
+    def prune_terms(self, chamados, acc_terms):
+        prune_set = self.build_prune_set(acc_terms)
+        for id_chamado, chamado_terms in chamados.items():
+            exclude_terms = []
+            for term, freq in chamado_terms.items():
+                if term in prune_set:
+                    exclude_terms.append(term)
+            for term in exclude_terms:
+                del chamado_terms[ term ]
+        
+    def clear_terms(self, conn):
+        conn.executescript('DELETE FROM INCIDENTE_TERMOS')
+        
+    def save_terms(self, conn, id_chamado, chamado_terms):
+        sql = 'insert into incidente_termos(id_chamado, termo, freq) values (?, ?, ?)'
+        args_set = []
+        for term, freq in chamado_terms.items():
+            args_set.append( (id_chamado, term, freq) )
+        conn.executemany(sql, args_set)
+    
+    def read_stop_words(self):
+        stop_words = set()
+        with open(self.stop_words) as fh:
+            for line in fh:
+                line = line.strip()
+                if line.startswith("#"):    
+                    continue # comment
+                stop_words.add(line)
+        return stop_words
+        
+    """
     def fetch_details_action_ids(self, conn_apuracao):
         logger.info('fetching deatils action ids')
         details_action_ids_df = pd.read_sql(SQL_FETCH_DETAIL_IDS, conn_apuracao, index_col=None)
@@ -307,14 +283,28 @@ class App(object):
             logger.info(f'fetching resolutions batch {i + 1} containing {len(batch)} actions')
             self.fetch_resolutions(conn_assyst, batch, resolutions)
         self.save_details(conn_apuracao, details, resolutions)
-        
+    """
+    
     def run(self):
         try:
-            logger.info('starting remarks dumper - version %d.%d.%d', *self.VERSION)
-            conn_assyst = self.connect_db_assyst()
-            conn_apuracao = self.connect_db_apuracao()
-            self.dump_remarks(conn_assyst, conn_apuracao)
-            self.dump_details(conn_assyst, conn_apuracao)
+            logger.info('starting remarks indexer - version %d.%d.%d', *self.VERSION)
+            conn = self.connect_db()
+            stop_words = self.read_stop_words()
+            texts_df = self.fetch_texts(conn)
+            acc_terms = {}
+            chamado_terms = {}
+            chamados = {}
+            for row in texts_df.itertuples():
+                chamado_terms = self.index_incident(row.ID_CHAMADO, row.TEXTO, acc_terms, stop_words)
+                chamados[ row.ID_CHAMADO ] = chamado_terms
+            logger.info('pruning terms')
+            self.prune_terms(chamados, acc_terms)
+            logger.info('clearing terms')
+            self.clear_terms(conn)
+            logger.info('storing terms')
+            for id_chamado, chamado_terms in chamados.items():
+                self.save_terms(conn, id_chamado, chamado_terms)
+            conn.commit()
             logger.info('finished')
         except:
             logger.exception('an error has occurred')
@@ -323,7 +313,8 @@ class App(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('dir_apuracao', type=str, help='diretório de apuração')
+    parser.add_argument('stop_words', type=str, help='arquivo de stop words')
     args = parser.parse_args()
-    app = App(args.dir_apuracao)
+    app = App(args.dir_apuracao, args.stop_words)
     app.run()
-    
+     
