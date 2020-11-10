@@ -22,10 +22,8 @@ data as (
 	,		a.status
 	,		a.mesa
 	,       a.aging
-	,		case 	when a.aging < 30 then 'ok' 
-					when a.aging < 60 then 'aging 30'
-					when a.aging < 90 then 'aging 60'
-					else 'aging 90'
+	,		case 	when a.aging < 60 then 'ok' 
+					else 'aging 60+'
 			end as categoria
 	,		c.termo
 	,		c.freq

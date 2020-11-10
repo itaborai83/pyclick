@@ -10,7 +10,7 @@ import numpy as np
 #import matplotlib.pyplot as plt
 
 
-from sklearn.naive_bayes import ComplementNB
+from sklearn.naive_bayes import ComplementNB, MultinomialNB
 from sklearn import metrics
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -55,7 +55,6 @@ class App(object):
         labels = data_df[ 'categoria' ].array
         classifier.fit(bow, labels)
         return vectorizer, classifier
-        
     
     def analyze_class(self, vectorizer, classifier, class_name):
         idx = -1
@@ -81,24 +80,18 @@ class App(object):
             
             term     = []
             prob_ok  = []
-            prob_a30 = []
             prob_a60 = []
-            prob_a90 = []
             for single_term_doc, classification in zip(identitiy, classifications):
                 terms = vectorizer.inverse_transform(single_term_doc)
                 assert len(terms) == 1
                 term.append(terms[0][0])
                 prob_ok.append(classification[0])
-                prob_a30.append(classification[1])
-                prob_a60.append(classification[2])
-                prob_a90.append(classification[3])
+                prob_a60.append(classification[1])
                 #print(terms[0], classification[0], classification[1], classification[2], classification[3])
             terms_df = pd.DataFrame({
                 'term'      : term,
                 'prob_ok'   : prob_ok,
-                'prob_a30'  : prob_a30,
                 'prob_a60'  : prob_a60,
-                'prob_a90'  : prob_a90,
             })
             terms_df.to_excel('terms.xlsx', index=False)
             """
