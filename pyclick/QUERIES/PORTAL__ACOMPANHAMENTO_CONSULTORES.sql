@@ -64,6 +64,6 @@ select	a.ultimo_designado_n4 																				as designado
 from	incidents as a
 where	a.ultimo_designado_n4 is not null
 group	by a.ultimo_designado_n4
-order	by 1 desc
+order	by 3 desc
 
 
