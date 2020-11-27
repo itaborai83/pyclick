@@ -418,8 +418,12 @@ REPORT AS (
 					--4,	-- RESOLVER
 					5,	-- ENCERRAR
 					14,	-- RESOLVER FORNECEDOR - EXECUTAR ANTES DO "RESOLVER"!
-					18,	-- CANCELADO
-					151	-- CANCELAR
+					18	-- CANCELADO
+					-- Removido Cancelar pois a Cinthia reportou no dia 28/09/2020 um caso em que o incidente
+					-- foi reaberto e que constava como aberto no final do período de medição 2020-11.
+					-- A geração do planilhao diário não trouxe a ação de Cancelar
+					-- causando o incidente cancelado para constar como aberto
+					--151	-- CANCELAR
 				))
 			--
 			INNER JOIN INC_CAT INC_CAT_REGISTRO  WITH (NOLOCK)
