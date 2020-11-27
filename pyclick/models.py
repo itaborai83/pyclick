@@ -423,7 +423,15 @@ class Incidente(object):
     @property
     def status(self):
         assert self.action_count > 0
-        return self.acoes[ -1 ].status
+        if len(self.acoes) == 1:
+            return self.acoes[ -1 ].status
+        else:
+            if self.acoes[ -1 ].acao_nome ==  'Atribuição interna' and self.acoes[ -2 ].acao_nome ==  'Resolver':
+                # tratamento de atribuição interna posterior a resolução
+                # exemplo: T1839006 apontado pela Cinthia no dia 27/11/2020, apuração de Novembro
+                return self.acoes[ -2 ].status
+            else:
+                return self.acoes[ -1 ].status
     
     @property
     def ultima_acao_aberta(self):
