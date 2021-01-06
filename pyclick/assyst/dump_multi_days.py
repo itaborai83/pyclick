@@ -12,7 +12,7 @@ logger = util.get_logger('dump_multi_days')
 
 class DelayedExecution():
     
-    MAX_RETRIES = 3
+    MAX_RETRIES = 5
     
     def __init__(self, dir_staging, date, compress):
         self.dir_staging = dir_staging
@@ -94,6 +94,7 @@ class DelayedExecution():
         if self.popen.returncode != None:
             return
         self.popen.kill()
+        
     def retry(self):
         assert self.popen is None
         assert self.waiting == False
@@ -104,9 +105,11 @@ class DelayedExecution():
         stdout_file = os.path.join(self.dir_staging, self.date + ".out")
         stdout = open(stdout_file, "a") # open for appending
         if self.compress:
-            cmd = f"python -m pyclick.assyst.dump_daily --compress {self.dir_staging} {self.date}"
+        #    cmd = f"python -m pyclick.assyst.dump_daily --compress {self.dir_staging} {self.date}"
+            cmd = f"venv\Scripts\python.exe -m pyclick.assyst.dump_daily --compress {self.dir_staging} {self.date}"
         else:
-            cmd = f"python -m pyclick.assyst.dump_daily {self.dir_staging} {self.date}"
+        #    cmd = f"python -m pyclick.assyst.dump_daily {self.dir_staging} {self.date}"
+            cmd = f"venv\Scripts\python.exe -m pyclick.assyst.dump_daily {self.dir_staging} {self.date}"        
         self.popen = subprocess.Popen(
             args = cmd,
             stdout = stdout,
