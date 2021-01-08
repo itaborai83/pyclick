@@ -21,6 +21,38 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('csat')
 
+def build_ranges(end_date):
+    year = int(end_date[:4])
+    ranges = {
+        "JAN":  (f'{year-1}-12-26 00:00:00',    f'{year}-01-25 23:59:59'),
+        "FEV":  (f'{year}-01-26 00:00:00',      f'{year}-02-25 23:59:59'),
+        "MAR":  (f'{year}-02-26 00:00:00',      f'{year}-03-25 23:59:59'),
+        "ABR":  (f'{year}-03-26 00:00:00',      f'{year}-04-25 23:59:59'),
+        "MAIO": (f'{year}-04-26 00:00:00',      f'{year}-05-25 23:59:59'),
+        "JUN":  (f'{year}-05-26 00:00:00',      f'{year}-06-25 23:59:59'),
+        "JUL":  (f'{year}-06-26 00:00:00',      f'{year}-07-25 23:59:59'),
+        "AGO":  (f'{year}-07-26 00:00:00',      f'{year}-08-25 23:59:59'),
+        "SET":  (f'{year}-08-26 00:00:00',      f'{year}-09-25 23:59:59'),
+        "OUT":  (f'{year}-09-26 00:00:00',      f'{year}-10-25 23:59:59'),
+        "NOV":  (f'{year}-10-26 00:00:00',      f'{year}-11-25 23:59:59'),
+        "DEZ":  (f'{year}-11-26 00:00:00',      f'{year}-12-31 23:59:59'),
+    }
+    ranges_acc = {
+        "JAN":  (f'{year-1}-12-26 00:00:00',     f'{year}-01-25 23:59:59'),
+        "FEV":  (f'{year-1}-12-26 00:00:00',     f'{year}-02-25 23:59:59'),
+        "MAR":  (f'{year-1}-12-26 00:00:00',     f'{year}-03-25 23:59:59'),
+        "ABR":  (f'{year-1}-12-26 00:00:00',     f'{year}-04-25 23:59:59'),
+        "MAIO": (f'{year-1}-12-26 00:00:00',     f'{year}-05-25 23:59:59'),
+        "JUN":  (f'{year-1}-12-26 00:00:00',     f'{year}-06-25 23:59:59'),
+        "JUL":  (f'{year-1}-12-26 00:00:00',     f'{year}-07-25 23:59:59'),
+        "AGO":  (f'{year-1}-12-26 00:00:00',     f'{year}-08-25 23:59:59'),
+        "SET":  (f'{year-1}-12-26 00:00:00',     f'{year}-09-25 23:59:59'),
+        "OUT":  (f'{year-1}-12-26 00:00:00',     f'{year}-10-25 23:59:59'),
+        "NOV":  (f'{year-1}-12-26 00:00:00',     f'{year}-11-25 23:59:59'),
+        "DEZ":  (f'{year-1}-12-26 00:00:00',     f'{year}-12-31 23:59:59'),
+    }
+    return ranges, ranges_acc
+    
 class App(object):
     
     VERSION = (1, 0, 0)
@@ -161,78 +193,7 @@ class App(object):
                 data[ periodo ].append(kpi)
                 data[ f"{periodo} Qtd" ].append(qtd)
         return pd.DataFrame(data)
-    
-    """
-    def generate_controle(self, pesquisas_df, min_surveys, by_tecnico=False):
-        logger.info("generating control table")
-        data = {}
-        for row in pesquisas_df.itertuples():
-            mesa          = row.mesa_acao
-            chave_usuario = row.chave_usuario
-            nome_usuario  = row.nome_usuario
-            if by_tecnico:
-                chave_tecnico = row.chave_tecnico
-                nome_tecnico  = row.nome_tecnico
-                key = (mesa, chave_usuario, nome_usuario, chave_tecnico, nome_tecnico)
-            else:
-                key = (mesa, chave_usuario, nome_usuario)
-            qtd = 1
-            if pd.isna(row.data_resposta):
-                ruim = 0
-                boa = 0
-            else:
-                ruim = 1 if row.avaliacao < self.THRESHOLD_KPI else 0
-                boa = 1 if row.avaliacao >= self.THRESHOLD_KPI else 0
-            if key not in data:
-                data[ key ] = { 'qtd' : 0, 'avaliacoes_ruins' : 0, 'avaliacoes_boas' : 0 }
-            data[ key ][ 'qtd' ] += 1
-            data[ key ][ 'avaliacoes_ruins' ] += ruim
-            data[ key ][ 'avaliacoes_boas' ] += boa
         
-        if by_tecnico:
-            result = { 
-                'mesa': [], 
-                'chave_usuario': [], 
-                'nome_usuario': [], 
-                'chave_tecnico': [], 
-                'nome_tecnico': [], 
-                'qtd': [], 
-                'avaliacoes_ruins': [], 
-                'avaliacoes_boas': [] 
-            }
-        else:
-            result = { 
-                'mesa': [], 
-                'chave_usuario': [], 
-                'nome_usuario': [], 
-                'qtd': [], 
-                'avaliacoes_ruins': [], 
-                'avaliacoes_boas': []             
-            }
-        for key, value in data.items():
-            if value[ 'qtd' ] < min_surveys:
-                continue
-            if by_tecnico:
-                (mesa, chave_usuario, nome_usuario, chave_tecnico, nome_tecnico) = key
-            else:
-                (mesa, chave_usuario, nome_usuario) = key
-            qtd              = value[ 'qtd' ]
-            avaliacoes_ruins = value[ 'avaliacoes_ruins' ]
-            avaliacoes_boas  = value[ 'avaliacoes_boas' ]
-            result[ 'mesa'              ].append(mesa)
-            result[ 'chave_usuario'     ].append(chave_usuario)
-            result[ 'nome_usuario'      ].append(nome_usuario)
-            if by_tecnico:
-                result[ 'chave_tecnico' ].append(chave_tecnico)
-                result[ 'nome_tecnico'  ].append(nome_tecnico)
-            result[ 'qtd' ].append(qtd)
-            result[ 'avaliacoes_ruins'  ].append(avaliacoes_ruins)
-            result[ 'avaliacoes_boas'   ].append(avaliacoes_boas)
-        result_df = pd.DataFrame(result)
-        result_df.sort_values(['qtd', 'avaliacoes_ruins', 'avaliacoes_boas'], ascending=False, inplace=True, ignore_index=True)
-        return result_df
-    """
-    
     def _date_to_period(self, dt):
         if pd.isna(dt):
             return "XXXXXX"
@@ -241,8 +202,8 @@ class App(object):
             survey_date = util.unparse_date(dt) + " 00:00:00"
             if begin <= survey_date <= end:
                 return periodo
-        logger.warning("invalid date %s", util.unparse_date(dt))
-        print(begin, util.unparse_date(dt), end)
+        #logger.warning("invalid date %s", util.unparse_date(dt))
+        #print(begin, util.unparse_date(dt), end)
         #assert 1 == 2 # TODO: handle out of range dates
         return "XXXXXX"
         
@@ -421,6 +382,9 @@ if __name__ == '__main__':
     parser.add_argument('start_date', type=str, help='start date')
     parser.add_argument('end_date', type=str, help='end date')
     args = parser.parse_args()
+    ranges, ranges_acc = build_ranges(args.end_date)
+    App.RANGES = ranges
+    App.RANGES_ACC = ranges_acc
     app = App(args.dir_csat, args.start_date, args.end_date)
     app.run()
     
