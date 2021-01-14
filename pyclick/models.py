@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import pyclick.util as util
 import pyclick.ranges as ranges
@@ -166,7 +167,13 @@ class Acao(object):
     ]
     
     def __init__(self, id_acao, acao_nome, pendencia, mesa_atual, data_acao, data_fim_acao, duracao_m):
-        assert data_fim_acao is None or data_acao <= data_fim_acao # should I keep this check given that there are known cases of temporal inconsistencies?
+        if not (data_fim_acao is None or data_acao <= data_fim_acao):
+            print(f'WARNING!!!!', file=sys.stderr)
+            print(f'temporal inconsistency for action {id_acao} - start {data_acao} / end {data_fim_acao}', file=sys.stderr)
+            print(f'switching end date to its start', file=sys.stderr)
+            data_fim_acao = data_acao
+            #assert data_fim_acao is None # should I keep this check given that there are known cases of temporal inconsistencies?
+            #assert data_acao <= data_fim_acao # should I keep this check given that there are known cases of temporal inconsistencies?
         assert pendencia in ( 'S', 'N' )
         assert duracao_m >= 0
         self.id_acao        = id_acao
