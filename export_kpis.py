@@ -295,9 +295,10 @@ class App(object):
         "CSAT_GERENCIA_DESENV"
     ]
 
-    def __init__(self, dir_n4, dir_csat, cred_json):
+    def __init__(self, dir_n4, dir_csat, cred_json, current_year):
         self.dir_n4 = dir_n4
         self.dir_csat = dir_csat
+        self.current_year = current_year
         self.cred_json = cred_json
         self.nocloud = not cred_json
     
@@ -312,12 +313,17 @@ class App(object):
     
     def get_dirs_apuracoes(self):
         logger.info('getting diretórios de apuração')
+        periodo_mapping = self.get_period_mapping()
+        valid_periods = list(periodo_mapping.values())
+        valid_periods = valid_periods + list([ period + "-ACC" for period in valid_periods ])        
+        print(valid_periods)
         result = []
         for d in os.listdir(self.dir_n4):
             path = os.path.join(self.dir_n4, d)
             if not os.path.isdir(path) or d.startswith('_'):
                 continue
-            result.append(path)
+            if d in valid_periods:
+                result.append(path)
         result.sort()
         return result
     
@@ -405,7 +411,23 @@ class App(object):
             logger.warning("spreadsheet already exists. Deleting it")
             os.unlink(ks)
         return pd.ExcelWriter(ks, datetime_format=None)   
-    
+
+    def get_period_mapping(self):
+        return {
+            'JAN'   : f'{self.current_year}-01', 
+            'FEV'   : f'{self.current_year}-02', 
+            'MAR'   : f'{self.current_year}-03', 
+            'ABR'   : f'{self.current_year}-04', 
+            'MAIO'  : f'{self.current_year}-05', 
+            'JUN'   : f'{self.current_year}-06', 
+            'JUL'   : f'{self.current_year}-07', 
+            'AGO'   : f'{self.current_year}-08', 
+            'SET'   : f'{self.current_year}-09', 
+            'OUT'   : f'{self.current_year}-10', 
+            'NOV'   : f'{self.current_year}-11', 
+            'DEZ'   : f'{self.current_year}-12'
+        }
+        
     def process_csat(self, cred):
         logger.info('reading CSAT spreadsheet')
         path = os.path.join(self.dir_csat, self.CSAT_SPREADSHEET)
@@ -458,21 +480,23 @@ class App(object):
             'N4-SAP-SUSTENTACAO-SATI'           : 'SATI',
             'N4-SAP-SUSTENTACAO-DESENV'         : 'DESENV',
         }
+        
         meses = [ 'JAN', 'FEV', 'MAR', 'ABR', 'MAIO', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ' ]
-        periodo_mapping = {
-            'JAN'   : '2020-01', 
-            'FEV'   : '2020-02', 
-            'MAR'   : '2020-03', 
-            'ABR'   : '2020-04', 
-            'MAIO'  : '2020-05', 
-            'JUN'   : '2020-06', 
-            'JUL'   : '2020-07', 
-            'AGO'   : '2020-08', 
-            'SET'   : '2020-09', 
-            'OUT'   : '2020-10', 
-            'NOV'   : '2020-11', 
-            'DEZ'   : '2020-12'
-        }
+        #periodo_mapping = {
+        #    'JAN'   : f'{self.current_year}-01', 
+        #    'FEV'   : f'{self.current_year}-02', 
+        #    'MAR'   : f'{self.current_year}-03', 
+        #    'ABR'   : f'{self.current_year}-04', 
+        #    'MAIO'  : f'{self.current_year}-05', 
+        #    'JUN'   : f'{self.current_year}-06', 
+        #    'JUL'   : f'{self.current_year}-07', 
+        #    'AGO'   : f'{self.current_year}-08', 
+        #    'SET'   : f'{self.current_year}-09', 
+        #    'OUT'   : f'{self.current_year}-10', 
+        #    'NOV'   : f'{self.current_year}-11', 
+        #    'DEZ'   : f'{self.current_year}-12'
+        #}
+        periodo_mapping = self.get_period_mapping()
         csat_gerencia = { 
             'PERIODO' : [], 'INDICADOR' : [], 'MESA' : [], 'VALOR' : [], 'SLA' : [], 'OBS' : [] 
         }        
@@ -547,7 +571,7 @@ class App(object):
         else:
             acc = False
         return ano, mes, acc
-        
+    
     def run(self):
         try:
             logger.info('export_firebase - versão %d.%d.%d', *self.VERSION)
@@ -584,11 +608,14 @@ class App(object):
             raise
     
 if __name__ == '__main__':
+    import datetime as dt
+    current_year = dt.datetime.now().year
     parser = argparse.ArgumentParser()
     parser.add_argument('--cred', type=str, help='arquivo de credenciais para carga no Firestore')
+    parser.add_argument('--year', type=int, default=current_year, help='ano atual')
     parser.add_argument('dir_n4', type=str, help='diretório n4')
     parser.add_argument('dir_csat', type=str, help='diretório CSAT')
     args = parser.parse_args()
-    app = App(args.dir_n4, args.dir_csat, args.cred)
+    app = App(args.dir_n4, args.dir_csat, args.cred, args.year)
     app.run()
     
