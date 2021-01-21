@@ -1,0 +1,18 @@
+{
+	"namespace": "click.petrobras.avro",
+	"type": "record",
+	"name": "CLICK_ITEM",
+	"fields": [
+		{ "name": "ITEM_ID",        "type": [ "int",    "null" ] },
+		{ "name": "ITEM_N",         "type": [ "string", "null" ] },
+		{ "name": "PRODUCT_ID",     "type": [ "int",    "null" ] },
+		{ "name": "PRODUCT_N",      "type": [ "string", "null" ] },
+		{ "name": "PROD_CLS_ID",    "type": [ "int",    "null" ] },
+		{ "name": "PROD_CLS_N",     "type": [ "string", "null" ] },
+		{ "name": "GENERIC_CLS_ID", "type": [ "int",    "null" ] },
+		{ "name": "GENERIC_CLS_N",  "type": [ "string", "null" ] },
+		{ "name": "SUPPLIER_ID",    "type": [ "int",    "null" ] },
+		{ "name": "SUPPLIER_N",     "type": [ "string", "null" ] }
+	]
+}
+

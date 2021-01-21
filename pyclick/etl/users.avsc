@@ -1,0 +1,49 @@
+{
+	"namespace": "click.petrobras.avro",
+	"type": "record",
+	"name": "CLICK_USER",
+	"fields": [
+		{ "name": "USR_ID"          ,  "type": [ "int",		"null" ] }
+	,	{ "name": "USR_SC"          ,  "type": [ "string",	"null" ] }
+	,	{ "name": "USR_N"           ,  "type": [ "string",	"null" ] }
+	,	{ "name": "USR_RMK"         ,  "type": [ "string",	"null" ] }
+	,	{ "name": "USR_ROLE_ID"     ,  "type": [ "int",		"null" ] }
+	,	{ "name": "USR_ROLE_SC"     ,  "type": [ "string",	"null" ] }
+	,	{ "name": "USR_ROLE_N"      ,  "type": [ "string",	"null" ] }
+	,	{ "name": "SECTN_DEPT_ID"   ,  "type": [ "int",		"null" ] }
+	,	{ "name": "SECTN_DEPT_SC"   ,  "type": [ "string",	"null" ] }
+	,	{ "name": "DEPT_ID"			,  "type": [ "int",		"null" ] }
+	,	{ "name": "DEPT_SC"         ,  "type": [ "string",	"null" ] }
+	,	{ "name": "DEPT_N"          ,  "type": [ "string",	"null" ] }
+	,	{ "name": "SECTN_ID"        ,  "type": [ "int",		"null" ] }
+	,	{ "name": "SECTN_SC"        ,  "type": [ "string",	"null" ] }
+	,	{ "name": "SECTN_N"         ,  "type": [ "string",	"null" ] }
+	,	{ "name": "BRANCH_ID"       ,  "type": [ "int",		"null" ] }
+	,	{ "name": "BRANCH_SC"       ,  "type": [ "string",	"null" ] }
+	,	{ "name": "BRANCH_N"        ,  "type": [ "string",	"null" ] }
+	,	{ "name": "ORGANIZACAO_ID"  ,  "type": [ "int",		"null" ] }
+	,	{ "name": "ORGANIZACAO_SC"	,  "type": [ "string",	"null" ] }
+	,	{ "name": "ORGANIZACAO_N"   ,  "type": [ "string",	"null" ] }
+	,	{ "name": "COMPANHIA_ID"    ,  "type": [ "int",		"null" ] }
+	,	{ "name": "COMPANHIA_SC"    ,  "type": [ "string",	"null" ] }
+	,	{ "name": "COMPANHIA_N"     ,  "type": [ "string",	"null" ] }
+	,	{ "name": "SITE_ID"         ,  "type": [ "int",		"null" ] }
+	,	{ "name": "SITE_SC"         ,  "type": [ "string",	"null" ] }
+	,	{ "name": "SITE_N"          ,  "type": [ "string",	"null" ] }
+	,	{ "name": "SITE_RMK"        ,  "type": [ "string",	"null" ] }
+	,	{ "name": "SALA_SITE_ID"    ,  "type": [ "int",		"null" ] }
+	,	{ "name": "SALA_SITE_SC"    ,  "type": [ "string",	"null" ] }
+	,	{ "name": "SALA_ID"         ,  "type": [ "int",		"null" ] }
+	,	{ "name": "SALA_SC"         ,  "type": [ "string",	"null" ] }
+	,	{ "name": "SALA_N"          ,  "type": [ "string",	"null" ] }
+	,	{ "name": "CIDADE_ID"       ,  "type": [ "int",		"null" ] }
+	,	{ "name": "CIDADE_SC"       ,  "type": [ "string",	"null" ] }
+	,	{ "name": "CIDADE_N"        ,  "type": [ "string",	"null" ] }
+	,	{ "name": "ESTADO_ID"       ,  "type": [ "int",		"null" ] }
+	,	{ "name": "ESTADO_SC"       ,  "type": [ "string",	"null" ] }
+	,	{ "name": "ESTADO_N"        ,  "type": [ "string",	"null" ] }
+	,	{ "name": "PAIS_ID"         ,  "type": [ "int",		"null" ] }
+	,	{ "name": "PAIS_SC"         ,  "type": [ "string",	"null" ] }
+	,	{ "name": "PAIS_N"          ,  "type": [ "string",	"null" ] }
+	]
+}	

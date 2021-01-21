@@ -1,0 +1,38 @@
+{
+	"namespace": "click.petrobras.avro",
+	"type": "record",
+	"name": "CLICK_OFFERING",
+	"fields": [
+		{ "name": "SERV_OFF_ID"			, "type": [ "int", 	 	"null" ] }
+	,	{ "name": "SERV_OFF_SC"			, "type": [ "string",	"null" ] }
+	,	{ "name": "SERV_OFF_N"			, "type": [ "string",	"null" ] }
+	,	{ "name": "BUSINESS_REMARKS"	, "type": [ "string",	"null" ] }
+	,	{ "name": "REMARKS"				, "type": [ "string",	"null" ] }
+	,	{ "name": "STAT_FLAG"			, "type": [ "boolean",	"null" ] }
+	,	{ "name": "SOLIC_SERVICO"		, "type": [ "boolean",	"null" ] }
+	,	{ "name": "SERV_SC"				, "type": [ "string",	"null" ] }
+	,	{ "name": "SERV_N"				, "type": [ "string",	"null" ] }
+	,	{ "name": "SERV_CSG"			, "type": [ "string",	"null" ] }
+	,	{ "name": "SERV_DEPT_SC"		, "type": [ "string",	"null" ] }
+	,	{ "name": "SERV_DEPT_N"			, "type": [ "string",	"null" ] }
+	,	{ "name": "SERV_NEGOCIO"		, "type": [ "boolean",	"null" ] }
+	,	{ "name": "FORMULARIO"			, "type": [ "string",	"null" ] }
+	,	{ "name": "PROCESSO"			, "type": [ "string",	"null" ] }
+	,	{ "name": "PROCESSO_CSG"		, "type": [ "string",	"null" ] }	
+	,	{ "name": "PRODUCT_SC"			, "type": [ "string",	"null" ] }
+	,	{ "name": "PRODUCT_N"			, "type": [ "string",	"null" ] }
+	,	{ "name": "ITEM_ID"				, "type": [ "int",		"null" ] }
+	,	{ "name": "ITEM_SC"				, "type": [ "string",	"null" ] }
+	,	{ "name": "ITEM_N"				, "type": [ "string",	"null" ] }
+	,	{ "name": "CATEGORIA"			, "type": [ "string",	"null" ] }
+	,	{ "name": "IMPACTO_SC"			, "type": [ "string",	"null" ] }
+	,	{ "name": "IMPACTO_N"			, "type": [ "string",	"null" ] }
+	,	{ "name": "IMPACTO_CSG"			, "type": [ "string",	"null" ] }	
+	,	{ "name": "URGENCIA_SC"			, "type": [ "string",	"null" ] }
+	,	{ "name": "URGENCIA_N"			, "type": [ "string",	"null" ] }
+	,	{ "name": "URGENCIA_CSG"		, "type": [ "string",	"null" ] }
+	,	{ "name": "SLA_SC"				, "type": [ "string",	"null" ] }
+	,	{ "name": "SLA_N"				, "type": [ "string",	"null" ] }
+	,	{ "name": "PRAZO_M"				, "type": [ "int",		"null" ] }	
+	]
+}

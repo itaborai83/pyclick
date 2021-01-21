@@ -1,0 +1,50 @@
+{
+	"namespace": "click.petrobras.avro",
+	"type": "record",
+	"name": "CLICK_SCHEDULE",
+	"fields": [
+		{ "name": "MESA_ID"			, "type": [ "int",		"null" ] }
+	,	{ "name": "MESA_SC"			, "type": [ "string",	"null" ] }
+	,	{ "name": "MESA_N"			, "type": [ "string",	"null" ] }
+	,	{ "name": "FORNECEDOR_ID"	, "type": [ "int",		"null" ] }
+	,	{ "name": "FORNECEDOR_SC"	, "type": [ "string",	"null" ] }
+	,	{ "name": "FORNECEDOR_N"	, "type": [ "string",	"null" ] }
+	,	{ "name": "SLA_ID"			, "type": [ "int",		"null" ] }
+	,	{ "name": "SLA_SC"			, "type": [ "string",	"null" ] }
+	,	{ "name": "SLA_N"			, "type": [ "string",	"null" ] }
+	,	{ "name": "MON_BEGIN"		, "type": [ "string",	"null" ] }
+	,	{ "name": "MON_END"			, "type": [ "string",	"null" ] }
+	,	{ "name": "TUE_BEGIN"		, "type": [ "string",	"null" ] }
+	,	{ "name": "TUE_END"			, "type": [ "string",	"null" ] }
+	,	{ "name": "WED_BEGIN"		, "type": [ "string",	"null" ] }
+	,	{ "name": "WED_END"			, "type": [ "string",	"null" ] }
+	,	{ "name": "THR_BEGIN"		, "type": [ "string",	"null" ] }
+	,	{ "name": "THR_END"			, "type": [ "string",	"null" ] }
+	,	{ "name": "FRI_BEGIN"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FRI_END"			, "type": [ "string",	"null" ] }
+	,	{ "name": "SAT_BEGIN"		, "type": [ "string",	"null" ] }
+	,	{ "name": "SAT_END"			, "type": [ "string",	"null" ] }
+	,	{ "name": "SUN_BEGIN"		, "type": [ "string",	"null" ] }
+	,	{ "name": "SUN_END"			, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_01"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_02"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_03"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_04"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_05"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_06"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_07"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_08"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_09"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_10"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_11"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_12"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_13"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_14"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_15"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_16"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_17"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_18"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_19"		, "type": [ "string",	"null" ] }
+	,	{ "name": "FERIADO_20"		, "type": [ "string",	"null" ] }
+	]
+}	
