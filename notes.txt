@@ -11,6 +11,12 @@ assyst_usr
 surv_req
 serv_dept
 
+PRIORITY_DERIVED_RULE -> Não aparece na documentação
+	->
+		INNER JOIN PRIORITY_DERIVED_RULE A
+		ON 	A.PRIORITY_DERIVED_ID 		= SLA_SERIOUS.PRIORITY_DERIVED_ID
+		AND	SERV_OFF.DEFAULT_URGENCY_ID = A.INC_PRIOR_ID
+
 Planilhão
 ---------    
 \\petrobras.biz\Petrobras\TIC\TIC_OI_QOI\NP-1\Relatorios Click
