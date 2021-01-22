@@ -1,0 +1,34 @@
+{
+	"namespace": "click.petrobras.avro",
+	"type": "record",
+	"name": "CLICK_USER",
+	"fields": [
+		{ "name": "TYPE_ENUM"               , "type": [ "int" ] }	
+	,	{ "name": "INCIDENT_ID"             , "type": [ "int",		"null" ] }	
+	,	{ "name": "PARENT_INCIDENT_ID"      , "type": [ "int",		"null" ] }	
+	,	{ "name": "DATE_LOGGED"             , "type": [ "string",	"null" ] }	
+	,	{ "name": "INC_RESOLVE_ACT"         , "type": [ "string",	"null" ] }	
+	,	{ "name": "CHAMADO_ID"              , "type": [ "string",	"null" ] }	
+	,	{ "name": "PARENT_CHAMADO_ID"       , "type": [ "string",	"null" ] }	
+	,	{ "name": "SOURCE_INCIDENT"         , "type": [ "string",	"null" ] }	
+	,	{ "name": "AFF_USR_ID"              , "type": [ "int" ] }	
+	,	{ "name": "REP_USR_ID"              , "type": [ "int" ] }	
+	,	{ "name": "INCIDENT_STATUS"         , "type": [ "string",	"null" ] }	
+	,	{ "name": "MAJOR_CATEGORY"          , "type": [ "string",	"null" ] }	
+	,	{ "name": "SHORT_DESC"              , "type": [ "string",	"null" ] }	
+	,	{ "name": "REMARKS"                 , "type": [ "string",	"null" ] }	
+	,	{ "name": "SERV_OFF_ID"             , "type": [ "int",		"null" ] }	
+	,	{ "name": "ITEM_ID"                 , "type": [ "int",		"null" ] }	
+	,	{ "name": "ITEM_B_ID"               , "type": [ "int",		"null" ] }	
+	,	{ "name": "CAUSE_ITEM_ID"           , "type": [ "int",		"null" ] }	
+	,	{ "name": "CATEGORY"                , "type": [ "string",	"null" ] }	
+	,	{ "name": "CAUSE_CATEGORY"          , "type": [ "string",	"null" ] }	
+	,	{ "name": "PRIORITY_DERIVED_N"      , "type": [ "string",	"null" ] }	
+	,	{ "name": "TIME_TO_RESOLVE"         , "type": [ "int" ] }	
+	,	{ "name": "INCIDENT_TOTAL_TIME_M"	, "type": [ "int" ] }
+	,	{ "name": "INC_RESOLVE_SLA"			, "type": [ "int" ] }
+	,	{ "name": "MAJOR_INC"				, "type": [ "boolean",	"null" ] }
+	]
+}
+
+
