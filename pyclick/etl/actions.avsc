@@ -1,0 +1,24 @@
+ {
+	"namespace": "click.petrobras.avro",
+	"type": "record",
+	"name": "CLICK_ACTION",
+	"fields": [
+		{ "name": "ACT_REG_ID"			, "type": [ "int" ] }
+	,	{ "name": "INCIDENT_ID"			, "type": [ "int" ] }
+	,	{ "name": "DATE_ACTIONED"		, "type": [ "string",	"null" ] }
+	,	{ "name": "ACT_TYPE_ID"			, "type": [ "int" ] }
+	,	{ "name": "ACT_TYPE_N"			, "type": [ "string",	"null" ] }
+	,	{ "name": "SUPPLIER_ID"			, "type": [ "int" ] }
+	,	{ "name": "ASS_SVD_ID"			, "type": [ "int" ] }
+	,	{ "name": "SERV_DEPT_N"			, "type": [ "string",	"null" ] }
+	,	{ "name": "ASS_USR_ID"			, "type": [ "int" ] }
+	,	{ "name": "ASSYST_USR_SC"		, "type": [ "string",	"null" ] }
+	,	{ "name": "ASSYST_USR_N"		, "type": [ "string",	"null" ] }
+	,	{ "name": "TIME_TO_RESOLVE"		, "type": [ "int" ] }
+	,	{ "name": "ASSIGNMENT_TIME"		, "type": [ "int" ] }
+	,	{ "name": "IS_RESOLUTION"		, "type": [ "boolean" ] }
+	,	{ "name": "USER_STATUS"			, "type": [ "string",	"null" ] }
+	,	{ "name": "REMARKS"				, "type": [ "string",	"null" ] }	
+	]
+}
+
