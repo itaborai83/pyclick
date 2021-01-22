@@ -52,7 +52,7 @@ class App(object):
                 return x
             return int(x)
         def generator(incidents_df):
-            incidents_df = incidents_df.where(pd.notnull(incidents_df), None)
+            #incidents_df = incidents_df.where(pd.notnull(incidents_df), None)
             for row in incidents_df.itertuples():
                 assert row.MAJOR_INC in ('y', 'n')
                 yield {
