@@ -46,4 +46,4 @@
 	,	{ "name": "PAIS_SC"         ,  "type": [ "string",	"null" ] }
 	,	{ "name": "PAIS_N"          ,  "type": [ "string",	"null" ] }
 	]
-}	
+}
