@@ -1,0 +1,16 @@
+{
+	"namespace": "click.petrobras.avro",
+	"type": "record",
+	"name": "CLICK_ASSYST_USER",
+	"fields": [
+		{ "name": "ASSYST_USR_ID"			, "type": [ "int" ] }	
+	,	{ "name": "ASSYST_USR_SC"           , "type": [ "string",	"null" ] }	
+	,	{ "name": "ASSYST_USR_N"            , "type": [ "string",	"null" ] }	
+	,	{ "name": "ASSYST_USR_RMK"          , "type": [ "string",	"null" ] }	
+	,	{ "name": "SERV_DEPT_ID"            , "type": [ "int" ] }	
+	,	{ "name": "SERV_DEPT_SC"            , "type": [ "string",	"null" ] }	
+	,	{ "name": "SERV_DEPT_N"             , "type": [ "string",	"null" ] }	
+	]
+}
+
+

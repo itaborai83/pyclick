@@ -1,7 +1,7 @@
 {
 	"namespace": "click.petrobras.avro",
 	"type": "record",
-	"name": "CLICK_USER",
+	"name": "CLICK_INCIDENT",
 	"fields": [
 		{ "name": "TYPE_ENUM"               , "type": [ "int" ] }	
 	,	{ "name": "INCIDENT_ID"             , "type": [ "int",		"null" ] }	

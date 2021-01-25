@@ -41,6 +41,7 @@ class App(object):
         df = pd.read_sql(SQL_OFFERINGS, conn, index_col=None)
         return df
     
+    """
     def save_offerings(self, schema, items_df):        
         fh = open(self.output, "wb")
         writer = DataFileWriter(fh, DatumWriter(), schema, 'deflate')
@@ -82,15 +83,58 @@ class App(object):
             ,   "PRAZO_M"			: row.PRAZO_M            
             })
         writer.close()
-            
+    """
+
+    def save_offerings(self, offerings_df):
+        def generator(df):
+            for row in df.itertuples():
+                yield (
+                    row.SERV_OFF_ID, 
+                    {
+                        "SERV_OFF_ID"		: row.SERV_OFF_ID
+                    ,   "SERV_OFF_SC"		: row.SERV_OFF_SC        
+                    ,   "SERV_OFF_N"		: row.SERV_OFF_N         
+                    ,   "BUSINESS_REMARKS"	: row.BUSINESS_REMARKS   
+                    ,   "REMARKS"			: row.REMARKS            
+                    ,   "STAT_FLAG"			: row.STAT_FLAG          == 'y'
+                    ,   "SOLIC_SERVICO"		: row.SOLIC_SERVICO      == 'y'
+                    ,   "SERV_SC"			: row.SERV_SC            
+                    ,   "SERV_N"			: row.SERV_N             
+                    ,   "SERV_CSG"			: row.SERV_CSG           
+                    ,   "SERV_DEPT_SC"		: row.SERV_DEPT_SC       
+                    ,   "SERV_DEPT_N"		: row.SERV_DEPT_N        
+                    ,   "SERV_NEGOCIO"		: row.SERV_NEGOCIO       == 'y'
+                    ,   "FORMULARIO"		: row.FORMULARIO         
+                    ,   "PROCESSO"			: row.PROCESSO           
+                    ,   "PROCESSO_CSG"		: row.PROCESSO_CSG       
+                    ,   "PRODUCT_SC"		: row.PRODUCT_SC         
+                    ,   "PRODUCT_N"			: row.PRODUCT_N          
+                    ,   "ITEM_ID"			: row.ITEM_ID            
+                    ,   "ITEM_SC"			: row.ITEM_SC            
+                    ,   "ITEM_N"			: row.ITEM_N             
+                    ,   "CATEGORIA"			: row.CATEGORIA          
+                    ,   "IMPACTO_SC"		: row.IMPACTO_SC         
+                    ,   "IMPACTO_N"			: row.IMPACTO_N          
+                    ,   "IMPACTO_CSG"		: row.IMPACTO_CSG        
+                    ,   "URGENCIA_SC"		: row.URGENCIA_SC        
+                    ,   "URGENCIA_N"		: row.URGENCIA_N         
+                    ,   "URGENCIA_CSG"		: row.URGENCIA_CSG       
+                    ,   "SLA_SC"			: row.SLA_SC             
+                    ,   "SLA_N"				: row.SLA_N              
+                    ,   "PRAZO_M"			: row.PRAZO_M            
+                    }
+                )
+        import pyclick.etl.load_repo as r
+        repo = r.LoadRepo(self.output)
+        repo.save_offerings(self.schema_file, generator(offerings_df))   
+        
     def run(self):
         conn = None
         try:
             logger.info('starting offerings dumper - version %d.%d.%d', *self.VERSION)
-            schema      = self.parse_schema()
             conn        = self.connect_db()
-            items_df    = self.fetch_offerings(conn)
-            self.save_offerings(schema, items_df)
+            offering_df = self.fetch_offerings(conn)
+            self.save_offerings(offering_df)
             logger.info('finished')
         finally:
             if conn:

@@ -77,13 +77,12 @@ ORDER	BY A.ACT_REG_ID
 
 STRIP_CHARS = set([
     '@', "'", '"', '!', '#', '$', '£', '%', '¢', '¨', '¬', '&', '*', '(', ')',
-    '=', '+', '§', '|', '\\', ',', '<', '.', '>', ';', ':', '/', '?',
+    '=', '+', '§', '|', '\\', ',', '<', '.', '>', ';', '/', '?', #':',
     '°', '~', '^', ']', '}', 'º', '´', '`', '[', '{', 'ª', '\n', '\t', '\0', 
-    '\x8A', '\x8D', '\x87', '\x82', '\x83', '\x93', '\x90', '\x81'
+    '\x8A', '\x8D', '\x87', '\x82', '\x83', '\x93', '\x90', '\x81', '-'
 ])
 
 SKIP_TEXTS = set([
-    """
     'favor verificar',
     'fechamento automatico apos 2 dias',
     'relogio de fornecedor pausado apos o relogio de ans ser pausado',
@@ -115,12 +114,36 @@ SKIP_TEXTS = set([
     'gentileza verificar',
     'favor atender',
     'designando atraves do web service',
-    '',
     'nao houve retorno da usuaria',
     'aguardando retorno da usuaria',
     'o prazo de atendimento e de ate 32 horas uteis favor verificar',
-    'nao houve retorno do usuario'
-    """
+    'nao houve retorno do usuario',
+    'item b from: empty to:click',
+    'tarefa de mudanca : value changed from empty to false',
+    'prosseguindo o atendimento',
+    'prazo expirado',
+    'a equipe n3-seguranca_acesso nao realiza cadastro manual dos usuarios da wicl o servidor da equipe esta funcionando e foi testado a integracao por api favor verificar a integracao click barramento ise e fazer com que os chamados sejam reprocessados automaticamente',
+    'tipo: general information sumario: artigo de solucao nota: nome do artigo: incluir excluir chave em departamento de servico no click - n2 link do artigo: https: autoatendimentotic petrobras com br visualizar 5584862 14095 artigo consultado no suporte',
+    'tipo: general information sumario: artigo de solucao nota: nome do artigo: cadastrar alterar ou excluir usuarios tic no sistema click link do artigo: https: autoatendimentotic petrobras com br visualizar 5500225 14108 artigo consultado no suporte',
+    'tipo: general information sumario: artigo de solucao nota: nome do artigo: cadastrar alterar ou excluir usuarios tic no sistema click link do artigo: https: autoatendimentotic petrobras com br visualizar 5557725 14108 artigo consultado no suporte',
+    'favor tratar',
+    'tipo: general information sumario: artigo de solucao nota: nome do artigo: cadastrar alterar ou excluir usuarios tic no sistema click link do artigo: https: autoatendimentotic petrobras com br visualizar 5533045 14108 artigo consultado no suporte',
+    'image',
+    'tipo: general information sumario: artigo de solucao nota: nome do artigo: incluir excluir chave em departamento de servico no click - n2 link do artigo: https: autoatendimentotic petrobras com br visualizar 5211869 14095 artigo consultado no suporte',
+    'em andamento',
+    'encaminhado para atendimento',
+    'avaliar',
+    'analisando a solicitacao',
+    'iniciando analise',
+    'confirma que alterou valor do campo grupo serv atribuido para uma mesa valida : value changed from empty to true', 
+    'solicitacao atendida', 
+    'designando para o analista', 
+    'verificando e providenciando', 
+    'designado para analista responsavel', 
+    'ics atualizados em lote', 
+    'ics atualizados em lote conf solicitado', 
+    'repassando', 
+    'produto criado conforme solicitacao', 
 ])
 
 

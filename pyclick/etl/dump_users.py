@@ -14,7 +14,7 @@ assert os.environ[ 'PYTHONUTF8' ] == "1"
 
 logger = util.get_logger('dump_users')
 
-SQL_USERS = util.get_query("ASSYST__USERS")
+SQL_USERS = util.get_query("ASSYST__DUMP_USERS")
 
 class App(object):
     
@@ -37,10 +37,11 @@ class App(object):
         df = pd.read_sql(SQL_USERS, conn, index_col=None)
         return df
     
-    def save_users(self, schema, users_df):
+    def save_users(self, users_df):
+        logger.info('saving users')
         def generator(users_df):
             for row in users_df.itertuples():
-                yield {
+                yield (row.USR_ID, {
                     "USR_ID"          	: row.USR_ID
                 ,   "USR_SC"          	: row.USR_SC
                 ,   "USR_N"           	: row.USR_N
@@ -83,18 +84,18 @@ class App(object):
                 ,   "PAIS_ID"         	: row.PAIS_ID
                 ,   "PAIS_SC"         	: row.PAIS_SC
                 ,   "PAIS_N"          	: row.PAIS_N
-                }
-        fh = open(self.output, "wb")
-        writer(fh, schema, generator(users_df), 'deflate')
-            
+                })
+        import pyclick.etl.load_repo as r
+        repo = r.LoadRepo(self.output)
+        repo.save_users(self.schema_file, generator(users_df))
+        
     def run(self):
         conn = None
         try:
             logger.info('starting user dumper - version %d.%d.%d', *self.VERSION)
-            schema = self.parse_schema()
             conn = self.connect_db()
             users_df = self.fetch_users(conn)
-            self.save_users(schema, users_df)
+            self.save_users(users_df)
             logger.info('finished')
         finally:
             if conn:
@@ -107,4 +108,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
     app = App(args.schema, args.output)
     app.run()
-    
+   
