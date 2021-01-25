@@ -1,0 +1,14 @@
+{
+	"namespace": "click.petrobras.avro",
+	"type": "record",
+	"name": "CLICK_SUPPLIER",
+	"fields": [
+		{ "name": "SUPPLIER_ID"		, "type": [ "int" ] }	
+	,	{ "name": "SUPPLIER_SC"		, "type": [ "string",	"null" ] }	
+	,	{ "name": "SUPPLIER_N" 		, "type": [ "string",	"null" ] }	
+	,	{ "name": "SLA_ID"     		, "type": [ "int" ] }	
+	,	{ "name": "SLA_SC"     		, "type": [ "string",	"null" ] }
+	,	{ "name": "SLA_N"      		, "type": [ "string",	"null" ] }	
+	,	{ "name": "SLA_RMK"    		, "type": [ "string",	"null" ] }	
+	]
+}

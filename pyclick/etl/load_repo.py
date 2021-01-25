@@ -7,7 +7,7 @@ from fastavro.schema import load_schema
 
 class LoadRepo:
 
-    DB_MAP_SIZE = 1024 * 1024 * 1024
+    DB_MAP_SIZE = 10 * 1024 * 1024 * 1024
     DB_MAX_DBS = 100
     
     def __init__(self, dbpath):
@@ -82,6 +82,9 @@ class LoadRepo:
     def save_offerings(self, schema_file, row_generator):
         self.save_rows(schema_file, row_generator, int_key=True)
 
+    def save_suppliers(self, schema_file, row_generator):
+        self.save_rows(schema_file, row_generator, int_key=True)
+
     def save_incidents(self, schema_file, row_generator):
         self.save_rows(schema_file, row_generator, int_key=True)
         
@@ -109,15 +112,16 @@ class LoadRepo:
                     yield (parsed_key, key)
                     cursor.next()
         
-    def save_rows(self, schema_file, row_generator, int_key=True):
+    def save_rows(self, schema_file, row_generator, int_key=True, drop_first=True):
         buffer = io.BytesIO()
         schema = load_schema(schema_file)
         env = self.open_db()
         db_name = schema[ 'name' ].encode()
         # drop db first
-        #with env.begin(write=True) as txn:
-        #    db_data = env.open_db(key=db_name, txn=txn, dupsort=False, create=True)
-        #    txn.drop(db_data, delete=False) # delete=False deletes all entries but keep the database itself
+        if drop_first:
+            with env.begin(write=True) as txn:
+                db_data = env.open_db(key=db_name, txn=txn, dupsort=False, create=True)
+                txn.drop(db_data, delete=False) # delete=False deletes all entries but keep the database itself
         
         with env.begin(write=True) as txn:
             db_schema = env.open_db(key=b'SCHEMAS', txn=txn, dupsort=False, create=True)
@@ -125,7 +129,7 @@ class LoadRepo:
             
             db_name = schema[ 'name' ].encode()
             db_data = env.open_db(key=db_name, txn=txn, dupsort=False, create=True)
-            txn.drop(db_data, delete=False) # delete=False deletes all entries but keep the database itself
+            #txn.drop(db_data, delete=False) # delete=False deletes all entries but keep the database itself
             with txn.cursor(db=db_data) as data_cursor:
                 for key, dict_data in row_generator:
                     schemaless_writer(buffer, schema, dict_data)

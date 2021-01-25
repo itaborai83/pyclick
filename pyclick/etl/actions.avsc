@@ -12,8 +12,6 @@
 	,	{ "name": "ASS_SVD_ID"			, "type": [ "int" ] }
 	,	{ "name": "SERV_DEPT_N"			, "type": [ "string",	"null" ] }
 	,	{ "name": "ASS_USR_ID"			, "type": [ "int" ] }
-	,	{ "name": "ASSYST_USR_SC"		, "type": [ "string",	"null" ] }
-	,	{ "name": "ASSYST_USR_N"		, "type": [ "string",	"null" ] }
 	,	{ "name": "TIME_TO_RESOLVE"		, "type": [ "int" ] }
 	,	{ "name": "ASSIGNMENT_TIME"		, "type": [ "int" ] }
 	,	{ "name": "IS_RESOLUTION"		, "type": [ "boolean" ] }

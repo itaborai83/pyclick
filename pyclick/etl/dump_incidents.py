@@ -20,9 +20,14 @@ class App(object):
     
     VERSION = (1, 0, 0)
     
-    def __init__(self, schema_file, output):
+    def __init__(self, schema_file, output, start_dt, end_dt):
+        assert start_dt <= end_dt
+        assert len(start_dt) == len('yyyy-mm-dd')
+        assert len(end_dt) == len('yyyy-mm-dd')
         self.schema_file = schema_file
         self.output = output
+        self.start_dt = start_dt
+        self.end_dt = end_dt
         
     def connect_db(self):
         logger.info('connecting to db')
@@ -30,7 +35,8 @@ class App(object):
     
     def fetch_incidents(self, conn):
         logger.info('fetching incidents')
-        df = pd.read_sql(SQL_INCIDENTS, conn, index_col=None)
+        params = (self.start_dt, self.end_dt)
+        df = pd.read_sql(SQL_INCIDENTS, conn, params=params, index_col=None)
         return df
 
     def save_incidents(self, incidents_df):
@@ -84,7 +90,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('schema', type=str, help='schema file')
     parser.add_argument('output', type=str, help='output file')
+    parser.add_argument('start_dt', type=str, help='start date')
+    parser.add_argument('end_dt', type=str, help='end date')    
     args = parser.parse_args()
-    app = App(args.schema, args.output)
+    app = App(args.schema, args.output, args.start_dt, args.end_dt)
     app.run()
     
