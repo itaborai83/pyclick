@@ -20,14 +20,17 @@ class App(object):
     
     VERSION = (1, 0, 0)
     
-    def __init__(self, schema_file, output, start_dt, end_dt):
+    def __init__(self, schema_file, output, start_dt, end_dt, open, closed):
         assert start_dt <= end_dt
         assert len(start_dt) == len('yyyy-mm-dd')
         assert len(end_dt) == len('yyyy-mm-dd')
+        assert open or closed
         self.schema_file = schema_file
         self.output = output
         self.start_dt = start_dt
         self.end_dt = end_dt
+        self.open = 1 if open else 0
+        self.closed = 1 if closed else 0
         
     def connect_db(self):
         logger.info('connecting to db')
@@ -36,14 +39,15 @@ class App(object):
     def fetch_incidents(self, conn):
         logger.info('fetching incidents')
         params = (self.start_dt, self.end_dt)
-        df = pd.read_sql(SQL_INCIDENTS, conn, params=params, index_col=None)
+        sql = SQL_INCIDENTS.format(self.open, self.closed)
+        df = pd.read_sql(sql, conn, params=params, index_col=None)
         return df
 
     def save_incidents(self, incidents_df):
         def generator(df):
             for row in df.itertuples():
                 assert row.MAJOR_INC in ('y', 'n')
-                yield (row.INCIDENT_ID, {
+                yield {
                     "TYPE_ENUM"                 : row.TYPE_ENUM
                 ,   "INCIDENT_ID"               : row.INCIDENT_ID
                 ,   "PARENT_INCIDENT_ID"        : row.PARENT_INCIDENT_ID
@@ -69,10 +73,9 @@ class App(object):
                 ,   "INCIDENT_TOTAL_TIME_M"     : row.INCIDENT_TOTAL_TIME_M
                 ,   "INC_RESOLVE_SLA"			: row.INC_RESOLVE_SLA
                 ,   "MAJOR_INC"				    : row.MAJOR_INC	== 'y'
-                })
+                }
         import pyclick.etl.load_repo as r
-        repo = r.LoadRepo(self.output)
-        repo.save_incidents(self.schema_file, generator(incidents_df))
+        r.save_avro(self.schema_file, self.output, generator(incidents_df))
             
     def run(self):
         conn = None
@@ -88,11 +91,13 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--open', action='store_true', help='dump open incidents')
+    parser.add_argument('--closed', action='store_true', help='dump closed incidents')
     parser.add_argument('schema', type=str, help='schema file')
     parser.add_argument('output', type=str, help='output file')
     parser.add_argument('start_dt', type=str, help='start date')
     parser.add_argument('end_dt', type=str, help='end date')    
     args = parser.parse_args()
-    app = App(args.schema, args.output, args.start_dt, args.end_dt)
+    app = App(args.schema, args.output, args.start_dt, args.end_dt, args.open, args.closed)
     app.run()
     

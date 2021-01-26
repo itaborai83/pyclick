@@ -20,15 +20,18 @@ class App(object):
     
     VERSION = (1, 0, 0)
     
-    def __init__(self, schema_file, output, start_dt, end_dt):
+    def __init__(self, schema_file, output, start_dt, end_dt, open, closed):
         assert start_dt <= end_dt
         assert len(start_dt) == len('yyyy-mm-dd')
         assert len(end_dt) == len('yyyy-mm-dd')
+        assert open or closed
         self.schema_file = schema_file
         self.output = output
         self.start_dt = start_dt
         self.end_dt = end_dt
-    
+        self.open = 1 if open else 0
+        self.closed = 1 if closed else 0
+            
     def parse_schema(self):
         logger.info('parsing avro schema')
         return load_schema(self.schema_file)
@@ -40,14 +43,15 @@ class App(object):
     def fetch_actions(self, conn):
         logger.info('fetching actions')
         params = (self.start_dt, self.end_dt)
-        df = pd.read_sql(SQL_ACTIONS, conn, params=params, index_col=None)
+        sql = SQL_ACTIONS.format(self.open, self.closed)
+        df = pd.read_sql(sql, conn, params=params, index_col=None)
         return df
         
     def save_actions(self, schema, actions_df):
         def generator(actions_df):
             for row in actions_df.itertuples():
                 assert row.IS_RESOLUTION in ('y', 'n')
-                yield (row.ACT_REG_ID, {
+                yield {
                     "ACT_REG_ID"		: row.ACT_REG_ID
                 ,   "INCIDENT_ID"		: row.INCIDENT_ID
                 ,   "DATE_ACTIONED"	    : row.DATE_ACTIONED
@@ -62,12 +66,9 @@ class App(object):
                 ,   "IS_RESOLUTION"	    : row.IS_RESOLUTION == 'y'
                 ,   "USER_STATUS"		: row.USER_STATUS
                 ,   "REMARKS"			: row.REMARKS
-                })
-        #fh = open(self.output, "wb")
-        #writer(fh, schema, generator(actions_df), 'deflate')
+                }
         import pyclick.etl.load_repo as r
-        repo = r.LoadRepo(self.output)
-        repo.save_actions(self.schema_file, generator(actions_df))
+        r.save_avro(self.schema_file, self.output, generator(actions_df))
 
     def run(self):
         conn = None
@@ -84,12 +85,14 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--open', action='store_true', help='dump open incidents')
+    parser.add_argument('--closed', action='store_true', help='dump closed incidents')
     parser.add_argument('schema', type=str, help='schema file')
     parser.add_argument('output', type=str, help='output file')
     parser.add_argument('start_dt', type=str, help='start date')
     parser.add_argument('end_dt', type=str, help='end date')
     args = parser.parse_args()
-    app = App(args.schema, args.output, args.start_dt, args.end_dt)
+    app = App(args.schema, args.output, args.start_dt, args.end_dt, args.open, args.closed)
     app.run()
     
     

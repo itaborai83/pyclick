@@ -5,6 +5,11 @@ from fastavro import writer, reader, parse_schema, schemaless_writer
 from fastavro.schema import load_schema
 
 
+def save_avro(schema_file, data_file, row_generator):
+    schema = load_schema(schema_file)
+    with open(data_file, 'wb') as fh:
+        writer(fh, schema, row_generator, codec='deflate')
+        
 class LoadRepo:
 
     DB_MAP_SIZE = 10 * 1024 * 1024 * 1024
@@ -83,12 +88,6 @@ class LoadRepo:
         self.save_rows(schema_file, row_generator, int_key=True)
 
     def save_suppliers(self, schema_file, row_generator):
-        self.save_rows(schema_file, row_generator, int_key=True)
-
-    def save_incidents(self, schema_file, row_generator):
-        self.save_rows(schema_file, row_generator, int_key=True)
-        
-    def save_actions(self, schema_file, row_generator):
         self.save_rows(schema_file, row_generator, int_key=True)
         
     def list_keys(self, db_name=None, int_key=False):
