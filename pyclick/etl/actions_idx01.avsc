@@ -1,0 +1,17 @@
+{
+	"namespace": "click.petrobras.avro",
+	"type": "record",
+	"name": "CLICK_SERV_DEPT_IDX01",
+	"fields": [
+		{ "name": "SERV_DEPT_ID"            , "type": [ "int" ] }
+	,	{ "name": "SERV_DEPT_SC"           	, "type": [ "string",	"null" ] }
+	,	{ "name": "SERV_DEPT_N"           	, "type": [ "string",	"null" ] }
+	,	{ "name": "DATE_ACTIONED"           , "type": [ "string",	"null" ] }
+	,	{ "name": "NEXT_DATE_ACTIONED"      , "type": [ "string",	"null" ] }
+	,	{ "name": "INCIDENT_ID"            	, "type": [ "int" ] }
+	,	{ "name": "ACT_REG_ID"            	, "type": [ "int" ] }
+	]
+}
+
+
+

@@ -7,9 +7,11 @@
 	,	{ "name": "INCIDENT_ID"			, "type": [ "int" ] }
 	,	{ "name": "DATE_ACTIONED"		, "type": [ "string",	"null" ] }
 	,	{ "name": "ACT_TYPE_ID"			, "type": [ "int" ] }
+	,	{ "name": "ACT_TYPE_SC"			, "type": [ "string",	"null" ] }
 	,	{ "name": "ACT_TYPE_N"			, "type": [ "string",	"null" ] }
 	,	{ "name": "SUPPLIER_ID"			, "type": [ "int" ] }
-	,	{ "name": "ASS_SVD_ID"			, "type": [ "int" ] }
+	,	{ "name": "SERV_DEPT_ID"		, "type": [ "int" ] }
+	,	{ "name": "SERV_DEPT_SC"		, "type": [ "string",	"null" ] }
 	,	{ "name": "SERV_DEPT_N"			, "type": [ "string",	"null" ] }
 	,	{ "name": "ASS_USR_ID"			, "type": [ "int" ] }
 	,	{ "name": "TIME_TO_RESOLVE"		, "type": [ "int" ] }

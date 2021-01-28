@@ -25,12 +25,12 @@ class App(object):
         assert len(start_dt) == len('yyyy-mm-dd')
         assert len(end_dt) == len('yyyy-mm-dd')
         assert open or closed
-        self.schema_file = schema_file
-        self.output = output
-        self.start_dt = start_dt
-        self.end_dt = end_dt
-        self.open = 1 if open else 0
-        self.closed = 1 if closed else 0
+        self.schema_file    = schema_file
+        self.output         = output
+        self.start_dt       = start_dt  + " 00:00:00"
+        self.end_dt         = end_dt    + " 23:59:59"
+        self.open           = (1 if open else 0)
+        self.closed         = (1 if closed else 0)
         
     def connect_db(self):
         logger.info('connecting to db')
@@ -78,17 +78,12 @@ class App(object):
         r.save_avro(self.schema_file, self.output, generator(incidents_df))
             
     def run(self):
-        conn = None
-        try:
-            logger.info('starting incidents dumper - version %d.%d.%d', *self.VERSION)
-            conn = self.connect_db()
-            incidents_df = self.fetch_incidents(conn)
-            self.save_incidents(incidents_df)
-            logger.info('finished')
-        finally:
-            if conn:
-                conn = None
-            
+        logger.info('starting incidents dumper - version %d.%d.%d', *self.VERSION)
+        conn = self.connect_db()
+        incidents_df = self.fetch_incidents(conn)
+        self.save_incidents(incidents_df)
+        logger.info('finished')
+        
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--open', action='store_true', help='dump open incidents')
