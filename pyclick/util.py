@@ -58,8 +58,8 @@ def report_file_mismatch(logger, headers, expected_columns):
 def sort_rel_medicao(df):
     df.sort_values(by=[ "id_chamado", "chamado_pai", "data_inicio_acao", "id_acao", "status_de_evento" ], inplace=True, kind="mergesort", ignore_index=True)
 
-def read_mesas(dir_apuracao):
-    path = os.path.join(dir_apuracao, config.MESAS_FILE)
+def read_mesas_file(mesas_file):
+    path = mesas_file
     result = []
     with open(path) as fh:
         for line in fh:
@@ -69,6 +69,10 @@ def read_mesas(dir_apuracao):
             elif mesa:
                 result.append(mesa)
         return result
+
+def read_mesas(dir_apuracao):
+    path = os.path.join(dir_apuracao, config.MESAS_FILE)
+    return read_mesas_file(path)
 
 def read_expurgos(dir_apuracao):
     path = os.path.join(dir_apuracao, config.EXPURGOS_FILE)
@@ -160,6 +164,18 @@ def datetime2tstmp(txt):
     dt1 = parse_datetime(txt)
     return int(dt1.timestamp())
 
+def dates_between(start_dt_txt, end_dt_txt):
+    start_dt = parse_date(start_dt_txt)
+    end_dt = parse_date(end_dt_txt)
+    assert start_dt <= end_dt
+    curr_date = start_dt
+    result = []
+    delta = dt.timedelta(1)
+    while curr_date <= end_dt:
+        result.append(curr_date)
+        curr_date += delta
+    return list([ unparse_date(d) for d in result ])
+    
 def tstmp2datetime(d):
     return dt.datetime.fromtimestamp(d).strftime('%Y-%m-%d %H:%M:%S')
     
