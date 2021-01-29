@@ -6,14 +6,11 @@ import logging
 import lmdb
 from fastavro import writer, reader, parse_schema, schemaless_writer
 from fastavro.schema import load_schema
-#from fastavro.schema import parse
-#from fastavro.codecs import DeflateCodec
-#from fastavro.datafile import DataFileWriter
-#from fastavro.io import DatumWriter
 
 import pyclick.util as util
 import pyclick.config as config
 import pyclick.assyst.config as click_config
+import pyclick.etl.config as etl_config
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -27,8 +24,8 @@ class App(object):
     DB_MAX_DBS = 100
     DB_MAP_SIZE = 10 * 1024 * 1024 * 1024
     
-    def __init__(self, schema_file, output):
-        self.schema_file = schema_file
+    def __init__(self, output):
+        self.schema_file = etl_config.ITEMS_SCHEMA_FILE
         self.output = output
     
     def parse_schema(self):
@@ -79,9 +76,8 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('schema', type=str, help='schema file')
     parser.add_argument('output', type=str, help='output file')
     args = parser.parse_args()
-    app = App(args.schema, args.output)
+    app = App(args.output)
     app.run()
     

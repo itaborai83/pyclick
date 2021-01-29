@@ -2,13 +2,14 @@ import os
 import argparse
 import pandas as pd
 import logging
-
+import pprint
 from fastavro import writer, reader, parse_schema
 from fastavro.schema import load_schema
 
 import pyclick.util as util
 import pyclick.config as config
 import pyclick.assyst.config as click_config
+import pyclick.etl.config as etl_config
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -18,14 +19,16 @@ SQL_INCIDENTS = util.get_query("ASSYST__DUMP_INCIDENTS")
 
 class App(object):
     
-    VERSION = (1, 0, 0)
+    VERSION         = (1, 0, 0)
+    OPEN_STATUS     = 'Aberto'
+    PRINT_INCIDENTS = False
     
-    def __init__(self, schema_file, output, start_dt, end_dt, open, closed):
+    def __init__(self, output, start_dt, end_dt, open, closed):
         assert start_dt <= end_dt
         assert len(start_dt) == len('yyyy-mm-dd')
         assert len(end_dt) == len('yyyy-mm-dd')
         assert open or closed
-        self.schema_file    = schema_file
+        self.schema_file    = etl_config.INCIDENTS_SCHEMA_FILE
         self.output         = output
         self.start_dt       = start_dt  + " 00:00:00"
         self.end_dt         = end_dt    + " 23:59:59"
@@ -47,7 +50,7 @@ class App(object):
         def generator(df):
             for row in df.itertuples():
                 assert row.MAJOR_INC in ('y', 'n')
-                yield {
+                incident = {
                     "TYPE_ENUM"                 : row.TYPE_ENUM
                 ,   "INCIDENT_ID"               : row.INCIDENT_ID
                 ,   "PARENT_INCIDENT_ID"        : row.PARENT_INCIDENT_ID
@@ -74,6 +77,12 @@ class App(object):
                 ,   "INC_RESOLVE_SLA"			: row.INC_RESOLVE_SLA
                 ,   "MAJOR_INC"				    : row.MAJOR_INC	== 'y'
                 }
+                if incident[ "INC_RESOLVE_ACT" ] and incident[ "INC_RESOLVE_ACT" ] > self.end_dt:
+                    incident[ "INC_RESOLVE_ACT" ] = None
+                    incident[ "INCIDENT_STATUS" ] = self.OPEN_STATUS
+                if self.PRINT_INCIDENTS:
+                    pprint.pprint(incident)
+                yield incident
         import pyclick.etl.load_repo as r
         r.save_avro(self.schema_file, self.output, generator(incidents_df))
             
@@ -88,11 +97,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--open', action='store_true', help='dump open incidents')
     parser.add_argument('--closed', action='store_true', help='dump closed incidents')
-    parser.add_argument('schema', type=str, help='schema file')
     parser.add_argument('output', type=str, help='output file')
     parser.add_argument('start_dt', type=str, help='start date')
     parser.add_argument('end_dt', type=str, help='end date')    
     args = parser.parse_args()
-    app = App(args.schema, args.output, args.start_dt, args.end_dt, args.open, args.closed)
+    app = App(args.output, args.start_dt, args.end_dt, args.open, args.closed)
     app.run()
     

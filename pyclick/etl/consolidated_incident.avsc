@@ -1,0 +1,246 @@
+{
+	"name": "CLICK_CONSOLIDATED_RECORD", "namespace": "click.petrobras.avro", "type": "record", "fields": [
+		{
+			"name": "INCIDENT", "type": { 
+				"type": "record", "name": "INCIDENT", "fields": [
+						{ "name": "TYPE_ENUM"               , "type": [ "int" ] }	
+					,	{ "name": "INCIDENT_ID"             , "type": [ "int",		"null" ] }	
+					,	{ "name": "PARENT_INCIDENT_ID"      , "type": [ "int",		"null" ] }	
+					,	{ "name": "DATE_LOGGED"             , "type": [ "string",	"null" ] }	
+					,	{ "name": "INC_RESOLVE_ACT"         , "type": [ "string",	"null" ] }	
+					,	{ "name": "CHAMADO_ID"              , "type": [ "string",	"null" ] }	
+					,	{ "name": "PARENT_CHAMADO_ID"       , "type": [ "string",	"null" ] }	
+					,	{ "name": "SOURCE_INCIDENT"         , "type": [ "string",	"null" ] }	
+					,	{ "name": "AFF_USR_ID"              , "type": [ "int" ] }	
+					,	{ "name": "REP_USR_ID"              , "type": [ "int" ] }	
+					,	{ "name": "INCIDENT_STATUS"         , "type": [ "string",	"null" ] }	
+					,	{ "name": "MAJOR_CATEGORY"          , "type": [ "string",	"null" ] }	
+					,	{ "name": "SHORT_DESC"              , "type": [ "string",	"null" ] }	
+					,	{ "name": "REMARKS"                 , "type": [ "string",	"null" ] }	
+					,	{ "name": "SERV_OFF_ID"             , "type": [ "int",		"null" ] }	
+					,	{ "name": "ITEM_ID"                 , "type": [ "int",		"null" ] }	
+					,	{ "name": "ITEM_B_ID"               , "type": [ "int",		"null" ] }	
+					,	{ "name": "CAUSE_ITEM_ID"           , "type": [ "int",		"null" ] }	
+					,	{ "name": "CATEGORY"                , "type": [ "string",	"null" ] }	
+					,	{ "name": "CAUSE_CATEGORY"          , "type": [ "string",	"null" ] }	
+					,	{ "name": "PRIORITY_DERIVED_N"      , "type": [ "string",	"null" ] }	
+					,	{ "name": "TIME_TO_RESOLVE"         , "type": [ "int" ] }	
+					,	{ "name": "INCIDENT_TOTAL_TIME_M"	, "type": [ "int" ] }
+					,	{ "name": "INC_RESOLVE_SLA"			, "type": [ "int" ] }
+					,	{ "name": "MAJOR_INC"				, "type": [ "boolean",	"null" ] }
+					]
+				}
+		}, 
+		{
+			"name": "OFFERING", "type": { 
+				"type": "record", "name": "OFFERING", "fields": [
+					{ "name": "SERV_OFF_ID"					, "type": [ "int", 	 	"null" ] }
+				,	{ "name": "SERV_OFF_SC"					, "type": [ "string",	"null" ] }
+				,	{ "name": "SERV_OFF_N"					, "type": [ "string",	"null" ] }
+				,	{ "name": "BUSINESS_REMARKS"			, "type": [ "string",	"null" ] }
+				,	{ "name": "REMARKS"						, "type": [ "string",	"null" ] }
+				,	{ "name": "STAT_FLAG"					, "type": [ "boolean",	"null" ] }
+				,	{ "name": "SOLIC_SERVICO"				, "type": [ "boolean",	"null" ] }
+				,	{ "name": "SERV_SC"						, "type": [ "string",	"null" ] }
+				,	{ "name": "SERV_N"						, "type": [ "string",	"null" ] }
+				,	{ "name": "SERV_CSG"					, "type": [ "string",	"null" ] }
+				,	{ "name": "SERV_DEPT_SC"				, "type": [ "string",	"null" ] }
+				,	{ "name": "SERV_DEPT_N"					, "type": [ "string",	"null" ] }
+				,	{ "name": "SERV_NEGOCIO"				, "type": [ "boolean",	"null" ] }
+				,	{ "name": "FORMULARIO"					, "type": [ "string",	"null" ] }
+				,	{ "name": "PROCESSO"					, "type": [ "string",	"null" ] }
+				,	{ "name": "PROCESSO_CSG"				, "type": [ "string",	"null" ] }	
+				,	{ "name": "PRODUCT_SC"					, "type": [ "string",	"null" ] }
+				,	{ "name": "PRODUCT_N"					, "type": [ "string",	"null" ] }
+				,	{ "name": "ITEM_ID"						, "type": [ "int",		"null" ] }
+				,	{ "name": "ITEM_SC"						, "type": [ "string",	"null" ] }
+				,	{ "name": "ITEM_N"						, "type": [ "string",	"null" ] }
+				,	{ "name": "CATEGORIA"					, "type": [ "string",	"null" ] }
+				,	{ "name": "IMPACTO_SC"					, "type": [ "string",	"null" ] }
+				,	{ "name": "IMPACTO_N"					, "type": [ "string",	"null" ] }
+				,	{ "name": "IMPACTO_CSG"					, "type": [ "string",	"null" ] }	
+				,	{ "name": "URGENCIA_SC"					, "type": [ "string",	"null" ] }
+				,	{ "name": "URGENCIA_N"					, "type": [ "string",	"null" ] }
+				,	{ "name": "URGENCIA_CSG"				, "type": [ "string",	"null" ] }
+				,	{ "name": "SLA_SC"						, "type": [ "string",	"null" ] }
+				,	{ "name": "SLA_N"						, "type": [ "string",	"null" ] }
+				,	{ "name": "PRAZO_M"						, "type": [ "int",		"null" ] }	
+				]
+			}
+		},
+		{
+			"name": "ITEMS", "type": {
+				"type": "map", "default": {}, "values": {
+					"type": "record", "name": "ITEM", "fields": [
+						{ "name": "ITEM_ID"         		, "type": [ "int",    "null" ] }
+					,	{ "name": "ITEM_N"          		, "type": [ "string", "null" ] }
+					,	{ "name": "PRODUCT_ID"      		, "type": [ "int",    "null" ] }
+					,	{ "name": "PRODUCT_N"       		, "type": [ "string", "null" ] }
+					,	{ "name": "PROD_CLS_ID"     		, "type": [ "int",    "null" ] }
+					,	{ "name": "PROD_CLS_N"      		, "type": [ "string", "null" ] }
+					,	{ "name": "GENERIC_CLS_ID"  		, "type": [ "int",    "null" ] }
+					,	{ "name": "GENERIC_CLS_N"   		, "type": [ "string", "null" ] }
+					,	{ "name": "SUPPLIER_ID"     		, "type": [ "int",    "null" ] }
+					,	{ "name": "SUPPLIER_N"      		, "type": [ "string", "null" ] }
+					]
+				}
+			}
+		},
+		{
+			"name": "SUPPLIERS", "type": {
+				"type": "map", "default": {}, "values": {
+					"type": "record", "name": "SUPPLIER", "fields": [
+						{ "name": "SUPPLIER_ID"				, "type": [ "int" ] }	
+					,	{ "name": "SUPPLIER_SC"				, "type": [ "string",	"null" ] }	
+					,	{ "name": "SUPPLIER_N" 				, "type": [ "string",	"null" ] }	
+					,	{ "name": "SLA_ID"     				, "type": [ "int" ] }	
+					,	{ "name": "SLA_SC"     				, "type": [ "string",	"null" ] }
+					,	{ "name": "SLA_N"      				, "type": [ "string",	"null" ] }	
+					,	{ "name": "SLA_RMK"    				, "type": [ "string",	"null" ] }
+					]
+				}
+			}
+		},
+		{
+			"name": "USERS", "type": {
+				"type": "map", "default": {}, "values": {
+					"type": "record", "name": "USER", "fields": [
+						{ "name": "USR_ID"          		,  "type": [ "int",		"null" ] }
+					,	{ "name": "USR_SC"          		,  "type": [ "string",	"null" ] }
+					,	{ "name": "USR_N"           		,  "type": [ "string",	"null" ] }
+					,	{ "name": "USR_RMK"         		,  "type": [ "string",	"null" ] }
+					,	{ "name": "USR_ROLE_ID"     		,  "type": [ "int",		"null" ] }
+					,	{ "name": "USR_ROLE_SC"     		,  "type": [ "string",	"null" ] }
+					,	{ "name": "USR_ROLE_N"      		,  "type": [ "string",	"null" ] }
+					,	{ "name": "SECTN_DEPT_ID"   		,  "type": [ "int",		"null" ] }
+					,	{ "name": "SECTN_DEPT_SC"   		,  "type": [ "string",	"null" ] }
+					,	{ "name": "DEPT_ID"					,  "type": [ "int",		"null" ] }
+					,	{ "name": "DEPT_SC"         		,  "type": [ "string",	"null" ] }
+					,	{ "name": "DEPT_N"          		,  "type": [ "string",	"null" ] }
+					,	{ "name": "SECTN_ID"        		,  "type": [ "int",		"null" ] }
+					,	{ "name": "SECTN_SC"        		,  "type": [ "string",	"null" ] }
+					,	{ "name": "SECTN_N"         		,  "type": [ "string",	"null" ] }
+					,	{ "name": "BRANCH_ID"       		,  "type": [ "int",		"null" ] }
+					,	{ "name": "BRANCH_SC"       		,  "type": [ "string",	"null" ] }
+					,	{ "name": "BRANCH_N"        		,  "type": [ "string",	"null" ] }
+					,	{ "name": "ORGANIZACAO_ID"  		,  "type": [ "int",		"null" ] }
+					,	{ "name": "ORGANIZACAO_SC"			,  "type": [ "string",	"null" ] }
+					,	{ "name": "ORGANIZACAO_N"   		,  "type": [ "string",	"null" ] }
+					,	{ "name": "COMPANHIA_ID"    		,  "type": [ "int",		"null" ] }
+					,	{ "name": "COMPANHIA_SC"    		,  "type": [ "string",	"null" ] }
+					,	{ "name": "COMPANHIA_N"     		,  "type": [ "string",	"null" ] }
+					,	{ "name": "SITE_ID"         		,  "type": [ "int",		"null" ] }
+					,	{ "name": "SITE_SC"         		,  "type": [ "string",	"null" ] }
+					,	{ "name": "SITE_N"          		,  "type": [ "string",	"null" ] }
+					,	{ "name": "SITE_RMK"        		,  "type": [ "string",	"null" ] }
+					,	{ "name": "SALA_SITE_ID"    		,  "type": [ "int",		"null" ] }
+					,	{ "name": "SALA_SITE_SC"    		,  "type": [ "string",	"null" ] }
+					,	{ "name": "SALA_ID"         		,  "type": [ "int",		"null" ] }
+					,	{ "name": "SALA_SC"         		,  "type": [ "string",	"null" ] }
+					,	{ "name": "SALA_N"          		,  "type": [ "string",	"null" ] }
+					,	{ "name": "CIDADE_ID"       		,  "type": [ "int",		"null" ] }
+					,	{ "name": "CIDADE_SC"       		,  "type": [ "string",	"null" ] }
+					,	{ "name": "CIDADE_N"        		,  "type": [ "string",	"null" ] }
+					,	{ "name": "ESTADO_ID"       		,  "type": [ "int",		"null" ] }
+					,	{ "name": "ESTADO_SC"       		,  "type": [ "string",	"null" ] }
+					,	{ "name": "ESTADO_N"        		,  "type": [ "string",	"null" ] }
+					,	{ "name": "PAIS_ID"         		,  "type": [ "int",		"null" ] }
+					,	{ "name": "PAIS_SC"         		,  "type": [ "string",	"null" ] }
+					,	{ "name": "PAIS_N"          		,  "type": [ "string",	"null" ] }
+					]
+				}
+			}
+		},
+		{
+			"name": "ASSYST_USERS", "type": {
+				"type": "map", "default": {}, "values": {
+					"type": "record", "name": "ASSYST_USER", "fields": [
+						{ "name": "ASSYST_USR_ID"			, "type": [ "int" ] }	
+					,	{ "name": "ASSYST_USR_SC"           , "type": [ "string",	"null" ] }	
+					,	{ "name": "ASSYST_USR_N"            , "type": [ "string",	"null" ] }	
+					,	{ "name": "ASSYST_USR_RMK"          , "type": [ "string",	"null" ] }	
+					,	{ "name": "SERV_DEPT_ID"            , "type": [ "int" ] }	
+					,	{ "name": "SERV_DEPT_SC"            , "type": [ "string",	"null" ] }	
+					,	{ "name": "SERV_DEPT_N"             , "type": [ "string",	"null" ] }						
+					]
+				}
+			}
+		},
+		{
+			"name": "SCHEDULES", "type": {
+				"type": "map", "default": {}, "values": {
+					"type": "record", "name": "SCHEDULE", "fields": [
+						{ "name": "MESA_ID"			, "type": [ "int",		"null" ] }
+					,	{ "name": "MESA_SC"			, "type": [ "string",	"null" ] }
+					,	{ "name": "MESA_N"			, "type": [ "string",	"null" ] }
+					,	{ "name": "FORNECEDOR_ID"	, "type": [ "int",		"null" ] }
+					,	{ "name": "FORNECEDOR_SC"	, "type": [ "string",	"null" ] }
+					,	{ "name": "FORNECEDOR_N"	, "type": [ "string",	"null" ] }
+					,	{ "name": "SLA_ID"			, "type": [ "int",		"null" ] }
+					,	{ "name": "SLA_SC"			, "type": [ "string",	"null" ] }
+					,	{ "name": "SLA_N"			, "type": [ "string",	"null" ] }
+					,	{ "name": "MON_BEGIN"		, "type": [ "string",	"null" ] }
+					,	{ "name": "MON_END"			, "type": [ "string",	"null" ] }
+					,	{ "name": "TUE_BEGIN"		, "type": [ "string",	"null" ] }
+					,	{ "name": "TUE_END"			, "type": [ "string",	"null" ] }
+					,	{ "name": "WED_BEGIN"		, "type": [ "string",	"null" ] }
+					,	{ "name": "WED_END"			, "type": [ "string",	"null" ] }
+					,	{ "name": "THR_BEGIN"		, "type": [ "string",	"null" ] }
+					,	{ "name": "THR_END"			, "type": [ "string",	"null" ] }
+					,	{ "name": "FRI_BEGIN"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FRI_END"			, "type": [ "string",	"null" ] }
+					,	{ "name": "SAT_BEGIN"		, "type": [ "string",	"null" ] }
+					,	{ "name": "SAT_END"			, "type": [ "string",	"null" ] }
+					,	{ "name": "SUN_BEGIN"		, "type": [ "string",	"null" ] }
+					,	{ "name": "SUN_END"			, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_01"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_02"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_03"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_04"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_05"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_06"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_07"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_08"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_09"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_10"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_11"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_12"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_13"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_14"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_15"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_16"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_17"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_18"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_19"		, "type": [ "string",	"null" ] }
+					,	{ "name": "FERIADO_20"		, "type": [ "string",	"null" ] }
+					]
+				}
+			}
+		},
+		{
+			"name": "ACTIONS", "type": { 
+				"type": "array", "default": [], "items": { 
+					"type": "record", "name": "ACTION", "fields": [
+						{ "name": "ACT_REG_ID"				, "type": [ "int" ] }
+					,	{ "name": "INCIDENT_ID"				, "type": [ "int" ] }
+					,	{ "name": "DATE_ACTIONED"			, "type": [ "string",	"null" ] }
+					,	{ "name": "ACT_TYPE_ID"				, "type": [ "int" ] }
+					,	{ "name": "ACT_TYPE_SC"				, "type": [ "string",	"null" ] }
+					,	{ "name": "ACT_TYPE_N"				, "type": [ "string",	"null" ] }
+					,	{ "name": "SUPPLIER_ID"				, "type": [ "int" ] }
+					,	{ "name": "SERV_DEPT_ID"			, "type": [ "int" ] }
+					,	{ "name": "SERV_DEPT_SC"			, "type": [ "string",	"null" ] }
+					,	{ "name": "SERV_DEPT_N"				, "type": [ "string",	"null" ] }
+					,	{ "name": "ASS_USR_ID"				, "type": [ "int" ] }
+					,	{ "name": "TIME_TO_RESOLVE"			, "type": [ "int" ] }
+					,	{ "name": "ASSIGNMENT_TIME"			, "type": [ "int" ] }
+					,	{ "name": "IS_RESOLUTION"			, "type": [ "boolean" ] }
+					,	{ "name": "USER_STATUS"				, "type": [ "string",	"null" ] }
+					,	{ "name": "REMARKS"					, "type": [ "string",	"null" ] }
+					]
+				}
+			}
+		}
+	]
+}
+			

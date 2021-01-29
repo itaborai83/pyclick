@@ -11,6 +11,7 @@ from fastavro.schema import load_schema
 import pyclick.util as util
 import pyclick.config as config
 import pyclick.assyst.config as click_config
+import pyclick.etl.config as etl_config
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
 
@@ -24,8 +25,8 @@ class App(object):
     DB_MAP_SIZE = 10 * 1024 * 1024 * 1024
     DB_MAX_DBS = 100
 
-    def __init__(self, schema_file, output):
-        self.schema_file = schema_file
+    def __init__(self, output):
+        self.schema_file = etl_config.ASSYST_USERS_SCHEMA_FILE
         self.output = output
     
     def parse_schema(self):
@@ -74,9 +75,8 @@ class App(object):
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('schema', type=str, help='schema file')
     parser.add_argument('output', type=str, help='output file')
     args = parser.parse_args()
-    app = App(args.schema, args.output)
+    app = App(args.output)
     app.run()
     

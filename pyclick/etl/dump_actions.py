@@ -9,6 +9,7 @@ from fastavro.schema import load_schema
 import pyclick.util as util
 import pyclick.config as config
 import pyclick.assyst.config as click_config
+import pyclick.etl.config as etl_config
 import pyclick.etl.load_repo as r
 
 assert os.environ[ 'PYTHONUTF8' ] == "1"
@@ -30,13 +31,13 @@ class App(object):
     PRINT_ACTIONS = False
     PRINT_INDEXES_ENTRIES = False
     
-    def __init__(self, schema_file, index_schema_file, output, index_output, start_dt, end_dt, open, closed):
+    def __init__(self, output, index_output, start_dt, end_dt, open, closed):
         assert start_dt <= end_dt
         assert len(start_dt) == len('yyyy-mm-dd')
         assert len(end_dt) == len('yyyy-mm-dd')
         assert open or closed
-        self.schema_file        = schema_file
-        self.index_schema_file  = index_schema_file
+        self.schema_file        = etl_config.ACTIONS_SCHEMA_FILE
+        self.index_schema_file  = etl_config.ACTIONS_IDX01_SCHEMA_FILE
         self.output             = output
         self.index_output       = index_output
         self.start_dt           = start_dt  + ' 00:00:00'
@@ -199,17 +200,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--closed',     action='store_true',    help='dump closed incidents')
     parser.add_argument('--open',       action='store_true',    help='dump open incidents')
-    parser.add_argument('schema',       type=str,               help='schema file')
-    parser.add_argument('index_schema', type=str,               help='schema file')
     parser.add_argument('output',       type=str,               help='output file')
     parser.add_argument('index_output', type=str,               help='index output file')
     parser.add_argument('start_dt',     type=str,               help='start date')
     parser.add_argument('end_dt',       type=str,               help='end date')
     args = parser.parse_args()
     app = App(
-        args.schema
-    ,   args.index_schema
-    ,   args.output
+        args.output
     ,   args.index_output
     ,   args.start_dt
     ,   args.end_dt

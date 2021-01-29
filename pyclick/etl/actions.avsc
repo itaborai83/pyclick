@@ -18,7 +18,7 @@
 	,	{ "name": "ASSIGNMENT_TIME"		, "type": [ "int" ] }
 	,	{ "name": "IS_RESOLUTION"		, "type": [ "boolean" ] }
 	,	{ "name": "USER_STATUS"			, "type": [ "string",	"null" ] }
-	,	{ "name": "REMARKS"				, "type": [ "string",	"null" ] }	
+	,	{ "name": "REMARKS"				, "type": [ "string",	"null" ] }
 	]
 }
 
