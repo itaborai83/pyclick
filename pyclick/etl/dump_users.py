@@ -22,12 +22,7 @@ class App(object):
     VERSION = (1, 0, 0)
     
     def __init__(self, output):
-        self.schema_file = etl_config.USERS_SCHEMA_FILE
         self.output = output
-    
-    def parse_schema(self):
-        logger.info('parsing avro schema')
-        return load_schema(self.schema_file)
         
     def connect_db(self):
         logger.info('connecting to db')
@@ -88,7 +83,7 @@ class App(object):
                 })
         import pyclick.etl.load_repo as r
         repo = r.LoadRepo(self.output)
-        repo.save_users(self.schema_file, generator(users_df))
+        repo.save_users(generator(users_df))
         
     def run(self):
         conn = None

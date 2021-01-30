@@ -22,17 +22,10 @@ SQL_USERS = util.get_query("ASSYST__DUMP_ASSYST_USERS")
 class App(object):
     
     VERSION = (1, 0, 0)
-    DB_MAP_SIZE = 10 * 1024 * 1024 * 1024
-    DB_MAX_DBS = 100
 
     def __init__(self, output):
-        self.schema_file = etl_config.ASSYST_USERS_SCHEMA_FILE
         self.output = output
-    
-    def parse_schema(self):
-        logger.info('parsing avro schema')
-        return load_schema(self.schema_file)
-        
+            
     def connect_db(self):
         logger.info('connecting to db')
         return click_config.SQLALCHEMY_ENGINE.connect()    
@@ -59,7 +52,7 @@ class App(object):
                 )
         import pyclick.etl.load_repo as r
         repo = r.LoadRepo(self.output)
-        repo.save_assyst_users(self.schema_file, generator(assyst_users_df))
+        repo.save_assyst_users(generator(assyst_users_df))
         
     def run(self):
         conn = None

@@ -24,15 +24,8 @@ class App(object):
     VERSION = (1, 0, 0)
     
     def __init__(self, output):
-        self.schema_file = etl_config.OFFERINGS_SCHEMA_FILE
         self.output = output
-    
-    def parse_schema(self):
-        logger.info('parsing avro schema')
-        with open(self.schema_file, "rb") as fh:
-            schema_txt = fh.read()
-            return parse(schema_txt)
-        
+            
     def connect_db(self):
         logger.info('connecting to db')
         return click_config.SQLALCHEMY_ENGINE.connect()    
@@ -83,7 +76,7 @@ class App(object):
                 )
         import pyclick.etl.load_repo as r
         repo = r.LoadRepo(self.output)
-        repo.save_offerings(self.schema_file, generator(offerings_df))   
+        repo.save_offerings(generator(offerings_df))   
         
     def run(self):
         conn = None

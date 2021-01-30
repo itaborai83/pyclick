@@ -1,9 +1,11 @@
 import io
 import json
 import lmdb
-from fastavro import writer, reader, parse_schema, schemaless_writer
+
+from fastavro import writer, reader, parse_schema, schemaless_writer, schemaless_reader
 from fastavro.schema import load_schema
 
+import pyclick.etl.config as etl_config
 
 def save_avro(schema_file, data_file, row_generator):
     schema = load_schema(schema_file)
@@ -23,73 +25,43 @@ class LoadRepo:
         if reader_check:
             env.reader_check()
         return env
-
-    def parse_schema(self, schema_file):
-        return parse_schema(schema_file)
                 
-    """
-    def save_assyst_users(self, schema_file, assyst_users_gen):
-        buffer = io.BytesIO()
-        schema = load_schema(schema_file)
-        env = self.open_db()
-        with env.begin(write=True) as txn:
-            db_schema = env.open_db(key=b'SCHEMAS', txn=txn, dupsort=False, create=True)
-            self._save_schema(txn, db_schema, schema)
-            schema_cursor.close()
-            
-            db_data = env.open_db(key=b'ASSYST_USERS', txn=txn, dupsort=False, create=True, integerkey=True)
-            txn.drop(db_data, delete=False) # delete=False deletes all entries but keep the database itself            
-            data_cursor = txn.cursor(db=db_data)
-            
-            for key, dict_data in assyst_users_gen:
-                schemaless_writer(buffer, schema, dict_data)
-                key  = self._encode_int(key)
-                data = buffer.read()
-                txn.put(key, data)
-                buffer.seek(0)
-                buffer.truncate()
+    def save_assyst_users(self, row_generator):
+        self.save_rows(etl_config.ASSYST_USERS_SCHEMA, row_generator, int_key=True)
 
-    
-    def save_items(self, schema_file, items_gen):
-        buffer = io.BytesIO()
-        schema = load_schema(schema_file)
-        env = self.open_db()
-        with env.begin(write=True) as txn:
-            db_schema = env.open_db(key=b'SCHEMAS', txn=txn, dupsort=False, create=True)
-            schema_cursor = txn.cursor(db=db_schema)
-            self._save_schema(schema_cursor, 'ITEMS', schema)
-            schema_cursor.close()
-            
-            db_data = env.open_db(key=b'ASSYST_USERS', txn=txn, dupsort=False, create=True, integerkey=True)
-            txn.drop(db_data, delete=False) # delete=False deletes all entries but keep the database itself            
-            data_cursor = txn.cursor(db=db_data)
-            
-            for key, dict_data in assyst_users_gen:
-                schemaless_writer(buffer, schema, dict_data)
-                key  = self._encode_int(key)
-                data = buffer.read()
-                txn.put(key, data)
-                buffer.seek(0)
-                buffer.truncate()
-    """
-    def save_assyst_users(self, schema_file, row_generator):
-        self.save_rows(schema_file, row_generator, int_key=True)
-
-    def save_users(self, schema_file, row_generator):
-        self.save_rows(schema_file, row_generator, int_key=True)                
+    def save_users(self, row_generator):
+        self.save_rows(etl_config.USERS_SCHEMA, row_generator, int_key=True)                
         
-    def save_items(self, schema_file, row_generator):
-        self.save_rows(schema_file, row_generator, int_key=True)
+    def save_items(self, row_generator):
+        self.save_rows(etl_config.ITEMS_SCHEMA, row_generator, int_key=True)
 
-    def save_schedules(self, schema_file, row_generator):
-        self.save_rows(schema_file, row_generator, int_key=True)
+    def save_schedules(self, row_generator):
+        self.save_rows(etl_config.SCHEDULES_SCHEMA, row_generator, int_key=True)
     
-    def save_offerings(self, schema_file, row_generator):
-        self.save_rows(schema_file, row_generator, int_key=True)
+    def save_offerings(self, row_generator):
+        self.save_rows(etl_config.OFFERINGS_SCHEMA, row_generator, int_key=True)
 
-    def save_suppliers(self, schema_file, row_generator):
-        self.save_rows(schema_file, row_generator, int_key=True)
+    def save_suppliers(self, row_generator):
+        self.save_rows(etl_config.SUPPLIERS_SCHEMA, row_generator, int_key=True)
+
+    def get_assyst_users(self, assyst_user_ids):
+        self.save_rows(etl_config.ASSYST_USERS_SCHEMA, row_generator, int_key=True)
+
+    def get_user(self, user_id):
+        self.save_rows(etl_config.USERS_SCHEMA, row_generator, int_key=True)                
         
+    def get_item(self, item_id):
+        self.save_rows(etl_config.ITEMS_SCHEMA, row_generator, int_key=True)
+
+    def get_schedules(self, serv_dept_id):
+        self.save_rows(etl_config.SCHEDULES_SCHEMA, row_generator, int_key=True)
+    
+    def get_offerings(self, serv_off_id):
+        self.save_rows(etl_config.OFFERINGS_SCHEMA, row_generator, int_key=True)
+
+    def get_suppliers(self, supplier_id):
+        self.save_rows(etl_config.SUPPLIERS_SCHEMA, row_generator, int_key=True)
+  
     def list_keys(self, db_name=None, int_key=False):
         env = self.open_db()
         with env.begin(write=False) as txn:
@@ -111,9 +83,8 @@ class LoadRepo:
                     yield (parsed_key, key)
                     cursor.next()
         
-    def save_rows(self, schema_file, row_generator, int_key=True, drop_first=True):
+    def save_rows(self, schema, row_generator, int_key=True, drop_first=True):
         buffer = io.BytesIO()
-        schema = load_schema(schema_file)
         env = self.open_db()
         db_name = schema[ 'name' ].encode()
         # drop db first
@@ -122,10 +93,7 @@ class LoadRepo:
                 db_data = env.open_db(key=db_name, txn=txn, dupsort=False, create=True)
                 txn.drop(db_data, delete=False) # delete=False deletes all entries but keep the database itself
         
-        with env.begin(write=True) as txn:
-            db_schema = env.open_db(key=b'SCHEMAS', txn=txn, dupsort=False, create=True)
-            self._save_schema(txn, db_schema, schema)
-            
+        with env.begin(write=True) as txn:            
             db_name = schema[ 'name' ].encode()
             db_data = env.open_db(key=db_name, txn=txn, dupsort=False, create=True)
             #txn.drop(db_data, delete=False) # delete=False deletes all entries but keep the database itself
@@ -142,6 +110,33 @@ class LoadRepo:
                     buffer.seek(0)
                     buffer.truncate()
 
+    def get_rows(self, schema, keys, int_key=True):
+        buffer = io.BytesIO()
+        result = {}
+        env = self.open_db()
+        db_name = schema[ 'name' ].encode()
+        
+        with env.begin(write=False) as txn:
+            db_name = schema[ 'name' ].encode()
+            db_data = env.open_db(key=db_name, txn=txn, dupsort=False, create=True)
+            with txn.cursor(db=db_data) as data_cursor:
+                for unencoded_key in keys:
+                    if int_key:
+                        key  = self._encode_int(key)
+                    else:
+                        key  = self._encode_string(key)
+                    data = data_cursor.get(key)
+                    if data:                        
+                        buffer.seek(0)
+                        buffer.truncate()
+                        buffer.write(data)
+                        buffer.seek(0)
+                        data = schemaless_reader(buffer, schema)
+                    else:
+                        data = None
+                    result[ unencoded_key ] = data
+            return result
+        
     ##############################################################################
     ##############################################################################
     ##
@@ -161,11 +156,3 @@ class LoadRepo:
     
     def _decode_int(self, data, signed=False):
         return int.from_bytes(data, "big", signed=signed)
-    
-    def _save_schema(self, txn, db_schema, schema):
-        with txn.cursor(db=db_schema) as schema_cursor:
-            schema_name = schema[ 'name' ]
-            key = self._encode_string(schema_name)
-            schema_json = json.dumps(schema)
-            schema_data = self._encode_string(schema_json)
-            schema_cursor.put(key, schema_data)

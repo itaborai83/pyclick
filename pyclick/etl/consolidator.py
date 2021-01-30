@@ -1,3 +1,4 @@
+import sys
 import os
 import os.path
 import argparse
@@ -41,10 +42,10 @@ class App(object):
         return {
             'open_actions_index_file'       : etl_config.OPEN_ACTIONS_IDX01_FILE_TMPLT.format(self.end_dt)
         ,   'open_actions_file'             : etl_config.OPEN_ACTIONS_FILE_TMPLT.format(self.end_dt)
-        ,   'open_incidents_files'          : etl_config.OPEN_INCIDENTS_FILE_TMPLT.format(self.end_dt)
+        ,   'open_incidents_file'           : etl_config.OPEN_INCIDENTS_FILE_TMPLT.format(self.end_dt)
         ,   'closed_actions_index_files'    : list([ etl_config.CLOSED_ACTIONS_IDX01_FILE_TMPLT.format(d)    for d in dates ])
         ,   'closed_actions_files'          : list([ etl_config.CLOSED_ACTIONS_FILE_TMPLT.format(d)          for d in dates ])
-        ,   'closed_incidents_file'         : list([ etl_config.CLOSED_INCIDENTS_FILE_TMPLT.format(d)        for d in dates ])
+        ,   'closed_incidents_files'        : list([ etl_config.CLOSED_INCIDENTS_FILE_TMPLT.format(d)        for d in dates ])
         }
 
     def search_action_index(self, index_file, mesas):
@@ -71,12 +72,81 @@ class App(object):
             result.update(incident_ids)
         logger.info(f'found { len(result) } incident ids in total')
         return result
-                    
+    
+    
+    def consolidate_daily_dump(self, incident_ids, incidents_file, actions_file, seen_set):
+        logger.info(f'processing incidents file {incidents_file}')
+        inc_count = 0
+        action_count = 0
+        incident_seen_set = set()
+        action_seen_set = set()
+        result = {}
+        path = os.path.join(self.data_dir, incidents_file) 
+        with open(path, 'rb') as fh:
+            for incident in reader(fh, etl_config.INCIDENTS_SCHEMA):
+                incident_id = incident[ "INCIDENT_ID" ]
+                if incident_id not in incident_ids:
+                    # skip incidents that didnt match the searched criterion
+                    continue
+                inc_count += 1
+                incident_seen_set.add(incident_id)
+                result[ incident_id ] = {
+                    "INCIDENT"      : incident
+                ,   "OFFERING"      : None
+                ,   "ITEMS"         : {}
+                ,   "SUPPLIERS"     : {}
+                ,   "USERS"         : {}
+                ,   "ASSYST_USERS"  : {}
+                ,   "SCHEDULES"     : {}
+                ,   "ACTIONS"       : [] 
+                }
+        logger.info(f'found {inc_count} incidents')
+        logger.info(f'processing actions file {actions_file}')
+        path = os.path.join(self.data_dir, actions_file) 
+        with open(path, 'rb') as fh:
+            for action in reader(fh, etl_config.ACTIONS_SCHEMA):
+                incident_id = action[ "INCIDENT_ID" ]
+                if action[ "INCIDENT_ID" ] not in incident_ids:
+                    # skip incidents that didnt match the searched criterion
+                    continue
+                action_seen_set.add(incident_id)
+                action_count +=1
+                result[ incident_id ][ "ACTIONS" ].append(action)
+        logger.info(f'found {action_count} actions')
+        if incident_seen_set != action_seen_set:
+            logger.error(f'file mismmatch while processing files {incidents_file} and {actions_file}')
+            difference_set = incident_seen_set.symmetric_difference(action_seen_set)
+            for incident_id in difference_set:
+                logger.error(f'could not find incident id {incident_id}')
+                pass
+            sys.exit(1)
+        seen_set.update(incident_seen_set)
+        return result
+        
+    def consolidate_daily_dumps(self, incident_ids, files):
+        seen_set = set()
+        result = {}
+        for incidents_file, actions_file in zip( files[ 'closed_incidents_files' ], files[ 'closed_actions_files' ]):
+            daily_result = self.consolidate_daily_dump(incident_ids, incidents_file, actions_file, seen_set)
+            result.update(daily_result)
+        daily_result = self.consolidate_daily_dump(incident_ids, files[ 'open_incidents_file' ], files[ 'open_actions_file' ], seen_set)
+        result.update(daily_result)
+        if incident_ids != seen_set:
+            logger.error('not all indexed incidents found')
+            difference_set = incident_ids - seen_set
+            for incident_id in difference_set:
+                #logger.error(f'incident id {incident_id} was indexed but not found')
+                pass
+            sys.exit(1)
+        return result
+        
     def run(self):
         logger.info('starting consolidator - version %d.%d.%d', *self.VERSION)
         files = self.build_files()
         mesas = set(util.read_mesas_file(self.mesas_file))
         incident_ids = self.search_action_indexes(files, mesas)
+        incidents = self.consolidate_daily_dumps(incident_ids, files)
+        pprint.pprint(incidents)
         logger.info('finished')
         
 if __name__ == '__main__':

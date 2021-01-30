@@ -21,11 +21,8 @@ SQL_ITEMS_DB = util.get_query("ASSYST__DUMP_ITEMS")
 class App(object):
     
     VERSION = (1, 0, 0)
-    DB_MAX_DBS = 100
-    DB_MAP_SIZE = 10 * 1024 * 1024 * 1024
     
     def __init__(self, output):
-        self.schema_file = etl_config.ITEMS_SCHEMA_FILE
         self.output = output
     
     def parse_schema(self):
@@ -60,19 +57,15 @@ class App(object):
                 )
         import pyclick.etl.load_repo as r
         repo = r.LoadRepo(self.output)
-        repo.save_items(self.schema_file, generator(items_df))
+        repo.save_items(generator(items_df))
         
     def run(self):
-        conn = None
-        try:
-            logger.info('starting scheduler dumper - version %d.%d.%d', *self.VERSION)
-            conn = self.connect_db()
-            items_df = self.fetch_items(conn)
-            self.save_items(items_df)
-            logger.info('finished')
-        finally:
-            if conn:
-                conn = None
+        logger.info('starting scheduler dumper - version %d.%d.%d', *self.VERSION)
+        conn = self.connect_db()
+        items_df = self.fetch_items(conn)
+        self.save_items(items_df)
+        logger.info('finished')
+
             
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

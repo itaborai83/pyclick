@@ -22,7 +22,6 @@ class App(object):
     VERSION = (1, 0, 0)
     
     def __init__(self, output):
-        self.schema_file = etl_config.SUPPLIERS_SCHEMA_FILE
         self.output = output
         
     def connect_db(self):
@@ -48,7 +47,7 @@ class App(object):
                 })
         import pyclick.etl.load_repo as r
         repo = r.LoadRepo(self.output)
-        repo.save_suppliers(self.schema_file, generator(suppliers_df))
+        repo.save_suppliers(generator(suppliers_df))
             
     def run(self):
         logger.info('starting suppliers dumper - version %d.%d.%d', *self.VERSION)
